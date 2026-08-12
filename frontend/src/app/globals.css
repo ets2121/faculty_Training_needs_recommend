@@ -4,7 +4,7 @@
 
 @layer base {
   :root {
-    --bg-main: #f8fafc;
+    --bg-main: #f1f5f9;
     --card-bg: #ffffff;
     --text-main: #0f172a;
     --border-main: #e2e8f0;
@@ -17,29 +17,73 @@
     --border-main: #1e293b;
   }
 
+  html {
+    color-scheme: dark;
+  }
+
+  html:not(.dark) {
+    color-scheme: light;
+  }
+
   body {
     background-color: var(--bg-main);
     color: var(--text-main);
     font-family: 'Inter', system-ui, -apple-system, sans-serif;
     min-height: 100vh;
+    transition: background-color 0.2s ease, color 0.2s ease;
+  }
+
+  /* Light mode body overrides */
+  html:not(.dark) body {
+    background-color: #f1f5f9;
+    color: #0f172a;
+  }
+
+  /* Light mode card/surface overrides */
+  html:not(.dark) .bg-slate-900\/60,
+  html:not(.dark) .bg-slate-900\/80,
+  html:not(.dark) .bg-slate-950\/80,
+  html:not(.dark) .bg-slate-950\/60 {
+    background-color: rgba(255, 255, 255, 0.85) !important;
+  }
+
+  html:not(.dark) .bg-slate-950 {
+    background-color: #f8fafc !important;
+  }
+
+  html:not(.dark) .border-slate-800 {
+    border-color: #e2e8f0 !important;
+  }
+
+  html:not(.dark) .text-slate-400 {
+    color: #475569 !important;
+  }
+
+  html:not(.dark) .text-slate-300 {
+    color: #334155 !important;
+  }
+
+  html:not(.dark) .text-slate-100,
+  html:not(.dark) .text-white {
+    color: #0f172a !important;
   }
 }
 
 /* Custom Scrollbars */
 ::-webkit-scrollbar {
-  width: 8px;
-  height: 8px;
+  width: 6px;
+  height: 6px;
 }
 
 ::-webkit-scrollbar-track {
-  background: rgba(15, 23, 42, 0.6);
+  background: transparent;
 }
 
 ::-webkit-scrollbar-thumb {
-  background: rgba(51, 65, 85, 0.8);
-  border-radius: 4px;
+  background: rgba(51, 65, 85, 0.6);
+  border-radius: 3px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: rgba(16, 185, 129, 0.6);
+  background: rgba(16, 185, 129, 0.5);
 }
