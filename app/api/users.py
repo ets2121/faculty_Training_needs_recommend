@@ -31,6 +31,15 @@ def _user_to_out(user: User, db: Session) -> dict:
     role_name = get_user_role_name(user, db)
     dept_id = get_user_department_id(user, db)
     dept = db.query(Department).filter(Department.id == dept_id).first() if dept_id else None
+    
+    user_status = user.status
+    if role_name == "faculty":
+        faculty = user.faculty_profile
+        if not faculty:
+            faculty = db.query(Faculty).filter(Faculty.user_id == user.id).first()
+        if faculty:
+            user_status = faculty.questionnaire_status
+            
     return {
         "id": user.id,
         "username": user.username,
@@ -39,7 +48,7 @@ def _user_to_out(user: User, db: Session) -> dict:
         "role": role_name,
         "department_code": dept.code if dept else None,
         "department_name": dept.name if dept else None,
-        "status": user.status,
+        "status": user_status,
     }
 
 
