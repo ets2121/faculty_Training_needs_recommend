@@ -57,31 +57,37 @@
                     └─────────────────┘
 ```
 
-### Questionnaire Flow
+### Questionnaire Flow & Status Lifecycle
 
 ```
 Faculty Login
      │
      ▼
-Dashboard: view progress (Parts 1–8)
+Dashboard: status = "not_started"
      │
      ▼
-Submit Part 1 (Personal Profile)  ──► Saved to MySQL
+Submit Part 1 (Personal Profile)  ──► Saved to MySQL ──► status = "in_progress"
      │ (must be complete before Part 2 unlocks)
      ▼
-Submit Part 2 (Educational Background) ──► Saved
+Submit Parts 2, 3, 4, 5, 6 ───────► Saved to MySQL ──► status = "eligible"
      │
      ▼
-Submit Part 3 (Professional Background) ──► Saved
-     │
-    ...
+POST /profile/request-recommendation
      │
      ▼
-Parts 1+2+3+5+6 complete ──► Eligible for Recommendation
-     │
-     ▼
-POST /profile/request-recommendation ──► Returns ML predictions + catalog matches
+Result generated ─────────────────► Saved to Faculty.last_recommendation_json
+                                    status = "has_recommendation"
 ```
+
+#### Status Lifecycle (`faculty.questionnaire_status`)
+
+- `not_started`: Default when account is created. No questionnaire parts submitted yet.
+- `in_progress`: Faculty has saved at least one part, but missing required parts (1, 2, 3, 5, or 6).
+- `eligible`: All 5 required parts (1, 2, 3, 5, 6) are completed. Ready for recommendation execution.
+- `has_recommendation`: Recommendation has been executed and saved directly to the faculty record.
+
+> **Department Recommendation Filtering Rule:**
+> `POST /api/v1/recommendations/department` automatically filters faculty members by `questionnaire_status IN ('eligible', 'has_recommendation')`. Any faculty with `not_started` or `in_progress` status are automatically excluded to guarantee valid, complete data payloads.
 
 ---
 
@@ -838,7 +844,7 @@ Automatically uses saved questionnaire data from MySQL. No request body needed.
 - `system_admin`: must specify `department_code` as query parameter
 - `faculty`: **403 Forbidden**
 
-Automatically fetches all eligible faculty from MySQL, filters out incomplete ones, and runs the recommendation.
+Automatically fetches all eligible faculty from MySQL (with `questionnaire_status` in `'eligible'` or `'has_recommendation'`), filters out incomplete ones, and runs the recommendation. Stores individual results back on each faculty record.
 
 **Response:**
 ```json
@@ -848,7 +854,10 @@ Automatically fetches all eligible faculty from MySQL, filters out incomplete on
   "department_name": "Bachelor of Science in Information Technology",
   "total_faculty_in_dept": 10,
   "eligible_faculty_count": 7,
-  "skipped_incomplete_count": 3,
+  "skipped_faculty": [
+    { "faculty_id": 4, "questionnaire_status": "in_progress" }
+  ],
+  "individual_results_stored": 7,
   "model": { "status": "ready", "version": "20260812055414" },
   "faculty_count": 7,
   "prediction": {
@@ -862,6 +871,62 @@ Automatically fetches all eligible faculty from MySQL, filters out incomplete on
     ]
   },
   "recommendations": [...]
+}
+```
+
+---
+
+#### Get Faculty Last Stored Recommendation (Admin View)
+
+**`GET /api/v1/recommendations/faculty/{faculty_id}/last`** — Requires JWT (Admin roles)
+
+Allows department and system administrators to inspect the latest recommendation stored on a specific faculty member's record.
+
+---
+
+### 6.7 Non-Auth Testing Endpoints (Development / Postman Testing)
+
+These endpoints do **NOT** require authentication or JWT tokens. They take raw faculty JSON payloads directly in the request body and return ML prediction and catalog match results instantly without writing to MySQL.
+
+Set `ENABLE_TEST_ENDPOINTS=false` in `.env` to disable them in production.
+
+#### Test Individual Recommendation (No Auth)
+
+**`POST /api/v1/test/recommendations/individual`** — No Auth
+
+**Request Body:**
+```json
+{
+  "faculty": {
+    "department": "BSIT",
+    "age": 35,
+    "sex": "Male",
+    "employment_status": "Permanent",
+    "academic_rank": "Assistant Professor",
+    "highest_educational_attainment": "Master's Degree",
+    "field_of_specialization": "Computer Science",
+    "years_teaching": "5-10 years",
+    "emerging_training_needs": {
+      "artificial_intelligence": 5,
+      "educational_technology": 4
+    },
+    "preferred_learning_modality": ["Webinar"]
+  }
+}
+```
+
+#### Test Department Recommendation (No Auth)
+
+**`POST /api/v1/test/recommendations/department`** — No Auth
+
+**Request Body:**
+```json
+{
+  "department": "BSIT",
+  "faculty": [
+    { "department": "BSIT", "age": 35, "emerging_training_needs": {"artificial_intelligence": 5} },
+    { "department": "BSIT", "age": 42, "emerging_training_needs": {"data_analytics": 5} }
+  ]
 }
 ```
 

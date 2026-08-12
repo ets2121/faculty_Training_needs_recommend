@@ -1,14 +1,17 @@
 """
 Faculty Profile API — Faculty can view/update their own profile and request recommendations.
+All endpoints are FACULTY-ONLY.
 """
 import json
+from datetime import datetime, timezone
+
 from fastapi import APIRouter, Depends, HTTPException, Request, status
 from pydantic import BaseModel
 from sqlalchemy.orm import Session
 
 from app.core.security import get_current_user, get_user_role_name, log_audit
 from app.db.models import (
-    Department, Faculty, RecommendationHistory, TrainingRecommendationRequest, User
+    Department, Faculty, TrainingRecommendationRequest, User
 )
 from app.db.session import get_db
 from app.api.questionnaire import (
@@ -65,7 +68,13 @@ def get_my_profile(
             },
         },
         "questionnaire_progress": {
-            "eligible_for_recommendation": is_eligible_for_recommendation(faculty.id, db),
+            "questionnaire_status": faculty.questionnaire_status,
+            "eligible_for_recommendation": faculty.questionnaire_status in ("eligible", "has_recommendation"),
+            "has_existing_recommendation": faculty.questionnaire_status == "has_recommendation",
+            "last_recommendation_at": (
+                faculty.last_recommendation_at.isoformat()
+                if faculty.last_recommendation_at else None
+            ),
             "required_parts_completed": f"{completed_required}/{len(REQUIRED_PARTS)}",
             "total_parts_completed": f"{completed_total}/{TOTAL_PARTS}",
             "parts_status": {
@@ -129,6 +138,12 @@ def request_my_recommendation(
     """
     Request an individual training recommendation using saved questionnaire data.
     Requires Parts 1, 2, 3, 5, and 6 to be complete.
+
+    On success:
+    - Stores result in training_recommendation_requests table
+    - Updates faculty.last_recommendation_json with the full result
+    - Updates faculty.last_recommendation_at with the timestamp
+    - Sets faculty.questionnaire_status = 'has_recommendation'
     """
     from app.ml.predictor import ModelService
     from app.core.config import get_settings
@@ -138,9 +153,7 @@ def request_my_recommendation(
 
     if not is_eligible_for_recommendation(faculty.id, db):
         completed = _get_completed_parts(faculty.id, db)
-        missing = [
-            PART_LABELS[p] for p in REQUIRED_PARTS if not completed.get(p, False)
-        ]
+        missing = [PART_LABELS[p] for p in REQUIRED_PARTS if not completed.get(p, False)]
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail=f"Please complete the following questionnaire parts first: {missing}",
@@ -157,21 +170,29 @@ def request_my_recommendation(
     record = build_faculty_record(faculty.id, faculty, db)
     result = individual(model, record, db=db)
 
-    # Save to recommendation requests log
-    req = TrainingRecommendationRequest(
+    # Store result in recommendation requests log
+    rec_request = TrainingRecommendationRequest(
         faculty_id=faculty.id,
         requested_by_user_id=current_user.id,
         recommendation_type="individual",
         model_version=result.get("model", {}).get("version"),
         recommendation_json=json.dumps(result),
     )
-    db.add(req)
+    db.add(rec_request)
+
+    # Update faculty record with latest recommendation result and status
+    now = datetime.now(timezone.utc)
+    faculty.last_recommendation_json = json.dumps(result)
+    faculty.last_recommendation_at = now
+    faculty.questionnaire_status = "has_recommendation"
+
     db.commit()
 
     log_audit(
         db, current_user, "request_recommendation",
         entity_type="faculty",
         entity_id=str(faculty.id),
+        new_values={"recommendation_id": rec_request.id, "model_version": rec_request.model_version},
         ip_address=request.client.host if request.client else None,
     )
 
@@ -195,6 +216,7 @@ def get_recommendation_history(
 
     return {
         "faculty_id": faculty.id,
+        "questionnaire_status": faculty.questionnaire_status,
         "total": len(history),
         "history": [
             {
@@ -206,4 +228,34 @@ def get_recommendation_history(
             }
             for h in history
         ],
+    }
+
+
+@router.get("/last-recommendation")
+def get_last_recommendation(
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    """
+    Quickly retrieve the most recent recommendation stored on the faculty record.
+    Returns null if no recommendation has been generated yet.
+    """
+    faculty = _get_faculty_or_403(current_user, db)
+
+    if not faculty.last_recommendation_json:
+        return {
+            "faculty_id": faculty.id,
+            "questionnaire_status": faculty.questionnaire_status,
+            "recommendation": None,
+            "message": "No recommendation generated yet. Complete the questionnaire and request one.",
+        }
+
+    return {
+        "faculty_id": faculty.id,
+        "questionnaire_status": faculty.questionnaire_status,
+        "last_recommendation_at": (
+            faculty.last_recommendation_at.isoformat()
+            if faculty.last_recommendation_at else None
+        ),
+        "recommendation": json.loads(faculty.last_recommendation_json),
     }

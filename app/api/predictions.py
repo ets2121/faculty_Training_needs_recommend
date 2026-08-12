@@ -1,12 +1,19 @@
 """
-Recommendations API — All endpoints require JWT authentication.
+Recommendations API — Authenticated endpoints for admin-driven recommendations.
 
 RBAC:
-  - faculty: cannot call this API directly (use /profile/request-recommendation)
-  - department_admin: can only call /recommendations/department for their own department
-  - system_admin: can call both /recommendations/individual and /recommendations/department
+  - faculty: FORBIDDEN (use /profile/request-recommendation)
+  - department_admin: individual for their dept faculty; department for own dept
+  - system_admin: individual and department for any faculty/dept
+
+Department recommendation filters by questionnaire_status IN ('eligible', 'has_recommendation')
+to ensure only faculty with validated, complete data are included.
+
+Result is stored back on the faculty record on every successful generation.
 """
 import json
+from datetime import datetime, timezone
+
 from fastapi import APIRouter, Depends, HTTPException, Request, status
 from sqlalchemy.orm import Session
 
@@ -16,19 +23,18 @@ from app.core.security import (
     get_user_role_name,
     log_audit,
 )
-from app.db.models import Department, Faculty, User
+from app.db.models import Department, Faculty, TrainingRecommendationRequest, User
 from app.db.session import get_db
-from app.api.questionnaire import (
-    build_faculty_record,
-    is_eligible_for_recommendation,
-)
+from app.api.questionnaire import build_faculty_record, is_eligible_for_recommendation
 from app.services.recommendation import individual, department as dept_recommendation
 
 router = APIRouter(prefix="/recommendations", tags=["Recommendations"])
 
+# Faculty must have one of these statuses to be included in recommendations
+ELIGIBLE_STATUSES = {"eligible", "has_recommendation"}
+
 
 def _get_model_or_503(request: Request):
-    """Get the active model from app state or raise 503."""
     model = getattr(request.app.state, "model", None)
     if model is None or not model.ready():
         raise HTTPException(
@@ -38,21 +44,38 @@ def _get_model_or_503(request: Request):
     return model
 
 
+def _store_individual_result(faculty: Faculty, result: dict, requested_by_user_id: int, db: Session) -> None:
+    """Persist recommendation result onto the faculty record and log it."""
+    now = datetime.now(timezone.utc)
+    faculty.last_recommendation_json = json.dumps(result)
+    faculty.last_recommendation_at = now
+    faculty.questionnaire_status = "has_recommendation"
+
+    db.add(TrainingRecommendationRequest(
+        faculty_id=faculty.id,
+        requested_by_user_id=requested_by_user_id,
+        recommendation_type="individual",
+        model_version=result.get("model", {}).get("version"),
+        recommendation_json=json.dumps(result),
+    ))
+
+
 @router.post("/individual")
 def individual_recommendation(
     request: Request,
-    faculty_id: int | None = None,
+    faculty_id: int,
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
     """
-    Generate individual recommendation for a faculty member using their saved questionnaire.
+    Generate and persist an individual recommendation for a specific faculty member.
 
-    - system_admin: can specify any faculty_id
-    - department_admin: can specify a faculty_id within their own department
-    - faculty: FORBIDDEN — use /profile/request-recommendation instead
+    Required query parameter: ?faculty_id=<int>
 
-    faculty_id is passed as a query parameter.
+    Access:
+    - system_admin: any faculty
+    - department_admin: only faculty within their own department
+    - faculty: 403 — use /profile/request-recommendation
     """
     role_name = get_user_role_name(current_user, db)
 
@@ -62,17 +85,10 @@ def individual_recommendation(
             detail="Faculty members must use /api/v1/profile/request-recommendation for their own recommendations.",
         )
 
-    if faculty_id is None:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="faculty_id query parameter is required.",
-        )
-
     target_faculty = db.query(Faculty).filter(Faculty.id == faculty_id).first()
     if not target_faculty:
-        raise HTTPException(status_code=404, detail="Faculty not found.")
+        raise HTTPException(status_code=404, detail=f"Faculty with ID {faculty_id} not found.")
 
-    # Department admin scope check
     if role_name == "department_admin":
         admin_dept_id = get_user_department_id(current_user, db)
         if target_faculty.department_id != admin_dept_id:
@@ -81,20 +97,27 @@ def individual_recommendation(
                 detail="You can only generate recommendations for faculty in your own department.",
             )
 
-    if not is_eligible_for_recommendation(faculty_id, db):
+    if target_faculty.questionnaire_status not in ELIGIBLE_STATUSES:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail=f"Faculty ID {faculty_id} has not completed the minimum questionnaire requirements (Parts 1, 2, 3, 5, 6).",
+            detail=(
+                f"Faculty ID {faculty_id} has questionnaire_status='{target_faculty.questionnaire_status}'. "
+                f"Required: one of {sorted(ELIGIBLE_STATUSES)}. "
+                f"Faculty must complete Parts 1, 2, 3, 5, and 6 first."
+            ),
         )
 
     model = _get_model_or_503(request)
     record = build_faculty_record(faculty_id, target_faculty, db)
     result = individual(model, record, db=db)
 
+    _store_individual_result(target_faculty, result, current_user.id, db)
+    db.commit()
+
     log_audit(
         db, current_user, "individual_recommendation",
-        entity_type="faculty",
-        entity_id=str(faculty_id),
+        entity_type="faculty", entity_id=str(faculty_id),
+        new_values={"model_version": result.get("model", {}).get("version")},
         ip_address=request.client.host if request.client else None,
     )
 
@@ -109,13 +132,15 @@ def department_recommendation(
     db: Session = Depends(get_db),
 ):
     """
-    Generate department-level recommendations from ALL eligible faculty in the department.
+    Generate department-level recommendations.
 
-    - system_admin: can specify any department_code
-    - department_admin: auto-uses their own department (department_code ignored)
-    - faculty: FORBIDDEN
+    Faculty included: only those with questionnaire_status IN ('eligible', 'has_recommendation').
+    Individual results are stored back on each faculty record.
 
-    Eligibility: Only faculty who have completed Parts 1, 2, 3, 5, 6 are included.
+    Access:
+    - system_admin: must provide ?department_code=<code>
+    - department_admin: auto-uses their own department
+    - faculty: 403
     """
     role_name = get_user_role_name(current_user, db)
 
@@ -125,14 +150,13 @@ def department_recommendation(
             detail="Faculty members cannot generate department recommendations.",
         )
 
-    # Determine target department
+    # Resolve department
     if role_name == "department_admin":
         dept_id = get_user_department_id(current_user, db)
         dept = db.query(Department).filter(Department.id == dept_id).first()
         if not dept:
             raise HTTPException(status_code=404, detail="Your department was not found.")
     else:
-        # system_admin must specify department_code
         if not department_code:
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
@@ -142,7 +166,7 @@ def department_recommendation(
         if not dept:
             raise HTTPException(status_code=404, detail=f"Department '{department_code}' not found.")
 
-    # Collect all faculty in the department
+    # Get all active faculty in the department
     all_faculty = db.query(Faculty).filter(
         Faculty.department_id == dept.id,
         Faculty.status == "active",
@@ -150,45 +174,109 @@ def department_recommendation(
 
     if not all_faculty:
         raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
+            status_code=404,
             detail=f"No active faculty found in department '{dept.code}'.",
         )
 
-    # Filter to only eligible faculty (completed minimum questionnaire requirements)
-    eligible_faculty = [f for f in all_faculty if is_eligible_for_recommendation(f.id, db)]
-    skipped_count = len(all_faculty) - len(eligible_faculty)
+    # Filter strictly by questionnaire_status — ONLY eligible or has_recommendation
+    eligible_faculty = [f for f in all_faculty if f.questionnaire_status in ELIGIBLE_STATUSES]
+    skipped = [
+        {"faculty_id": f.id, "questionnaire_status": f.questionnaire_status}
+        for f in all_faculty if f.questionnaire_status not in ELIGIBLE_STATUSES
+    ]
 
     if not eligible_faculty:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail=(
-                f"No faculty in '{dept.code}' have completed the minimum questionnaire requirements "
-                f"(Parts 1, 2, 3, 5, 6). {len(all_faculty)} faculty member(s) found but none are eligible yet."
+                f"No eligible faculty in '{dept.code}'. "
+                f"{len(all_faculty)} faculty found but none have completed the required questionnaire parts. "
+                f"Faculty must have questionnaire_status of 'eligible' or 'has_recommendation'."
             ),
         )
 
-    # Build records from DB
+    # Build records and run recommendation
     records = [build_faculty_record(f.id, f, db) for f in eligible_faculty]
-
     model = _get_model_or_503(request)
     result = dept_recommendation(model, records, dept_name=dept.code, db=db)
 
-    # Add eligibility metadata to response
+    # Run and store individual results for each eligible faculty
+    individual_results_stored = 0
+    for faculty_obj in eligible_faculty:
+        try:
+            ind_result = individual(model, build_faculty_record(faculty_obj.id, faculty_obj, db), db=None)
+            _store_individual_result(faculty_obj, ind_result, current_user.id, db)
+            individual_results_stored += 1
+        except Exception:
+            pass  # Don't fail the whole request for one faculty's individual result
+
+    db.commit()
+
+    # Attach metadata to response
     result["department_name"] = dept.name
     result["total_faculty_in_dept"] = len(all_faculty)
     result["eligible_faculty_count"] = len(eligible_faculty)
-    result["skipped_incomplete_count"] = skipped_count
+    result["skipped_faculty"] = skipped
+    result["individual_results_stored"] = individual_results_stored
 
     log_audit(
         db, current_user, "department_recommendation",
-        entity_type="department",
-        entity_id=str(dept.id),
+        entity_type="department", entity_id=str(dept.id),
         new_values={
             "department": dept.code,
             "eligible": len(eligible_faculty),
-            "skipped": skipped_count,
+            "skipped": len(skipped),
         },
         ip_address=request.client.host if request.client else None,
     )
 
     return result
+
+
+# ─── Faculty: Get last stored recommendation for a specific faculty (admin use) ──
+
+@router.get("/faculty/{faculty_id}/last")
+def get_faculty_last_recommendation(
+    faculty_id: int,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    """
+    Retrieve the most recent stored recommendation for a specific faculty member.
+    Useful for dept admin dashboards showing per-faculty recommendation status.
+
+    Access:
+    - system_admin: any faculty
+    - department_admin: only their own dept faculty
+    - faculty: 403
+    """
+    role_name = get_user_role_name(current_user, db)
+    if role_name == "faculty":
+        raise HTTPException(status_code=403, detail="Use /api/v1/profile/last-recommendation instead.")
+
+    target = db.query(Faculty).filter(Faculty.id == faculty_id).first()
+    if not target:
+        raise HTTPException(status_code=404, detail="Faculty not found.")
+
+    if role_name == "department_admin":
+        my_dept = get_user_department_id(current_user, db)
+        if target.department_id != my_dept:
+            raise HTTPException(status_code=403, detail="Access denied.")
+
+    dept = db.query(Department).filter(Department.id == target.department_id).first()
+    user = target.user
+
+    return {
+        "faculty_id": target.id,
+        "faculty_name": user.full_name if user else None,
+        "department": dept.code if dept else None,
+        "questionnaire_status": target.questionnaire_status,
+        "last_recommendation_at": (
+            target.last_recommendation_at.isoformat()
+            if target.last_recommendation_at else None
+        ),
+        "recommendation": (
+            json.loads(target.last_recommendation_json)
+            if target.last_recommendation_json else None
+        ),
+    }

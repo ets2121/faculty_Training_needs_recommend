@@ -5,7 +5,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from app.core.config import get_settings
 from app.db.init_db import init_db
 from app.ml.predictor import ModelService
-from app.api import auth, catalog, health, predictions, training, users, audit, questionnaire, profile
+from app.api import auth, catalog, health, predictions, training, users, audit, questionnaire, profile, test_recommendations
 
 settings = get_settings()
 
@@ -48,6 +48,7 @@ app.include_router(profile.router, prefix=pfx)
 app.include_router(questionnaire.router, prefix=pfx)
 app.include_router(users.router, prefix=pfx)
 app.include_router(predictions.router, prefix=pfx)
+app.include_router(test_recommendations.router, prefix=pfx)
 app.include_router(training.router, prefix=pfx)
 app.include_router(catalog.router, prefix=pfx)
 app.include_router(audit.router, prefix=pfx)

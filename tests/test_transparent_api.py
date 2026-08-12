@@ -12,7 +12,7 @@ def test_individual_recommendation_transparent_api():
         payload = json.load(f)
 
     with TestClient(app) as client:
-        response = client.post("/api/v1/recommendations/individual", json=payload)
+        response = client.post("/api/v1/test/recommendations/individual", json=payload)
         assert response.status_code == 200, response.text
         data = response.json()
 
@@ -60,7 +60,7 @@ def test_department_recommendation_transparent_api():
     }
 
     with TestClient(app) as client:
-        response = client.post("/api/v1/recommendations/department", json=dept_payload)
+        response = client.post("/api/v1/test/recommendations/department", json=dept_payload)
         assert response.status_code == 200, response.text
         data = response.json()
 
@@ -111,7 +111,7 @@ def test_incomplete_faculty_record():
         }
     }
     with TestClient(app) as client:
-        response = client.post("/api/v1/recommendations/individual", json=incomplete_payload)
+        response = client.post("/api/v1/test/recommendations/individual", json=incomplete_payload)
         assert response.status_code == 200, response.text
         data = response.json()
         assert data["status"] == "success"

@@ -13,6 +13,8 @@ Parts:
 
 Minimum requirement for recommendation: Parts 1, 2, 3, 5, 6 must all be complete.
 Faculty cannot proceed to part N+1 without completing part N.
+questionnaire_status on Faculty is updated automatically:
+  not_started → in_progress → eligible → has_recommendation
 """
 import json
 from typing import Any
@@ -21,7 +23,7 @@ from fastapi import APIRouter, Depends, HTTPException, Request, status
 from pydantic import BaseModel, Field, field_validator
 from sqlalchemy.orm import Session
 
-from app.core.security import get_current_user, get_user_role_name, log_audit
+from app.core.security import get_current_user, log_audit
 from app.db.models import Faculty, QuestionnairePart, User
 from app.db.session import get_db
 
@@ -143,7 +145,7 @@ PART_SCHEMAS = {
 }
 
 
-# ─── Helpers ─────────────────────────────────────────────────────────────────
+# ─── Status Helpers ───────────────────────────────────────────────────────────
 
 def _get_faculty_or_403(current_user: User, db: Session) -> Faculty:
     """Ensure user is a faculty member and return their Faculty profile."""
@@ -157,7 +159,7 @@ def _get_faculty_or_403(current_user: User, db: Session) -> Faculty:
 
 
 def _get_completed_parts(faculty_id: int, db: Session) -> dict[int, bool]:
-    """Returns a dict: {part_number: is_complete} for all stored parts."""
+    """Returns {part_number: is_complete} for all stored parts."""
     parts = db.query(QuestionnairePart).filter(QuestionnairePart.faculty_id == faculty_id).all()
     return {p.part_number: p.is_complete for p in parts}
 
@@ -179,18 +181,40 @@ def is_eligible_for_recommendation(faculty_id: int, db: Session) -> bool:
     return all(completed.get(p, False) for p in REQUIRED_PARTS)
 
 
+def update_faculty_questionnaire_status(faculty: Faculty, db: Session) -> None:
+    """
+    Recalculates and updates faculty.questionnaire_status based on completed parts.
+    - not_started       → no parts at all
+    - in_progress       → some parts saved but required not all done
+    - eligible          → all required parts done (no recommendation yet)
+    - has_recommendation → stays if already set (recommendation was generated)
+    """
+    # Never downgrade from has_recommendation
+    if faculty.questionnaire_status == "has_recommendation":
+        return
+
+    completed = _get_completed_parts(faculty.id, db)
+    any_saved = len(completed) > 0
+    all_required = all(completed.get(p, False) for p in REQUIRED_PARTS)
+
+    if all_required:
+        faculty.questionnaire_status = "eligible"
+    elif any_saved:
+        faculty.questionnaire_status = "in_progress"
+    else:
+        faculty.questionnaire_status = "not_started"
+
+
 def build_faculty_record(faculty_id: int, faculty_obj: Faculty, db: Session) -> dict[str, Any]:
     """
     Assembles a complete faculty record dict from all saved questionnaire parts.
     Used to feed the recommendation model.
     """
     record: dict[str, Any] = {}
-
     for part_num in range(1, TOTAL_PARTS + 1):
         data = _get_part_data(faculty_id, part_num, db)
         if data:
             record.update(data)
-
     return record
 
 
@@ -204,6 +228,7 @@ def get_questionnaire_progress(
     """
     Get the faculty's questionnaire completion progress for all 8 parts.
     Shows which parts are complete, saved, or not started.
+    Also returns current questionnaire_status from Faculty record.
     """
     faculty = _get_faculty_or_403(current_user, db)
     all_parts = db.query(QuestionnairePart).filter(
@@ -233,6 +258,11 @@ def get_questionnaire_progress(
 
     return {
         "faculty_id": faculty.id,
+        "questionnaire_status": faculty.questionnaire_status,
+        "last_recommendation_at": (
+            faculty.last_recommendation_at.isoformat()
+            if faculty.last_recommendation_at else None
+        ),
         "eligible_for_recommendation": is_eligible_for_recommendation(faculty.id, db),
         "required_parts_completed": f"{completed_required}/{len(REQUIRED_PARTS)}",
         "total_parts_completed": f"{completed_total}/{TOTAL_PARTS}",
@@ -241,7 +271,7 @@ def get_questionnaire_progress(
 
 
 @router.get("/parts/{part_number}")
-def get_part_data(
+def get_part_data_endpoint(
     part_number: int,
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
@@ -284,8 +314,9 @@ def submit_part(
     """
     Save or update data for a questionnaire part.
     - Part N cannot be saved until Part N-1 is marked complete (except Part 1).
-    - Validates the submitted data against the part's schema.
+    - Validates submitted data against the part's schema.
     - Marks the part as complete upon successful validation.
+    - Updates faculty.questionnaire_status automatically.
     """
     if part_number < 1 or part_number > TOTAL_PARTS:
         raise HTTPException(status_code=400, detail=f"Part number must be between 1 and {TOTAL_PARTS}.")
@@ -293,7 +324,7 @@ def submit_part(
     faculty = _get_faculty_or_403(current_user, db)
     completed_map = _get_completed_parts(faculty.id, db)
 
-    # Enforce sequential progression: previous part must be complete (except Part 1)
+    # Sequential progression: previous part must be complete (except Part 1)
     if part_number > 1:
         prev_complete = completed_map.get(part_number - 1, False)
         if not prev_complete:
@@ -313,7 +344,7 @@ def submit_part(
             detail=f"Validation error in Part {part_number}: {str(e)}",
         )
 
-    # Save or update the part record
+    # Save or update the QuestionnairePart record
     part = db.query(QuestionnairePart).filter(
         QuestionnairePart.faculty_id == faculty.id,
         QuestionnairePart.part_number == part_number,
@@ -331,13 +362,22 @@ def submit_part(
         part.data_json = json.dumps(validated_data)
         part.is_complete = True
 
+    db.flush()  # flush so _get_completed_parts sees the new record
+
+    # Update the faculty's questionnaire_status based on current completion
+    update_faculty_questionnaire_status(faculty, db)
+
     db.commit()
 
     log_audit(
         db, current_user, "submit_questionnaire_part",
         entity_type="questionnaire_part",
         entity_id=f"{faculty.id}:part{part_number}",
-        new_values={"part": part_number, "label": PART_LABELS[part_number]},
+        new_values={
+            "part": part_number,
+            "label": PART_LABELS[part_number],
+            "questionnaire_status": faculty.questionnaire_status,
+        },
         ip_address=request.client.host if request.client else None,
     )
 
@@ -346,7 +386,8 @@ def submit_part(
         "message": f"Part {part_number} ({PART_LABELS[part_number]}) saved successfully.",
         "part_number": part_number,
         "is_complete": True,
-        "eligible_for_recommendation": is_eligible_for_recommendation(faculty.id, db),
+        "questionnaire_status": faculty.questionnaire_status,
+        "eligible_for_recommendation": faculty.questionnaire_status in ("eligible", "has_recommendation"),
     }
 
 
@@ -366,6 +407,12 @@ def check_recommendation_eligibility(
 
     return {
         "eligible": len(missing) == 0,
+        "questionnaire_status": faculty.questionnaire_status,
+        "has_existing_recommendation": faculty.questionnaire_status == "has_recommendation",
+        "last_recommendation_at": (
+            faculty.last_recommendation_at.isoformat()
+            if faculty.last_recommendation_at else None
+        ),
         "missing_required_parts": missing,
         "message": (
             "You are eligible to request a training recommendation."

@@ -103,6 +103,16 @@ class Faculty(Base):
     highest_degree: Mapped[str | None] = mapped_column(String(100), nullable=True)
     specialization: Mapped[str | None] = mapped_column(String(200), nullable=True)
     status: Mapped[str] = mapped_column(String(20), nullable=False, default="active")
+    # Questionnaire lifecycle status:
+    #   not_started     — no parts submitted yet
+    #   in_progress     — at least one part saved but required parts incomplete
+    #   eligible        — all required parts (1,2,3,5,6) complete, no recommendation yet
+    #   has_recommendation — recommendation has been generated and stored
+    questionnaire_status: Mapped[str] = mapped_column(
+        String(30), nullable=False, default="not_started", index=True
+    )
+    last_recommendation_json: Mapped[str | None] = mapped_column(Text, nullable=True)
+    last_recommendation_at: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
     created_at: Mapped[datetime] = mapped_column(DateTime, server_default=func.now())
     updated_at: Mapped[datetime] = mapped_column(DateTime, server_default=func.now(), onupdate=func.now())
 
