@@ -1,0 +1,63 @@
+{
+  "department": "BSED",
+  "faculty": [
+    {
+      "department": "BSED",
+      "age": 35,
+      "sex": "Female",
+      "employment_status": "Permanent",
+      "academic_rank": "Assistant Professor",
+      "highest_educational_attainment": "Master's Degree",
+      "field_of_specialization": "English",
+      "years_teaching": "5-10 years",
+      "administrative_designation": "None",
+      "trainings_last_3_years": "1-2",
+      "training_areas": [
+        "Instruction",
+        "Research"
+      ],
+      "competency": {
+        "research_competency": {
+          "proficiency": 2,
+          "importance": 5
+        },
+        "computer_literacy_digital_technologies": {
+          "proficiency": 3,
+          "importance": 5
+        },
+        "outcomes_based_education": {
+          "proficiency": 2,
+          "importance": 5
+        }
+      },
+      "emerging_training_needs": {
+        "artificial_intelligence": 3,
+        "machine_learning": 3,
+        "data_analytics": 3,
+        "cybersecurity": 3,
+        "cloud_computing": 3,
+        "learning_management_systems": 3,
+        "educational_technology": 5,
+        "statistical_software": 3,
+        "research_methods": 5
+      },
+      "preferred_learning_modality": [
+        "Webinar",
+        "Blended Learning"
+      ],
+      "preferred_schedule": [
+        "Saturdays"
+      ],
+      "preferred_duration": [
+        "Two days"
+      ],
+      "barriers": {
+        "heavy_teaching_workload": 4,
+        "time_constraints": 4,
+        "lack_of_budget": 3,
+        "internet_connectivity": 2
+      },
+      "top_five_training_priorities": []
+    }
+  ]
+}

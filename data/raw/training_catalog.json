@@ -1,0 +1,436 @@
+[
+  {
+    "training_id": "TRN-001",
+    "title": "Generative AI for Higher Education",
+    "description": "Introduction to practical generative AI tools and responsible use in teaching, research, and academic work.",
+    "categories": [
+      "Artificial Intelligence",
+      "Educational Technology"
+    ],
+    "target_competencies": [
+      "Computer Literacy and Digital Technologies",
+      "Effective Teaching and Classroom Management"
+    ],
+    "modalities": [
+      "Webinar",
+      "Blended Learning"
+    ],
+    "durations": [
+      "One day",
+      "Two days"
+    ],
+    "schedules": [
+      "Saturdays",
+      "Semester Break"
+    ],
+    "status": "active"
+  },
+  {
+    "training_id": "TRN-002",
+    "title": "Machine Learning Fundamentals for Academic Research",
+    "description": "Hands-on introduction to practical machine learning concepts, algorithms, and applications in research.",
+    "categories": [
+      "Machine Learning",
+      "Research Methods",
+      "Data Analytics"
+    ],
+    "target_competencies": [
+      "Research and Publication Writing",
+      "Computer Literacy and Digital Technologies"
+    ],
+    "modalities": [
+      "Blended Learning",
+      "Self-Paced Online Course"
+    ],
+    "durations": [
+      "Three days",
+      "One week"
+    ],
+    "schedules": [
+      "Semester Break",
+      "Summer"
+    ],
+    "status": "active"
+  },
+  {
+    "training_id": "TRN-003",
+    "title": "Data Analytics and Visualization using R and Python",
+    "description": "Learn to analyze, clean, and visualize academic and institutional datasets effectively.",
+    "categories": [
+      "Data Analytics",
+      "Statistical Software"
+    ],
+    "target_competencies": [
+      "Research and Publication Writing",
+      "Computer Literacy and Digital Technologies"
+    ],
+    "modalities": [
+      "Webinar",
+      "Face-to-Face Seminar"
+    ],
+    "durations": [
+      "Two days",
+      "Three days"
+    ],
+    "schedules": [
+      "Fridays",
+      "Saturdays"
+    ],
+    "status": "active"
+  },
+  {
+    "training_id": "TRN-004",
+    "title": "Cybersecurity and Data Privacy for Educators",
+    "description": "Best practices for protecting academic data, managing online credentials, and student privacy compliance.",
+    "categories": [
+      "Cybersecurity"
+    ],
+    "target_competencies": [
+      "Computer Literacy and Digital Technologies"
+    ],
+    "modalities": [
+      "Webinar",
+      "Self-Paced Online Course"
+    ],
+    "durations": [
+      "Half-day",
+      "One day"
+    ],
+    "schedules": [
+      "Anytime",
+      "Fridays"
+    ],
+    "status": "active"
+  },
+  {
+    "training_id": "TRN-005",
+    "title": "Cloud Computing Infrastructure for Academic Projects",
+    "description": "Utilizing cloud platforms for hosting research tools, course materials, and collaborative databases.",
+    "categories": [
+      "Cloud Computing"
+    ],
+    "target_competencies": [
+      "Computer Literacy and Digital Technologies"
+    ],
+    "modalities": [
+      "Blended Learning",
+      "Webinar"
+    ],
+    "durations": [
+      "Two days"
+    ],
+    "schedules": [
+      "Saturdays",
+      "Semester Break"
+    ],
+    "status": "active"
+  },
+  {
+    "training_id": "TRN-006",
+    "title": "Mastering Learning Management Systems (LMS) for Course Delivery",
+    "description": "Advanced instructional design and course management using institutional LMS platforms.",
+    "categories": [
+      "Learning Management Systems",
+      "Educational Technology"
+    ],
+    "target_competencies": [
+      "Effective Teaching and Classroom Management",
+      "Innovative Instructional Material Development"
+    ],
+    "modalities": [
+      "Blended Learning",
+      "Face-to-Face Seminar"
+    ],
+    "durations": [
+      "One day",
+      "Two days"
+    ],
+    "schedules": [
+      "Fridays",
+      "Semester Break"
+    ],
+    "status": "active"
+  },
+  {
+    "training_id": "TRN-007",
+    "title": "Digital Tools for Modern Teaching and Blended Learning",
+    "description": "Integrating modern interactive tools, multimedia, and digital assessments into higher education teaching.",
+    "categories": [
+      "Educational Technology"
+    ],
+    "target_competencies": [
+      "Effective Teaching and Classroom Management",
+      "Innovative Instructional Material Development"
+    ],
+    "modalities": [
+      "Webinar",
+      "Blended Learning"
+    ],
+    "durations": [
+      "One day",
+      "Two days"
+    ],
+    "schedules": [
+      "Fridays",
+      "Saturdays"
+    ],
+    "status": "active"
+  },
+  {
+    "training_id": "TRN-008",
+    "title": "Statistical Data Analysis with SPSS and Jamovi",
+    "description": "Practical application of statistical tests, regression analysis, and data interpretation for faculty studies.",
+    "categories": [
+      "Statistical Software",
+      "Research Methods"
+    ],
+    "target_competencies": [
+      "Research and Publication Writing"
+    ],
+    "modalities": [
+      "Face-to-Face Seminar",
+      "Blended Learning"
+    ],
+    "durations": [
+      "Two days",
+      "Three days"
+    ],
+    "schedules": [
+      "Semester Break",
+      "Summer"
+    ],
+    "status": "active"
+  },
+  {
+    "training_id": "TRN-009",
+    "title": "Advanced Research Methods and Journal Publication Strategies",
+    "description": "Quantitative and qualitative research designs, manuscript writing, and navigating peer review.",
+    "categories": [
+      "Research Methods"
+    ],
+    "target_competencies": [
+      "Research and Publication Writing",
+      "Critical Thinking and Problem Solving"
+    ],
+    "modalities": [
+      "Face-to-Face Seminar",
+      "Mentoring"
+    ],
+    "durations": [
+      "Three days",
+      "One week"
+    ],
+    "schedules": [
+      "Semester Break",
+      "Summer"
+    ],
+    "status": "active"
+  },
+  {
+    "training_id": "TRN-010",
+    "title": "Outcomes-Based Education (OBE) Curriculum Design and Assessment",
+    "description": "Constructive alignment, syllabus development, learning outcomes assessment, and continuous quality improvement.",
+    "categories": [
+      "Outcomes-Based Education",
+      "Instruction"
+    ],
+    "target_competencies": [
+      "Outcomes-Based Education",
+      "Effective Teaching and Classroom Management"
+    ],
+    "modalities": [
+      "Face-to-Face Seminar",
+      "Blended Learning"
+    ],
+    "durations": [
+      "Two days",
+      "Three days"
+    ],
+    "schedules": [
+      "Semester Break"
+    ],
+    "status": "active"
+  },
+  {
+    "training_id": "TRN-011",
+    "title": "Institutional Quality Assurance Management and Accreditation",
+    "description": "Preparing self-survey instruments, program accreditation documentation, and quality management systems.",
+    "categories": [
+      "Quality Assurance Management",
+      "Quality Assurance"
+    ],
+    "target_competencies": [
+      "Quality Assurance Management"
+    ],
+    "modalities": [
+      "Face-to-Face Seminar",
+      "Benchmarking"
+    ],
+    "durations": [
+      "Two days",
+      "Three days"
+    ],
+    "schedules": [
+      "Semester Break"
+    ],
+    "status": "active"
+  },
+  {
+    "training_id": "TRN-012",
+    "title": "Academic Leadership and Strategic Management for Higher Ed",
+    "description": "Leadership strategies, department management, team motivation, and resource allocation for academic heads.",
+    "categories": [
+      "Leadership and Strategic Management",
+      "Leadership"
+    ],
+    "target_competencies": [
+      "Leadership and Strategic Management"
+    ],
+    "modalities": [
+      "Face-to-Face Seminar",
+      "Coaching"
+    ],
+    "durations": [
+      "Two days",
+      "Three days"
+    ],
+    "schedules": [
+      "Semester Break",
+      "Summer"
+    ],
+    "status": "active"
+  },
+  {
+    "training_id": "TRN-013",
+    "title": "Technology Transfer, IP Commercialization, and Extension",
+    "description": "Patenting research outputs, community extension project management, and commercialization pathways.",
+    "categories": [
+      "Technology Transfer and Innovation",
+      "Extension"
+    ],
+    "target_competencies": [
+      "Technology Transfer and Innovation"
+    ],
+    "modalities": [
+      "Face-to-Face Seminar",
+      "Project Immersion"
+    ],
+    "durations": [
+      "Two days",
+      "Three days"
+    ],
+    "schedules": [
+      "Summer"
+    ],
+    "status": "active"
+  },
+  {
+    "training_id": "TRN-014",
+    "title": "Legacy Slide Design Workshop (Archived)",
+    "description": "Old slide design training course kept for historical records.",
+    "categories": [
+      "Educational Technology"
+    ],
+    "target_competencies": [
+      "Innovative Instructional Material Development"
+    ],
+    "modalities": [
+      "Face-to-Face Seminar"
+    ],
+    "durations": [
+      "Half-day"
+    ],
+    "schedules": [
+      "Fridays"
+    ],
+    "status": "inactive"
+  },
+  {
+    "training_id": "TRN-015",
+    "title": "AI Tools for Academic Writing and Literature Review",
+    "description": "Practical session on utilizing generative AI tools for academic literature synthesis.",
+    "categories": [
+      "Artificial Intelligence",
+      "Research Methods"
+    ],
+    "target_competencies": [
+      "Research and Publication Writing"
+    ],
+    "modalities": [
+      "Webinar"
+    ],
+    "durations": [
+      "One day"
+    ],
+    "schedules": [
+      "Saturdays"
+    ],
+    "status": "active"
+  },
+  {
+    "training_id": "TRN-016",
+    "title": "AI Tools for Academic Writing and Literature Review",
+    "description": "Practical session on utilizing generative AI tools for academic literature synthesis.",
+    "categories": [
+      "Artificial Intelligence",
+      "Research Methods"
+    ],
+    "target_competencies": [
+      "Research and Publication Writing"
+    ],
+    "modalities": [
+      "Webinar"
+    ],
+    "durations": [
+      "One day"
+    ],
+    "schedules": [
+      "Saturdays"
+    ],
+    "status": "active"
+  },
+  {
+    "training_id": "TRN-017",
+    "title": "AI Tools for Academic Writing and Literature Review",
+    "description": "Practical session on utilizing generative AI tools for academic literature synthesis.",
+    "categories": [
+      "Artificial Intelligence",
+      "Research Methods"
+    ],
+    "target_competencies": [
+      "Research and Publication Writing"
+    ],
+    "modalities": [
+      "Webinar"
+    ],
+    "durations": [
+      "One day"
+    ],
+    "schedules": [
+      "Saturdays"
+    ],
+    "status": "active"
+  },
+  {
+    "training_id": "TRN-018",
+    "title": "AI Tools for Academic Writing and Literature Review",
+    "description": "Practical session on utilizing generative AI tools for academic literature synthesis.",
+    "categories": [
+      "Artificial Intelligence",
+      "Research Methods"
+    ],
+    "target_competencies": [
+      "Research and Publication Writing"
+    ],
+    "modalities": [
+      "Webinar"
+    ],
+    "durations": [
+      "One day"
+    ],
+    "schedules": [
+      "Saturdays"
+    ],
+    "status": "active"
+  }
+]

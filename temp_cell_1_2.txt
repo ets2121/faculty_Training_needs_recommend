@@ -1,0 +1,375 @@
+=== Code Cell 2 ===
+# === Install pinned libraries (must match backend requirements.txt) ===
+# CRITICAL: scikit-learn version MUST match the backend exactly.
+# Mismatched versions cause AttributeError when loading exported models.
+import sys
+
+# Pinned to match production backend requirements.txt
+PINNED = [
+    "scikit-learn==1.7.1",  # Must match backend scikit-learn version exactly
+    "joblib==1.5.1",        # Must match backend joblib version exactly
+    "pandas",
+    "numpy",
+    "matplotlib",
+    "seaborn",
+]
+
+try:
+    import google.colab
+    IN_COLAB = True
+    print("Running on Google Colab")
+except ImportError:
+    IN_COLAB = False
+    print("Running locally (not Colab)")
+
+if IN_COLAB:
+    import subprocess
+    print("Installing pinned versions: scikit-learn==1.7.1, joblib==1.5.1...")
+    subprocess.run([sys.executable, "-m", "pip", "install", "-q"] + PINNED, check=True)
+    print("Pinned install complete. Versions match backend.")
+
+    # Verify installation
+    import sklearn
+    if sklearn.__version__ != "1.7.1":
+        print("\n" + "="*60)
+        print("🚨 CRITICAL: scikit-learn version is still ", sklearn.__version__)
+        print("You must RESTART THE RUNTIME for the new version to take effect.")
+        print("Click: Runtime -> Restart Session, then Run All again.")
+        print("="*60 + "\n")
+        import os
+        os.kill(os.getpid(), 9) # Force restart
+
+
+=== Code Cell 4 ===
+# ─── Dataset Loading ──────────────────────────────────────────────────────────
+DATASET_FILENAME = "faculty_training.csv"
+
+df = None
+
+if IN_COLAB:
+    from google.colab import files
+    print("📁 Please upload your 'faculty_training.csv' dataset file:")
+    uploaded = files.upload()
+    csv_files = [f for f in uploaded.keys() if f.endswith(".csv")]
+    if csv_files:
+        df = pd.read_csv(csv_files[0])
+        print(f"\n✅ Dataset loaded: '{csv_files[0]}'")
+    else:
+        raise FileNotFoundError("No CSV file uploaded.")
+else:
+    # Local fallback search paths
+    search_paths = [
+        Path(DATASET_FILENAME),
+        Path("../data/raw") / DATASET_FILENAME,
+        Path("data/raw") / DATASET_FILENAME,
+    ]
+    for p in search_paths:
+        if p.exists():
+            df = pd.read_csv(p)
+            print(f"✅ Dataset loaded from: {p}")
+            break
+
+if df is None:
+    raise FileNotFoundError(
+        f"Could not find '{DATASET_FILENAME}'. "
+        "Upload it above (Colab) or place it in the notebook directory (local)."
+    )
+
+print(f"\n📊 Dataset Shape: {df.shape[0]} records × {df.shape[1]} columns")
+print(f"\n🔍 Columns Preview:")
+print([c for c in df.columns[:15]], "...")
+
+=== Code Cell 6 ===
+# ─── Validate required target columns exist ───────────────────────────────────
+TARGETS = [f"priority_{i}" for i in range(1, 6)]
+MISSING_TARGETS = [t for t in TARGETS if t not in df.columns]
+
+if MISSING_TARGETS:
+    raise ValueError(
+        f"❌ Required target columns missing: {MISSING_TARGETS}\n"
+        f"Expected columns: {TARGETS}"
+    )
+
+print("✅ All required target columns found.\n")
+
+# Missing values summary
+missing = df.isnull().sum()
+missing_pct = (missing / len(df) * 100).round(1)
+missing_report = pd.DataFrame({"missing_count": missing, "missing_%": missing_pct})
+high_missing = missing_report[missing_report["missing_%"] > 10]
+
+if len(high_missing) > 0:
+    print("⚠️  Columns with >10% missing values:")
+    print(high_missing.to_string())
+else:
+    print("✅ No columns with >10% missing values.")
+
+# Target label distribution
+print("\n\n📈 Label Frequency Distribution (Top Five Priority Training Topics):")
+all_labels = []
+for col in TARGETS:
+    all_labels.extend(df[col].dropna().astype(str).str.strip().tolist())
+label_series = pd.Series(all_labels)
+label_counts = label_series.value_counts()
+
+fig, ax = plt.subplots(figsize=(12, 5))
+label_counts.plot(kind="barh", ax=ax, color=sns.color_palette("muted", len(label_counts)))
+ax.set_title("Training Topic Label Frequency", fontsize=14, fontweight="bold")
+ax.set_xlabel("Count")
+ax.invert_yaxis()
+plt.tight_layout()
+plt.show()
+
+print(label_counts.to_string())
+
+=== Code Cell 8 ===
+# ─── Feature Engineering ─────────────────────────────────────────────────────
+# Drop targets + non-feature IDs
+EXCLUDE_COLS = TARGETS + ["faculty_id"]
+X_raw = df.drop(columns=EXCLUDE_COLS, errors="ignore")
+
+# Build multi-label targets
+labels = [
+    sorted(set(
+        str(x).strip() for x in row
+        if pd.notna(x) and str(x).strip() not in ("", "nan")
+    ))
+    for row in df[TARGETS].values.tolist()
+]
+
+all_topics = sorted(set(x for row in labels for x in row))
+
+mlb = MultiLabelBinarizer(classes=all_topics)
+y = mlb.fit_transform(labels)
+
+# Split categorical vs numeric columns
+cat_cols = X_raw.select_dtypes(include=["object"]).columns.tolist()
+num_cols = [c for c in X_raw.columns if c not in cat_cols]
+
+print(f"🎯 Training Categories ({len(all_topics)}):")
+for i, t in enumerate(all_topics, 1):
+    print(f"   {i:02d}. {t}")
+
+print(f"\n📐 Feature Matrix:")
+print(f"   Total feature columns : {X_raw.shape[1]}")
+print(f"   Categorical features  : {len(cat_cols)}")
+print(f"   Numeric features      : {len(num_cols)}")
+print(f"   Multi-label classes   : {y.shape[1]}")
+print(f"   Total records         : {X_raw.shape[0]}")
+
+# Validate minimum data requirement
+if len(df) < 50:
+    raise ValueError("❌ At least 50 records are required to train a reliable model.")
+print("\n✅ Feature engineering complete.")
+
+=== Code Cell 10 ===
+# ─── Pipeline Architecture (identical to backend trainer.py) ─────────────────
+#
+# ColumnTransformer
+#   ├── StandardScaler  → numeric features
+#   └── OneHotEncoder   → categorical features
+#         ↓
+# OneVsRestClassifier
+#   └── RandomForestClassifier(n_estimators=400, balanced_subsample, random_state=42)
+
+preprocessor = ColumnTransformer([
+    ("num", StandardScaler(), num_cols),
+    ("cat", OneHotEncoder(handle_unknown="ignore"), cat_cols),
+])
+
+classifier = OneVsRestClassifier(
+    RandomForestClassifier(
+        n_estimators=400,
+        min_samples_leaf=2,
+        class_weight="balanced_subsample",
+        random_state=42,
+        n_jobs=-1,
+    )
+)
+
+pipeline = Pipeline([
+    ("preprocessor", preprocessor),
+    ("classifier", classifier),
+])
+
+# ─── Train / Test split ───────────────────────────────────────────────────────
+X_train, X_test, y_train, y_test = train_test_split(
+    X_raw, y, test_size=0.2, random_state=42
+)
+
+print(f"📂 Split: {len(X_train)} train / {len(X_test)} test records")
+print("⏳ Training model — this may take 1-3 minutes on Colab CPU...")
+
+pipeline.fit(X_train, y_train)
+
+print("\n✅ Model training complete.")
+
+=== Code Cell 12 ===
+# ─── Overall Metrics ─────────────────────────────────────────────────────────
+y_pred = pipeline.predict(X_test)
+
+metrics = {
+    "micro_f1":        round(float(f1_score(y_test, y_pred, average="micro", zero_division=0)), 4),
+    "macro_f1":        round(float(f1_score(y_test, y_pred, average="macro", zero_division=0)), 4),
+    "micro_precision": round(float(precision_score(y_test, y_pred, average="micro", zero_division=0)), 4),
+    "micro_recall":    round(float(recall_score(y_test, y_pred, average="micro", zero_division=0)), 4),
+    "training_records": int(len(X_train)),
+    "test_records":    int(len(X_test)),
+}
+
+print("=" * 50)
+print("   MODEL EVALUATION METRICS")
+print("=" * 50)
+print(f"   Micro F1 Score  :  {metrics['micro_f1']:.4f}")
+print(f"   Macro F1 Score  :  {metrics['macro_f1']:.4f}")
+print(f"   Precision       :  {metrics['micro_precision']:.4f}")
+print(f"   Recall          :  {metrics['micro_recall']:.4f}")
+print(f"   Train Records   :  {metrics['training_records']}")
+print(f"   Test Records    :  {metrics['test_records']}")
+print("=" * 50)
+
+=== Code Cell 13 ===
+# ─── Per-Class F1 Scores ─────────────────────────────────────────────────────
+per_class_f1 = f1_score(y_test, y_pred, average=None, zero_division=0)
+per_class_precision = precision_score(y_test, y_pred, average=None, zero_division=0)
+per_class_recall = recall_score(y_test, y_pred, average=None, zero_division=0)
+
+class_report = pd.DataFrame({
+    "Category": all_topics,
+    "F1 Score": per_class_f1.round(4),
+    "Precision": per_class_precision.round(4),
+    "Recall": per_class_recall.round(4),
+}).sort_values("F1 Score", ascending=False).reset_index(drop=True)
+
+print("\n📋 Per-Category Performance:")
+print(class_report.to_string(index=False))
+
+# Plot
+fig, ax = plt.subplots(figsize=(12, 6))
+x = np.arange(len(class_report))
+width = 0.28
+ax.bar(x - width, class_report["F1 Score"], width, label="F1 Score")
+ax.bar(x, class_report["Precision"], width, label="Precision")
+ax.bar(x + width, class_report["Recall"], width, label="Recall")
+ax.set_xticks(x)
+ax.set_xticklabels(class_report["Category"], rotation=45, ha="right", fontsize=9)
+ax.set_title("Per-Category F1 / Precision / Recall", fontsize=14, fontweight="bold")
+ax.set_ylim(0, 1.05)
+ax.legend()
+plt.tight_layout()
+plt.show()
+
+=== Code Cell 14 ===
+# ─── Transparent Prediction Demonstrator ─────────────────────────────────────
+# Mimics the backend's predict_transparent() output exactly
+
+def predict_transparent(record_df, top_k=5):
+    """Returns transparent category predictions matching the backend API format."""
+    probs = pipeline.predict_proba(record_df)
+    classes = list(mlb.classes_)
+    results = []
+    for row_probs in probs:
+        ranked = np.argsort(row_probs)[::-1]
+        top_preds = [
+            {
+                "training_category": classes[idx],
+                "probability": round(float(row_probs[idx]), 4),
+                "rank": rank
+            }
+            for rank, idx in enumerate(ranked[:top_k], 1)
+        ]
+        all_preds = [
+            {"training_category": classes[idx], "probability": round(float(row_probs[idx]), 4)}
+            for idx in ranked
+        ]
+        results.append({"top_predictions": top_preds, "all_predictions": all_preds})
+    return results
+
+sample = X_test.iloc[[0]]
+demo = predict_transparent(sample)[0]
+
+print("🔍 Sample Transparent Prediction Output (matches backend API format):")
+print()
+print(json.dumps(demo["top_predictions"], indent=2))
+
+=== Code Cell 16 ===
+# ─── Export Artifacts ─────────────────────────────────────────────────────────
+timestamp = datetime.now(timezone.utc).strftime("%Y%m%d%H%M%S")
+version = timestamp  # e.g. 20260811161409
+
+export_dir = Path("exported_model")
+export_dir.mkdir(exist_ok=True)
+
+model_filename    = f"training_recommender_v{version}.joblib"
+labels_filename   = f"labels_v{version}.joblib"
+metadata_filename = f"metadata_v{version}.json"
+
+model_path    = export_dir / model_filename
+labels_path   = export_dir / labels_filename
+metadata_path = export_dir / metadata_filename
+active_path   = export_dir / "active.json"
+
+# Save pipeline and MultiLabelBinarizer
+joblib.dump(pipeline, model_path)
+joblib.dump(mlb, labels_path)
+
+# Save metadata
+meta_dict = {
+    "version": version,
+    "artifact": f"models/{model_filename}",
+    "labels": f"models/{labels_filename}",
+    "metrics": metrics,
+    "topics": all_topics,
+}
+metadata_path.write_text(json.dumps(meta_dict, indent=2))
+
+# Save active.json pointer (backend uses this to identify the current model)
+active_dict = {
+    "version": version,
+    "artifact": f"models/{model_filename}",
+    "labels": f"models/{labels_filename}",
+    "metadata": f"models/{metadata_filename}",
+}
+active_path.write_text(json.dumps(active_dict, indent=2))
+
+# ─── Package into ZIP ─────────────────────────────────────────────────────────
+zip_filename = f"qsu_model_v{version}.zip"
+with zipfile.ZipFile(zip_filename, "w") as zf:
+    for f in export_dir.glob("*"):
+        zf.write(f, arcname=f.name)
+        print(f"   📄 Added: {f.name}  ({f.stat().st_size / 1024:.1f} KB)")
+
+print(f"\n✅ Export complete! → {zip_filename}")
+print(f"   Model version: {version}")
+print(f"   Topics ({len(all_topics)}): {all_topics}")
+
+=== Code Cell 17 ===
+# ─── Download (Colab) or Print Path (local) ───────────────────────────────────
+if IN_COLAB:
+    from google.colab import files
+    print(f"⬇️  Downloading '{zip_filename}' to your computer...")
+    files.download(zip_filename)
+else:
+    print(f"💾 Model saved locally at: {Path(zip_filename).resolve()}")
+    print(f"   Extract the zip contents and copy all files into your backend ./models/ directory.")
+
+=== Code Cell 20 ===
+# ─── Optional: Hyperparameter Customization ───────────────────────────────────
+#
+# Modify these values, then re-run Cells 5–7 to retrain and re-export.
+#
+# These match the default production backend values.
+
+CONFIG = {
+    "n_estimators":      400,    # Number of trees (higher = more accurate, slower)
+    "min_samples_leaf":  2,      # Min samples per leaf (higher = less overfitting)
+    "class_weight":      "balanced_subsample",  # Handles class imbalance
+    "test_size":         0.20,   # Fraction of data held out for testing
+    "random_state":      42,     # For reproducibility
+    "top_k_predictions": 5,      # How many top predictions to include in API output
+}
+
+print("🔧 Current Training Configuration:")
+for k, v in CONFIG.items():
+    print(f"   {k:25s}: {v}")
+

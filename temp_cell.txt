@@ -1,0 +1,51 @@
+=== Code Cell 16 ===
+# ─── Export Artifacts ─────────────────────────────────────────────────────────
+timestamp = datetime.now(timezone.utc).strftime("%Y%m%d%H%M%S")
+version = timestamp  # e.g. 20260811161409
+
+export_dir = Path("exported_model")
+export_dir.mkdir(exist_ok=True)
+
+model_filename    = f"training_recommender_v{version}.joblib"
+labels_filename   = f"labels_v{version}.joblib"
+metadata_filename = f"metadata_v{version}.json"
+
+model_path    = export_dir / model_filename
+labels_path   = export_dir / labels_filename
+metadata_path = export_dir / metadata_filename
+active_path   = export_dir / "active.json"
+
+# Save pipeline and MultiLabelBinarizer
+joblib.dump(pipeline, model_path)
+joblib.dump(mlb, labels_path)
+
+# Save metadata
+meta_dict = {
+    "version": version,
+    "artifact": str(model_path),
+    "labels": str(labels_path),
+    "metrics": metrics,
+    "topics": all_topics,
+}
+metadata_path.write_text(json.dumps(meta_dict, indent=2))
+
+# Save active.json pointer (backend uses this to identify the current model)
+active_dict = {
+    "version": version,
+    "artifact": str(model_path),
+    "labels": str(labels_path),
+    "metadata": str(metadata_path),
+}
+active_path.write_text(json.dumps(active_dict, indent=2))
+
+# ─── Package into ZIP ─────────────────────────────────────────────────────────
+zip_filename = f"qsu_model_v{version}.zip"
+with zipfile.ZipFile(zip_filename, "w") as zf:
+    for f in export_dir.glob("*"):
+        zf.write(f, arcname=f.name)
+        print(f"   📄 Added: {f.name}  ({f.stat().st_size / 1024:.1f} KB)")
+
+print(f"\n✅ Export complete! → {zip_filename}")
+print(f"   Model version: {version}")
+print(f"   Topics ({len(all_topics)}): {all_topics}")
+

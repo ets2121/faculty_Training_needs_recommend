@@ -1,0 +1,38 @@
+=== Code Cell 4 ===
+# ─── Dataset Loading ──────────────────────────────────────────────────────────
+DATASET_FILENAME = "faculty_training.csv"
+
+df = None
+
+if IN_COLAB:
+    from google.colab import files
+    print("📁 Please upload your 'faculty_training.csv' dataset file:")
+    uploaded = files.upload()
+    csv_files = [f for f in uploaded.keys() if f.endswith(".csv")]
+    if csv_files:
+        df = pd.read_csv(csv_files[0])
+        print(f"\n✅ Dataset loaded: '{csv_files[0]}'")
+    else:
+        raise FileNotFoundError("No CSV file uploaded.")
+else:
+    # Local fallback search paths
+    search_paths = [
+        Path(DATASET_FILENAME),
+        Path("../data/raw") / DATASET_FILENAME,
+        Path("data/raw") / DATASET_FILENAME,
+    ]
+    for p in search_paths:
+        if p.exists():
+            df = pd.read_csv(p)
+            print(f"✅ Dataset loaded from: {p}")
+            break
+
+if df is None:
+    raise FileNotFoundError(
+        f"Could not find '{DATASET_FILENAME}'. "
+        "Upload it above (Colab) or place it in the notebook directory (local)."
+    )
+
+print(f"\n📊 Dataset Shape: {df.shape[0]} records × {df.shape[1]} columns")
+print(f"\n🔍 Columns Preview:")
+print([c for c in df.columns[:15]], "...")

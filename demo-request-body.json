@@ -1,0 +1,128 @@
+{
+  "faculty": {
+    "faculty_id": "TEST-BSED-001",
+    "department": "BSED",
+    "age": 35,
+    "sex": "Female",
+    "employment_status": "Permanent",
+    "academic_rank": "Assistant Professor",
+    "highest_educational_attainment": "Master's Degree",
+    "field_of_specialization": "English",
+    "years_teaching": "5-10 years",
+    "administrative_designation": "None",
+    "trainings_last_3_years": "1-2",
+    "training_areas": [
+      "Instruction",
+      "Research"
+    ],
+    "competency": {
+      "delivering_service_excellence": {
+        "proficiency": 4,
+        "importance": 5
+      },
+      "interpersonal_relationship": {
+        "proficiency": 4,
+        "importance": 5
+      },
+      "professionalism": {
+        "proficiency": 5,
+        "importance": 5
+      },
+      "achievement_orientation": {
+        "proficiency": 3,
+        "importance": 5
+      },
+      "consultancy_advising": {
+        "proficiency": 3,
+        "importance": 4
+      },
+      "critical_thinking_problem_solving": {
+        "proficiency": 3,
+        "importance": 5
+      },
+      "effective_teaching_classroom_management": {
+        "proficiency": 3,
+        "importance": 5
+      },
+      "innovative_instructional_material_development": {
+        "proficiency": 2,
+        "importance": 5
+      },
+      "computer_literacy_digital_technologies": {
+        "proficiency": 3,
+        "importance": 5
+      },
+      "research_competency": {
+        "proficiency": 2,
+        "importance": 5
+      },
+      "publication_writing": {
+        "proficiency": 2,
+        "importance": 4
+      },
+      "quality_assurance_management": {
+        "proficiency": 3,
+        "importance": 4
+      },
+      "technology_transfer_innovation": {
+        "proficiency": 2,
+        "importance": 3
+      },
+      "outcomes_based_education": {
+        "proficiency": 2,
+        "importance": 5
+      },
+      "strategic_thinking": {
+        "proficiency": 3,
+        "importance": 4
+      },
+      "leading_change": {
+        "proficiency": 3,
+        "importance": 4
+      },
+      "building_collaborative_relationships": {
+        "proficiency": 4,
+        "importance": 5
+      },
+      "coaching_mentoring": {
+        "proficiency": 3,
+        "importance": 4
+      },
+      "managing_performance": {
+        "proficiency": 3,
+        "importance": 4
+      }
+    },
+    "emerging_training_needs": {
+      "artificial_intelligence": 5,
+      "machine_learning": 3,
+      "data_analytics": 4,
+      "cybersecurity": 2,
+      "cloud_computing": 2,
+      "learning_management_systems": 5,
+      "educational_technology": 5,
+      "statistical_software": 4,
+      "research_methods": 5
+    },
+    "preferred_learning_modality": [
+      "Webinar",
+      "Blended Learning"
+    ],
+    "preferred_schedule": [
+      "Saturdays"
+    ],
+    "preferred_duration": [
+      "Two days"
+    ],
+    "barriers": {
+      "heavy_teaching_workload": 4,
+      "administrative_responsibilities": 2,
+      "lack_of_budget": 3,
+      "time_constraints": 4,
+      "travel_distance": 2,
+      "family_responsibilities": 2,
+      "internet_connectivity": 2
+    },
+    "top_five_training_priorities": []
+  }
+}
