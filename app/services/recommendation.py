@@ -1,7 +1,11 @@
+import json
 from collections import defaultdict
 from typing import Any
+from sqlalchemy.orm import Session
+
 from app.ml.predictor import ModelService
 from app.services.catalog import get_catalog_service, CatalogService
+from app.db.models import RecommendationHistory, TrainingResponse
 
 
 def match_catalog_items(
@@ -108,15 +112,16 @@ def match_catalog_items(
     return matches[:top_k]
 
 
-def individual(model: ModelService, record: dict) -> dict[str, Any]:
+def individual(model: ModelService, record: dict, db: Session | None = None) -> dict[str, Any]:
     """
     Generates transparent individual recommendation response adhering to
     QSU_Training_Catalog_and_Transparent_API.md format.
+    Records history in MySQL if db session is provided.
     """
     prediction_details = model.predict_transparent([record])[0]
     recommendations = match_catalog_items(prediction_details, record)
 
-    return {
+    response_payload = {
         "status": "success",
         "model": {
             "status": "ready",
@@ -126,11 +131,27 @@ def individual(model: ModelService, record: dict) -> dict[str, Any]:
         "recommendations": recommendations,
     }
 
+    if db is not None:
+        try:
+            hist = RecommendationHistory(
+                recommendation_type="individual",
+                model_version=model.version or "active",
+                request_payload_json=json.dumps(record),
+                response_json=json.dumps(response_payload),
+            )
+            db.add(hist)
+            db.commit()
+        except Exception as e:
+            print(f"Warning recording recommendation history: {e}")
 
-def department(model: ModelService, records: list[dict]) -> dict[str, Any]:
+    return response_payload
+
+
+def department(model: ModelService, records: list[dict], dept_name: str = "BSED", db: Session | None = None) -> dict[str, Any]:
     """
     Generates transparent department recommendation response.
     Aggregates faculty predictions and matches department catalog recommendations.
+    Records history in MySQL if db session is provided.
     """
     transparent_preds = model.predict_transparent(records)
     n = len(records)
@@ -162,7 +183,6 @@ def department(model: ModelService, records: list[dict]) -> dict[str, Any]:
         for rank, cat in enumerate(ranked_categories[:5], 1)
     ]
 
-    # Department level catalog recommendations
     dept_prediction_mock = {
         "all_predictions": [
             {"training_category": cat["training_category"], "probability": cat["department_score"]}
@@ -171,8 +191,9 @@ def department(model: ModelService, records: list[dict]) -> dict[str, Any]:
     }
     catalog_recs = match_catalog_items(dept_prediction_mock, record={}, top_k=5)
 
-    return {
+    response_payload = {
         "status": "success",
+        "department": dept_name,
         "model": {
             "status": "ready",
             "version": model.version or "active",
@@ -183,3 +204,18 @@ def department(model: ModelService, records: list[dict]) -> dict[str, Any]:
         },
         "recommendations": catalog_recs,
     }
+
+    if db is not None:
+        try:
+            hist = RecommendationHistory(
+                recommendation_type="department",
+                model_version=model.version or "active",
+                request_payload_json=json.dumps({"department": dept_name, "count": n}),
+                response_json=json.dumps(response_payload),
+            )
+            db.add(hist)
+            db.commit()
+        except Exception as e:
+            print(f"Warning recording department recommendation history: {e}")
+
+    return response_payload

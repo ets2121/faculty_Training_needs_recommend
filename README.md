@@ -51,13 +51,21 @@ Prediction       Recommendation
 
 - FastAPI: REST API
 - Pydantic: request/response validation
-- SQLAlchemy + PostgreSQL: application data
+- SQLAlchemy + **MySQL** (via PyMySQL): application data (RBAC, catalog, audit logs)
 - Alembic: database migrations
+- PyJWT + bcrypt: JWT authentication and password hashing
 - pandas/numpy: data processing
 - scikit-learn: preprocessing + Random Forest multi-label model
 - joblib: model artifacts
 - pytest/httpx: testing
-- Docker Compose: API + PostgreSQL
+
+## Documentation
+
+| Document | Description |
+|---|---|
+| [docs/API_REFERENCE.md](docs/API_REFERENCE.md) | **Full API reference + Postman testing guide** |
+| [docs/THESIS_METHODOLOGY.md](docs/THESIS_METHODOLOGY.md) | Academic methodology narrative |
+| [Database Schema & Access-Control Implementation Instructions.md](Database%20Schema%20%26%20Access-Control%20Implementation%20Instructions.md) | RBAC schema specification |
 
 ## Setup
 
@@ -79,19 +87,26 @@ For PowerShell use:
 Copy-Item .env.example .env
 ```
 
-### Database
+### Database (MySQL via XAMPP)
 
-Development can use SQLite through `DATABASE_URL`.
-
-For production, use PostgreSQL:
-```env
-DATABASE_URL=postgresql+psycopg://qsu:strong-password@localhost:5432/qsu_recommender
+1. Start XAMPP → ensure **MySQL** is running.
+2. Create the database:
+```powershell
+.venv\Scripts\python scripts/create_mysql_db.py
 ```
-
-Initialize/migrate:
-```bash
-alembic upgrade head
+3. Create all tables and seed roles, departments, admin user, and training catalog:
+```powershell
+.venv\Scripts\python scripts/seed_db.py
 ```
+4. Start the API:
+```powershell
+.venv\Scripts\uvicorn app.main:app --reload
+```
+5. Open Swagger UI at: **http://127.0.0.1:8000/docs**
+
+**Default admin account:** `admin` / `admin123`
+
+> See [docs/API_REFERENCE.md](docs/API_REFERENCE.md) for the full Postman testing guide.
 
 ## Dataset
 

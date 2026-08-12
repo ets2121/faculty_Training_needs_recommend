@@ -1,24 +1,207 @@
 from datetime import datetime
-from sqlalchemy import DateTime, Integer, String, Text, func
-from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
+from sqlalchemy import (
+    Boolean, DateTime, ForeignKey, Integer, String, Text, func,
+    UniqueConstraint, Index,
+)
+from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, relationship
+
 
 class Base(DeclarativeBase):
     pass
 
+
+# ─── Roles & Permissions ─────────────────────────────────────────────────────
+
+class Role(Base):
+    __tablename__ = "roles"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    name: Mapped[str] = mapped_column(String(50), unique=True, nullable=False)
+    description: Mapped[str | None] = mapped_column(String(255), nullable=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime, server_default=func.now())
+    updated_at: Mapped[datetime] = mapped_column(DateTime, server_default=func.now(), onupdate=func.now())
+
+    # Relationships
+    users: Mapped[list["User"]] = relationship("User", back_populates="role")
+    permissions: Mapped[list["RolePermission"]] = relationship("RolePermission", back_populates="role", cascade="all, delete-orphan")
+
+
+class Permission(Base):
+    __tablename__ = "permissions"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    code: Mapped[str] = mapped_column(String(100), unique=True, nullable=False)
+    description: Mapped[str | None] = mapped_column(String(255), nullable=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime, server_default=func.now())
+
+    roles: Mapped[list["RolePermission"]] = relationship("RolePermission", back_populates="permission", cascade="all, delete-orphan")
+
+
+class RolePermission(Base):
+    __tablename__ = "role_permissions"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    role_id: Mapped[int] = mapped_column(Integer, ForeignKey("roles.id", ondelete="CASCADE"), nullable=False)
+    permission_id: Mapped[int] = mapped_column(Integer, ForeignKey("permissions.id", ondelete="CASCADE"), nullable=False)
+
+    __table_args__ = (
+        UniqueConstraint("role_id", "permission_id", name="uq_role_permission"),
+    )
+
+    role: Mapped["Role"] = relationship("Role", back_populates="permissions")
+    permission: Mapped["Permission"] = relationship("Permission", back_populates="roles")
+
+
+# ─── Department ───────────────────────────────────────────────────────────────
+
+class Department(Base):
+    __tablename__ = "departments"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    code: Mapped[str] = mapped_column(String(20), unique=True, nullable=False)
+    name: Mapped[str] = mapped_column(String(200), nullable=False)
+    description: Mapped[str | None] = mapped_column(String(500), nullable=True)
+    status: Mapped[str] = mapped_column(String(20), nullable=False, default="active")
+    created_at: Mapped[datetime] = mapped_column(DateTime, server_default=func.now())
+    updated_at: Mapped[datetime] = mapped_column(DateTime, server_default=func.now(), onupdate=func.now())
+
+    faculty_members: Mapped[list["Faculty"]] = relationship("Faculty", back_populates="department")
+    department_admins: Mapped[list["DepartmentAdmin"]] = relationship("DepartmentAdmin", back_populates="department")
+
+
+# ─── User (Unified Auth) ─────────────────────────────────────────────────────
+
+class User(Base):
+    __tablename__ = "users"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    username: Mapped[str] = mapped_column(String(100), unique=True, nullable=False, index=True)
+    email: Mapped[str | None] = mapped_column(String(255), unique=True, nullable=True, index=True)
+    hashed_password: Mapped[str] = mapped_column(String(255), nullable=False)
+    full_name: Mapped[str | None] = mapped_column(String(200), nullable=True)
+    role_id: Mapped[int] = mapped_column(Integer, ForeignKey("roles.id"), nullable=False, index=True)
+    status: Mapped[str] = mapped_column(String(20), nullable=False, default="active")
+    last_login_at: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime, server_default=func.now())
+    updated_at: Mapped[datetime] = mapped_column(DateTime, server_default=func.now(), onupdate=func.now())
+
+    role: Mapped["Role"] = relationship("Role", back_populates="users")
+    faculty_profile: Mapped["Faculty | None"] = relationship("Faculty", back_populates="user", uselist=False)
+    department_admin_profile: Mapped["DepartmentAdmin | None"] = relationship("DepartmentAdmin", back_populates="user", uselist=False)
+
+
+# ─── Faculty ──────────────────────────────────────────────────────────────────
+
+class Faculty(Base):
+    __tablename__ = "faculty"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    user_id: Mapped[int] = mapped_column(Integer, ForeignKey("users.id", ondelete="CASCADE"), unique=True, nullable=False, index=True)
+    department_id: Mapped[int] = mapped_column(Integer, ForeignKey("departments.id"), nullable=False, index=True)
+    faculty_code: Mapped[str | None] = mapped_column(String(50), unique=True, nullable=True)
+    academic_rank: Mapped[str | None] = mapped_column(String(100), nullable=True)
+    highest_degree: Mapped[str | None] = mapped_column(String(100), nullable=True)
+    specialization: Mapped[str | None] = mapped_column(String(200), nullable=True)
+    status: Mapped[str] = mapped_column(String(20), nullable=False, default="active")
+    created_at: Mapped[datetime] = mapped_column(DateTime, server_default=func.now())
+    updated_at: Mapped[datetime] = mapped_column(DateTime, server_default=func.now(), onupdate=func.now())
+
+    user: Mapped["User"] = relationship("User", back_populates="faculty_profile")
+    department: Mapped["Department"] = relationship("Department", back_populates="faculty_members")
+    training_responses: Mapped[list["TrainingResponse"]] = relationship("TrainingResponse", back_populates="faculty")
+
+
+# ─── Department Admin ─────────────────────────────────────────────────────────
+
+class DepartmentAdmin(Base):
+    __tablename__ = "department_admins"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    user_id: Mapped[int] = mapped_column(Integer, ForeignKey("users.id", ondelete="CASCADE"), unique=True, nullable=False, index=True)
+    department_id: Mapped[int] = mapped_column(Integer, ForeignKey("departments.id"), nullable=False, index=True)
+    status: Mapped[str] = mapped_column(String(20), nullable=False, default="active")
+    created_at: Mapped[datetime] = mapped_column(DateTime, server_default=func.now())
+    updated_at: Mapped[datetime] = mapped_column(DateTime, server_default=func.now(), onupdate=func.now())
+
+    user: Mapped["User"] = relationship("User", back_populates="department_admin_profile")
+    department: Mapped["Department"] = relationship("Department", back_populates="department_admins")
+
+
+# ─── Training Catalog ─────────────────────────────────────────────────────────
+
+class TrainingCatalog(Base):
+    __tablename__ = "training_catalog"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    training_id: Mapped[str] = mapped_column(String(20), unique=True, nullable=False, index=True)
+    title: Mapped[str] = mapped_column(String(300), nullable=False)
+    description: Mapped[str | None] = mapped_column(Text, nullable=True)
+    categories_json: Mapped[str | None] = mapped_column(Text, nullable=True)
+    target_competencies_json: Mapped[str | None] = mapped_column(Text, nullable=True)
+    modalities_json: Mapped[str | None] = mapped_column(Text, nullable=True)
+    durations_json: Mapped[str | None] = mapped_column(Text, nullable=True)
+    schedules_json: Mapped[str | None] = mapped_column(Text, nullable=True)
+    status: Mapped[str] = mapped_column(String(20), nullable=False, default="active")
+    created_at: Mapped[datetime] = mapped_column(DateTime, server_default=func.now())
+    updated_at: Mapped[datetime] = mapped_column(DateTime, server_default=func.now(), onupdate=func.now())
+
+
+# ─── Training Response (Survey Submission) ────────────────────────────────────
+
 class TrainingResponse(Base):
     __tablename__ = "training_responses"
 
-    id: Mapped[int] = mapped_column(Integer, primary_key=True)
-    faculty_id: Mapped[str | None] = mapped_column(String(100), nullable=True, index=True)
-    department: Mapped[str] = mapped_column(String(100), index=True)
-    payload_json: Mapped[str] = mapped_column(Text)
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    faculty_id: Mapped[int | None] = mapped_column(Integer, ForeignKey("faculty.id"), nullable=True, index=True)
+    department_id: Mapped[int | None] = mapped_column(Integer, ForeignKey("departments.id"), nullable=True, index=True)
+    submitted_by_user_id: Mapped[int | None] = mapped_column(Integer, ForeignKey("users.id"), nullable=True, index=True)
+    payload_json: Mapped[str] = mapped_column(Text, nullable=False)
     created_at: Mapped[datetime] = mapped_column(DateTime, server_default=func.now())
+
+    faculty: Mapped["Faculty | None"] = relationship("Faculty", back_populates="training_responses")
+
+
+# ─── Recommendation History ───────────────────────────────────────────────────
+
+class RecommendationHistory(Base):
+    __tablename__ = "recommendation_history"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    faculty_id: Mapped[int | None] = mapped_column(Integer, ForeignKey("faculty.id"), nullable=True, index=True)
+    department_id: Mapped[int | None] = mapped_column(Integer, ForeignKey("departments.id"), nullable=True, index=True)
+    recommendation_type: Mapped[str] = mapped_column(String(30), nullable=False)  # "individual" or "department"
+    model_version: Mapped[str | None] = mapped_column(String(100), nullable=True)
+    request_payload_json: Mapped[str | None] = mapped_column(Text, nullable=True)
+    response_json: Mapped[str | None] = mapped_column(Text, nullable=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime, server_default=func.now())
+
+
+# ─── Model Registry ──────────────────────────────────────────────────────────
 
 class ModelRegistry(Base):
     __tablename__ = "model_registry"
 
-    id: Mapped[int] = mapped_column(Integer, primary_key=True)
-    version: Mapped[str] = mapped_column(String(100), unique=True)
-    artifact_path: Mapped[str] = mapped_column(String(500))
-    metrics_json: Mapped[str] = mapped_column(Text)
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    version: Mapped[str] = mapped_column(String(100), unique=True, nullable=False)
+    artifact_path: Mapped[str] = mapped_column(String(500), nullable=False)
+    metrics_json: Mapped[str | None] = mapped_column(Text, nullable=True)
+    is_active: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
     created_at: Mapped[datetime] = mapped_column(DateTime, server_default=func.now())
+
+
+# ─── Audit Log ────────────────────────────────────────────────────────────────
+
+class AuditLog(Base):
+    __tablename__ = "audit_logs"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    user_id: Mapped[int | None] = mapped_column(Integer, ForeignKey("users.id"), nullable=True, index=True)
+    username: Mapped[str | None] = mapped_column(String(100), nullable=True)
+    role_name: Mapped[str | None] = mapped_column(String(50), nullable=True)
+    action: Mapped[str] = mapped_column(String(50), nullable=False, index=True)
+    entity_type: Mapped[str | None] = mapped_column(String(50), nullable=True, index=True)
+    entity_id: Mapped[str | None] = mapped_column(String(50), nullable=True)
+    old_values_json: Mapped[str | None] = mapped_column(Text, nullable=True)
+    new_values_json: Mapped[str | None] = mapped_column(Text, nullable=True)
+    ip_address: Mapped[str | None] = mapped_column(String(45), nullable=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime, server_default=func.now(), index=True)

@@ -1,21 +1,22 @@
 import json
 from pathlib import Path
 from typing import Any
-import pandas as pd
+from sqlalchemy.orm import Session
+
 from app.core.config import get_settings
+from app.db.models import TrainingCatalog
+from app.db.session import SessionLocal
 
 
 class CatalogService:
     """
     Catalog Service handles loading, managing, and querying available training programs.
-    The catalog is maintained separately from the ML model, allowing programs to be added,
-    activated, or updated without retraining the model as long as categories match existing features.
+    Supports MySQL database persistence (TrainingCatalog table) with JSON file fallback.
     """
 
     def __init__(self, catalog_path: str | Path | None = None):
         settings = get_settings()
         if catalog_path is None:
-            # Check for JSON catalog first, fallback to CSV path from settings
             json_path = Path("./data/raw/training_catalog.json")
             if json_path.exists():
                 self.catalog_path = json_path
@@ -28,70 +29,126 @@ class CatalogService:
         self.reload()
 
     def reload(self) -> None:
-        """Reload catalog items from file."""
-        if not self.catalog_path.exists():
-            self.items = []
+        """Reload catalog items from database, falling back to JSON file if empty/unavailable."""
+        db_items = self._load_from_db()
+        if db_items:
+            self.items = db_items
             return
 
-        if self.catalog_path.suffix == ".json":
-            with open(self.catalog_path, "r", encoding="utf-8") as f:
-                self.items = json.load(f)
-        elif self.catalog_path.suffix == ".csv":
-            df = pd.read_csv(self.catalog_path).fillna("")
-            records = df.to_dict(orient="records")
+        # Fallback to JSON file
+        if self.catalog_path.exists() and self.catalog_path.suffix == ".json":
+            try:
+                with open(self.catalog_path, "r", encoding="utf-8") as f:
+                    self.items = json.load(f)
+            except Exception:
+                self.items = []
+        else:
             self.items = []
-            for r in records:
-                categories = [c.strip() for c in str(r.get("category", "")).split(",") if c.strip()]
-                self.items.append({
-                    "training_id": str(r.get("training_id", "")),
-                    "title": str(r.get("topic", r.get("title", ""))),
-                    "description": str(r.get("description", "")),
-                    "categories": categories,
-                    "target_competencies": [],
-                    "modalities": [],
-                    "durations": [],
-                    "schedules": [],
-                    "status": str(r.get("status", "active")),
-                })
+
+    def _load_from_db(self) -> list[dict[str, Any]]:
+        """Try loading items from MySQL TrainingCatalog table."""
+        try:
+            db: Session = SessionLocal()
+            try:
+                records = db.query(TrainingCatalog).all()
+                if not records:
+                    return []
+                results = []
+                for r in records:
+                    results.append({
+                        "training_id": r.training_id,
+                        "title": r.title,
+                        "description": r.description or "",
+                        "categories": json.loads(r.categories_json) if r.categories_json else [],
+                        "target_competencies": json.loads(r.target_competencies_json) if r.target_competencies_json else [],
+                        "modalities": json.loads(r.modalities_json) if r.modalities_json else [],
+                        "durations": json.loads(r.durations_json) if r.durations_json else [],
+                        "schedules": json.loads(r.schedules_json) if r.schedules_json else [],
+                        "status": r.status,
+                    })
+                return results
+            finally:
+                db.close()
+        except Exception:
+            return []
 
     def get_all_items(self, include_inactive: bool = False) -> list[dict[str, Any]]:
         """Get all catalog items, optionally including inactive programs."""
+        self.reload()  # Always read fresh state
         if include_inactive:
             return self.items
         return [item for item in self.items if item.get("status", "active") == "active"]
 
     def get_item_by_id(self, training_id: str) -> dict[str, Any] | None:
-        for item in self.items:
+        for item in self.get_all_items(include_inactive=True):
             if item.get("training_id") == training_id:
                 return item
         return None
 
     def add_item(self, item_data: dict[str, Any]) -> dict[str, Any]:
         """
-        Add a new catalog item. If category matches existing categories,
-        no retraining is required.
+        Add or update a catalog item in MySQL DB and JSON backup file.
         """
         training_id = item_data.get("training_id")
         if not training_id:
-            training_id = f"TRN-{len(self.items) + 1:03d}"
+            all_items = self.get_all_items(include_inactive=True)
+            training_id = f"TRN-{len(all_items) + 1:03d}"
 
-        categories = item_data.get("categories")
+        categories = item_data.get("categories", [])
         if isinstance(categories, str):
             categories = [c.strip() for c in categories.split(",") if c.strip()]
+
+        target_competencies = item_data.get("target_competencies", [])
+        modalities = item_data.get("modalities", [])
+        durations = item_data.get("durations", [])
+        schedules = item_data.get("schedules", [])
 
         new_item = {
             "training_id": training_id,
             "title": item_data.get("title", ""),
             "description": item_data.get("description", ""),
             "categories": categories or [item_data.get("category", "")],
-            "target_competencies": item_data.get("target_competencies", []),
-            "modalities": item_data.get("modalities", []),
-            "durations": item_data.get("durations", []),
-            "schedules": item_data.get("schedules", []),
+            "target_competencies": target_competencies,
+            "modalities": modalities,
+            "durations": durations,
+            "schedules": schedules,
             "status": item_data.get("status", "active"),
         }
 
-        # Replace existing or append
+        # 1. Save to MySQL DB
+        try:
+            db: Session = SessionLocal()
+            try:
+                existing = db.query(TrainingCatalog).filter(TrainingCatalog.training_id == training_id).first()
+                if existing:
+                    existing.title = new_item["title"]
+                    existing.description = new_item["description"]
+                    existing.categories_json = json.dumps(new_item["categories"])
+                    existing.target_competencies_json = json.dumps(new_item["target_competencies"])
+                    existing.modalities_json = json.dumps(new_item["modalities"])
+                    existing.durations_json = json.dumps(new_item["durations"])
+                    existing.schedules_json = json.dumps(new_item["schedules"])
+                    existing.status = new_item["status"]
+                else:
+                    db.add(TrainingCatalog(
+                        training_id=training_id,
+                        title=new_item["title"],
+                        description=new_item["description"],
+                        categories_json=json.dumps(new_item["categories"]),
+                        target_competencies_json=json.dumps(new_item["target_competencies"]),
+                        modalities_json=json.dumps(new_item["modalities"]),
+                        durations_json=json.dumps(new_item["durations"]),
+                        schedules_json=json.dumps(new_item["schedules"]),
+                        status=new_item["status"],
+                    ))
+                db.commit()
+            finally:
+                db.close()
+        except Exception as e:
+            print(f"Warning saving item to DB: {e}")
+
+        # 2. Update JSON file backup
+        self.reload()
         existing_index = None
         for idx, item in enumerate(self.items):
             if item.get("training_id") == training_id:
@@ -107,10 +164,13 @@ class CatalogService:
         return new_item
 
     def save(self) -> None:
-        """Save catalog items back to file."""
+        """Save catalog items back to JSON file backup."""
         if self.catalog_path.suffix == ".json":
-            with open(self.catalog_path, "w", encoding="utf-8") as f:
-                json.dump(self.items, f, indent=2)
+            try:
+                with open(self.catalog_path, "w", encoding="utf-8") as f:
+                    json.dump(self.items, f, indent=2)
+            except Exception:
+                pass
 
 
 _catalog_service_instance: CatalogService | None = None
