@@ -109,6 +109,8 @@ class Faculty(Base):
     user: Mapped["User"] = relationship("User", back_populates="faculty_profile")
     department: Mapped["Department"] = relationship("Department", back_populates="faculty_members")
     training_responses: Mapped[list["TrainingResponse"]] = relationship("TrainingResponse", back_populates="faculty")
+    questionnaire_parts: Mapped[list["QuestionnairePart"]] = relationship("QuestionnairePart", back_populates="faculty", cascade="all, delete-orphan")
+    recommendation_requests: Mapped[list["TrainingRecommendationRequest"]] = relationship("TrainingRecommendationRequest", back_populates="faculty", cascade="all, delete-orphan")
 
 
 # ─── Department Admin ─────────────────────────────────────────────────────────
@@ -205,3 +207,46 @@ class AuditLog(Base):
     new_values_json: Mapped[str | None] = mapped_column(Text, nullable=True)
     ip_address: Mapped[str | None] = mapped_column(String(45), nullable=True)
     created_at: Mapped[datetime] = mapped_column(DateTime, server_default=func.now(), index=True)
+
+
+# ─── Questionnaire Parts ──────────────────────────────────────────────────────
+
+class QuestionnairePart(Base):
+    """
+    Stores each faculty member's per-part questionnaire data and completion status.
+    Parts 1–8 correspond to the questionnaire sections.
+    Required for recommendation: Parts 1, 2, 3, 5, 6.
+    """
+    __tablename__ = "questionnaire_parts"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    faculty_id: Mapped[int] = mapped_column(Integer, ForeignKey("faculty.id", ondelete="CASCADE"), nullable=False, index=True)
+    part_number: Mapped[int] = mapped_column(Integer, nullable=False)  # 1 through 8
+    is_complete: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
+    data_json: Mapped[str | None] = mapped_column(Text, nullable=True)  # validated JSON for this part
+    created_at: Mapped[datetime] = mapped_column(DateTime, server_default=func.now())
+    updated_at: Mapped[datetime] = mapped_column(DateTime, server_default=func.now(), onupdate=func.now())
+
+    __table_args__ = (
+        UniqueConstraint("faculty_id", "part_number", name="uq_faculty_part"),
+    )
+
+    faculty: Mapped["Faculty"] = relationship("Faculty", back_populates="questionnaire_parts")
+
+
+# ─── Training Recommendation Requests ─────────────────────────────────────────
+
+class TrainingRecommendationRequest(Base):
+    """Records each recommendation request made by or for a faculty member."""
+    __tablename__ = "training_recommendation_requests"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    faculty_id: Mapped[int] = mapped_column(Integer, ForeignKey("faculty.id", ondelete="CASCADE"), nullable=False, index=True)
+    requested_by_user_id: Mapped[int | None] = mapped_column(Integer, ForeignKey("users.id"), nullable=True, index=True)
+    recommendation_type: Mapped[str] = mapped_column(String(20), nullable=False, default="individual")
+    model_version: Mapped[str | None] = mapped_column(String(100), nullable=True)
+    recommendation_json: Mapped[str | None] = mapped_column(Text, nullable=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime, server_default=func.now(), index=True)
+
+    faculty: Mapped["Faculty"] = relationship("Faculty", back_populates="recommendation_requests")
+

@@ -5,7 +5,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from app.core.config import get_settings
 from app.db.init_db import init_db
 from app.ml.predictor import ModelService
-from app.api import auth, catalog, health, predictions, training, users, audit
+from app.api import auth, catalog, health, predictions, training, users, audit, questionnaire, profile
 
 settings = get_settings()
 
@@ -19,23 +19,35 @@ async def lifespan(app: FastAPI):
 
 app = FastAPI(
     title=settings.app_name,
-    version="1.0.0",
-    description="Production-oriented faculty training needs recommendation API with MySQL & RBAC.",
+    version="2.0.0",
+    description=(
+        "QSU Faculty Training Needs Recommender System — "
+        "Production API with MySQL, RBAC, multi-part questionnaire, "
+        "and Next.js-ready REST interface."
+    ),
     lifespan=lifespan,
+    # Enable JSON response schema generation for Next.js type generation
+    generate_unique_id_function=lambda route: f"{route.tags[0]}-{route.name}" if route.tags else route.name,
 )
 
 app.add_middleware(
     CORSMiddleware,
     allow_origins=settings.cors_origin_list,
     allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
+    allow_methods=["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
+    allow_headers=["Authorization", "Content-Type", "X-Admin-API-Key", "Accept"],
+    expose_headers=["X-Total-Count", "X-Page", "X-Per-Page"],
 )
 
-app.include_router(health.router, prefix=settings.api_v1_prefix)
-app.include_router(auth.router, prefix=settings.api_v1_prefix)
-app.include_router(users.router, prefix=settings.api_v1_prefix)
-app.include_router(predictions.router, prefix=settings.api_v1_prefix)
-app.include_router(training.router, prefix=settings.api_v1_prefix)
-app.include_router(catalog.router, prefix=settings.api_v1_prefix)
-app.include_router(audit.router, prefix=settings.api_v1_prefix)
+# ─── Routes ───────────────────────────────────────────────────────────────────
+pfx = settings.api_v1_prefix
+
+app.include_router(health.router, prefix=pfx)
+app.include_router(auth.router, prefix=pfx)
+app.include_router(profile.router, prefix=pfx)
+app.include_router(questionnaire.router, prefix=pfx)
+app.include_router(users.router, prefix=pfx)
+app.include_router(predictions.router, prefix=pfx)
+app.include_router(training.router, prefix=pfx)
+app.include_router(catalog.router, prefix=pfx)
+app.include_router(audit.router, prefix=pfx)
