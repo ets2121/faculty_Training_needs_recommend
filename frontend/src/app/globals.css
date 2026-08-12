@@ -2,6 +2,12 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Ensure full-height layout works — html and body fill the viewport */
+html,
+body {
+  height: 100%;
+}
+
 @layer base {
   :root {
     --bg-main: #f1f5f9;

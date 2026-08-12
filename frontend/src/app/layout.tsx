@@ -17,26 +17,34 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en" className="dark">
-      <body className="min-h-screen flex flex-col antialiased selection:bg-emerald-500 selection:text-white bg-slate-950 text-slate-100 dark:bg-slate-950 dark:text-slate-100">
+    <html lang="en" className="dark h-full">
+      {/*
+        h-screen + overflow-hidden on body means the PAGE itself never scrolls.
+        Only the <main> region below will have overflow-y-auto and scroll.
+      */}
+      <body className="h-full overflow-hidden bg-slate-950 text-slate-100 antialiased selection:bg-emerald-500 selection:text-white">
         <ToastProvider>
           <AuthProvider>
             <ThemeProvider>
-              <div className="flex flex-col min-h-screen">
-                {/* Fixed top navbar */}
+              {/* Full-height column: Navbar on top, then sidebar+main row fills the rest */}
+              <div className="flex flex-col h-full">
+
+                {/* ── Navbar: fixed height, never scrolls ── */}
                 <Navbar />
 
-                {/* Below navbar: sidebar is fixed, main scrolls */}
-                <div className="flex flex-1 pt-0">
-                  {/* Sidebar renders its own fixed/mobile positioning */}
+                {/* ── Below navbar: sidebar + main, both constrained to remaining height ── */}
+                <div className="flex flex-1 overflow-hidden">
+
+                  {/* Sidebar is a normal flex child — it won't scroll with the page */}
                   <Sidebar />
 
-                  {/* Main content: offset by sidebar width on desktop */}
-                  <main className="flex-1 md:ml-56 min-h-[calc(100vh-4rem)] p-4 sm:p-6 lg:p-8">
+                  {/* Main content: THIS is the only scrollable region */}
+                  <main className="flex-1 overflow-y-auto p-4 sm:p-6 lg:p-8">
                     <div className="max-w-6xl mx-auto">
                       {children}
                     </div>
                   </main>
+
                 </div>
               </div>
             </ThemeProvider>
