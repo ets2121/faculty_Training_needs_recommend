@@ -164,6 +164,23 @@ system_admin
 | `department_admin` | `faculty` only | Only within their own department |
 | `faculty` | Nothing | Cannot call `/auth/register` |
 
+---
+
+### Seeded Test Accounts (Ready for Next.js Testing)
+
+The database seed script (`.venv\Scripts\python scripts/seed_db.py`) pre-configures all necessary user accounts, departments, questionnaire forms, and stored recommendations across all status levels:
+
+| Username | Password | Role | Department | `questionnaire_status` | Ideal Next.js Testing Use Case |
+|---|---|---|---|---|---|
+| `admin` | `admin123` | `system_admin` | *All* | — | Admin panel dashboard, user management, audit logs, model training |
+| `dept_bsit` | `dept123` | `department_admin` | `BSIT` | — | BSIT Dept Admin dashboard, department recommendations, faculty monitoring |
+| `dept_bsed` | `dept123` | `department_admin` | `BSED` | — | BSED Dept Admin dashboard, cross-department comparison |
+| `prof_santos` | `faculty123` | `faculty` | `BSIT` | `has_recommendation` | Faculty Dashboard with **active recommendation result** & completed questionnaire |
+| `prof_reyes` | `faculty123` | `faculty` | `BSIT` | `eligible` | Faculty Dashboard ready to click **"Request Recommendation"** |
+| `prof_cruz` | `faculty123` | `faculty` | `BSIT` | `in_progress` | Faculty Dashboard testing **Part 3 resume flow** (Parts 1 & 2 done) |
+| `prof_garcia` | `faculty123` | `faculty` | `BSIT` | `not_started` | Faculty Dashboard testing **fresh onboarding & Part 1 start** |
+| `prof_torres` | `faculty123` | `faculty` | `BSED` | `eligible` | BSED Faculty Dashboard testing |
+
 **Default Admin Account** (created by seed script):
 - Username: `admin`
 - Password: `admin123`
