@@ -13,11 +13,54 @@ import {
   Sparkles,
   RefreshCw,
   BookOpen,
-  CheckCircle2,
-  AlertCircle,
-  BarChart3,
+  Target,
+  Info,
+  Check,
 } from 'lucide-react';
 import { formatPercent } from '@/lib/utils';
+
+// ─── Mini SVG Donut Chart ────────────────────────────────────────────────────
+function DonutChart({ probability, color = '#10b981' }: { probability: number; color?: string }) {
+  const r = 20;
+  const circ = 2 * Math.PI * r;
+  const filled = probability * circ;
+  const gap = circ - filled;
+
+  return (
+    <svg width="52" height="52" viewBox="0 0 52 52" className="shrink-0">
+      <circle cx="26" cy="26" r={r} fill="none" stroke="#1e293b" strokeWidth="7" />
+      <circle
+        cx="26"
+        cy="26"
+        r={r}
+        fill="none"
+        stroke={color}
+        strokeWidth="7"
+        strokeDasharray={`${filled} ${gap}`}
+        strokeLinecap="round"
+        transform="rotate(-90 26 26)"
+        style={{ transition: 'stroke-dasharray 0.6s ease' }}
+      />
+      <text
+        x="26"
+        y="30"
+        textAnchor="middle"
+        fontSize="9"
+        fontWeight="700"
+        fontFamily="monospace"
+        fill={color}
+      >
+        {Math.round(probability * 100)}%
+      </text>
+    </svg>
+  );
+}
+
+function rankColor(rank: number): string {
+  if (rank === 1) return '#10b981'; // emerald
+  if (rank === 2) return '#f59e0b'; // gold
+  return '#64748b';                 // slate
+}
 
 export default function DeptDashboardPage() {
   const [users, setUsers] = useState<UserListItem[]>([]);
@@ -108,73 +151,152 @@ export default function DeptDashboardPage() {
 
       {/* 2. Department Aggregated Recommendation Results (if generated) */}
       {deptResult && (
-        <div className="space-y-6">
-          <div className="bg-slate-900/60 dark:bg-slate-900/80 border border-gold-500/30 rounded-3xl p-6 sm:p-8 shadow-2xl backdrop-blur-md space-y-6">
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-800 pb-4">
+        <div className="space-y-8">
+          {/* Header Banner */}
+          <div className="relative overflow-hidden rounded-2xl bg-gradient-to-r from-emerald-950 via-slate-900 to-slate-900 p-5 border border-emerald-500/30 shadow-2xl">
+            <div className="absolute top-0 right-0 p-6 opacity-5 pointer-events-none">
+              <Sparkles className="w-40 h-40 text-emerald-400" />
+            </div>
+            <div className="relative z-10 flex items-center gap-3">
+              <div className="w-10 h-10 rounded-xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center shrink-0">
+                <Sparkles className="w-5 h-5 text-emerald-400" />
+              </div>
               <div>
-                <span className="text-xs font-mono font-bold text-emerald-400 bg-emerald-500/10 px-2.5 py-0.5 rounded border border-emerald-500/20">
-                  {deptResult.department} Department Priorities
-                </span>
-                <h2 className="text-xl font-extrabold text-white mt-1">Aggregated Priority Training Categories</h2>
-              </div>
-
-              <div className="flex items-center gap-3 text-xs font-mono text-slate-300">
-                <span className="bg-slate-950 px-3 py-1.5 rounded-xl border border-slate-800">
-                  Total Faculty: <strong className="text-white">{deptResult.total_faculty_in_dept}</strong>
-                </span>
-                <span className="bg-emerald-950/60 text-emerald-300 px-3 py-1.5 rounded-xl border border-emerald-500/30">
-                  Eligible Analyzed: <strong className="text-emerald-400">{deptResult.eligible_faculty_count}</strong>
-                </span>
-              </div>
-            </div>
-
-            {/* Top Categories Grid */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              {deptResult.prediction?.top_categories?.map((cat) => (
-                <div key={cat.training_category} className="p-4 rounded-2xl border border-slate-800 bg-slate-950/80 space-y-2">
-                  <div className="flex items-center justify-between gap-2">
-                    <span className="text-xs font-mono font-bold text-gold-400 bg-gold-500/10 px-2 py-0.5 rounded border border-gold-500/20">
-                      Priority #{cat.rank}
-                    </span>
-                    <span className="text-xs font-bold text-emerald-400 font-mono">
-                      {formatPercent(cat.department_score)} Score
-                    </span>
-                  </div>
-                  <h4 className="font-bold text-slate-100 text-sm">{cat.training_category}</h4>
-                  <p className="text-[11px] text-slate-400">
-                    Faculty Coverage: <strong className="text-slate-200 font-mono">{formatPercent(cat.faculty_coverage)}</strong>
-                  </p>
+                <div className="flex items-center gap-2 mb-0.5">
+                  <span className="text-xs font-mono font-bold text-emerald-400">Department Recommendation Output</span>
+                  <span className="text-[10px] font-mono text-slate-500">v{deptResult.model?.version}</span>
                 </div>
-              ))}
+                <h2 className="text-base font-extrabold text-white tracking-tight">
+                  Aggregated Training Priorities — {deptResult.department} Department
+                </h2>
+              </div>
+            </div>
+          </div>
+
+          {/* Section 1: Model Predictions (compact, secondary) */}
+          <div className="space-y-3">
+            <div className="flex items-start gap-3 px-1">
+              <Target className="w-4 h-4 text-slate-400 mt-0.5 shrink-0" />
+              <div>
+                <h3 className="text-sm font-bold text-slate-200">Department Priority Training Categories</h3>
+                <p className="text-xs text-slate-400 leading-relaxed mt-0.5">
+                  These are the aggregated competency priority areas calculated for your department. The priority score represents a weighted average of individual faculty needs, combined with faculty coverage percentage.
+                </p>
+              </div>
             </div>
 
-            {/* Department Recommended Catalog Items */}
-            <div className="space-y-3 pt-2">
-              <h3 className="text-sm font-bold text-white flex items-center gap-2">
-                <BookOpen className="w-4 h-4 text-gold-400" />
-                <span>Matched Department Training Programs</span>
-              </h3>
-
-              <div className="space-y-3">
-                {deptResult.recommendations?.map((item) => (
-                  <div key={item.training_id} className="p-4 rounded-xl border border-slate-800 bg-slate-950/60 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-                    <div>
-                      <div className="flex items-center gap-2 mb-1">
-                        <span className="text-xs font-mono font-bold text-emerald-400">{item.training_id}</span>
-                        <span className="text-xs font-semibold text-gold-300 bg-gold-500/10 px-2 py-0.5 rounded">{item.category}</span>
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+              {deptResult.prediction?.top_categories?.map((cat) => {
+                const color = rankColor(cat.rank);
+                return (
+                  <div
+                    key={cat.training_category}
+                    className="flex items-center gap-3 p-3.5 rounded-xl border border-slate-800/80 bg-slate-900/40 hover:border-slate-700 transition-all"
+                  >
+                    <DonutChart probability={cat.department_score} color={color} />
+                    <div className="min-w-0 flex-1">
+                      <div className="flex items-center gap-1.5 mb-0.5">
+                        <span
+                          className="text-[10px] font-mono font-bold px-1.5 py-0.5 rounded"
+                          style={{ color, backgroundColor: `${color}18`, border: `1px solid ${color}30` }}
+                        >
+                          Priority #{cat.rank}
+                        </span>
                       </div>
-                      <h4 className="font-bold text-slate-100 text-sm">{item.title}</h4>
-                      <p className="text-xs text-slate-400 mt-1">{item.reason}</p>
+                      <p className="text-xs font-semibold text-slate-200 leading-snug">{cat.training_category}</p>
+                      <p className="text-[11px] font-mono text-slate-400 mt-0.5">
+                        Coverage: {formatPercent(cat.faculty_coverage)} · {(cat.department_score).toFixed(3)} raw
+                      </p>
                     </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
 
-                    <div className="px-3 py-1.5 rounded-xl bg-slate-900 border border-slate-800 text-center shrink-0">
-                      <span className="text-[10px] text-slate-400 block">Fit Score</span>
-                      <span className="text-sm font-bold text-gold-400 font-mono">{formatPercent(item.match_score)}</span>
+          {/* Section 2: Recommended Training Programs (prominent, primary) */}
+          <div className="space-y-4">
+            <div className="flex items-start gap-3 px-1">
+              <BookOpen className="w-4 h-4 text-gold-400 mt-0.5 shrink-0" />
+              <div>
+                <h3 className="text-base font-extrabold text-white">Recommended Department Training Programs</h3>
+                <p className="text-xs text-slate-400 leading-relaxed mt-0.5">
+                  These matched catalog items represent specific programs that address the aggregated gaps of your department's faculty. Plan department-wide webinars, workshops, or training courses around these high-scoring catalog matches.
+                </p>
+              </div>
+            </div>
+
+            <div className="flex items-center gap-2.5 px-4 py-2.5 rounded-xl bg-gold-500/8 border border-gold-500/20">
+              <Info className="w-4 h-4 text-gold-400 shrink-0" />
+              <p className="text-xs text-gold-300">
+                Programs are sorted by match fit. Use these as primary action items for department faculty development.
+              </p>
+            </div>
+
+            {deptResult.recommendations?.length === 0 ? (
+              <div className="p-10 text-center border border-dashed border-slate-800 rounded-2xl">
+                <p className="text-slate-400 text-sm">No department catalog matches found for these categories.</p>
+              </div>
+            ) : (
+              <div className="space-y-4">
+                {deptResult.recommendations?.map((item, idx) => (
+                  <div
+                    key={item.training_id}
+                    className="relative p-5 rounded-2xl border border-slate-800 bg-slate-900/60 hover:border-gold-500/40 hover:bg-slate-900/80 transition-all group shadow-lg"
+                  >
+                    <div
+                      className="absolute left-0 top-4 bottom-4 w-1 rounded-r-full"
+                      style={{ backgroundColor: idx === 0 ? '#f59e0b' : idx === 1 ? '#10b981' : '#334155' }}
+                    />
+                    <div className="pl-3 flex flex-col md:flex-row md:items-start justify-between gap-4">
+                      <div className="flex-1 space-y-2.5">
+                        <div className="flex flex-wrap items-center gap-2">
+                          <span className="text-xs font-mono font-bold text-emerald-400 bg-emerald-500/10 px-2.5 py-0.5 rounded border border-emerald-500/20">
+                            {item.training_id}
+                          </span>
+                          <span className="text-xs font-semibold text-gold-300 bg-gold-500/10 px-2.5 py-0.5 rounded border border-gold-500/20">
+                            {item.category}
+                          </span>
+                          {idx === 0 && (
+                            <span className="text-[10px] font-bold text-gold-400 bg-gold-500/10 px-2 py-0.5 rounded border border-gold-500/20">
+                              ★ Top Department Match
+                            </span>
+                          )}
+                        </div>
+
+                        <h4 className="text-base font-bold text-slate-100 group-hover:text-gold-300 transition-colors leading-snug">
+                          {item.title}
+                        </h4>
+
+                        {item.description && (
+                          <p className="text-xs text-slate-400 leading-relaxed max-w-2xl">
+                            {item.description}
+                          </p>
+                        )}
+
+                        <div className="flex items-start gap-2 text-xs text-emerald-400/90 bg-emerald-500/5 border border-emerald-500/15 rounded-lg px-3 py-2">
+                          <Check className="w-3.5 h-3.5 text-emerald-400 shrink-0 mt-0.5" />
+                          <span className="leading-relaxed">{item.reason}</span>
+                        </div>
+                      </div>
+
+                      <div className="flex flex-col items-center justify-center min-w-[90px] shrink-0">
+                        <DonutChart
+                          probability={item.match_score}
+                          color={item.match_score >= 0.7 ? '#10b981' : item.match_score >= 0.4 ? '#f59e0b' : '#64748b'}
+                        />
+                        <span className="text-[10px] text-slate-400 text-center mt-1 leading-tight">
+                          Match<br />Score
+                        </span>
+                        <span className="text-[10px] font-mono text-slate-500 mt-0.5">
+                          {(item.match_score).toFixed(3)}
+                        </span>
+                      </div>
                     </div>
                   </div>
                 ))}
               </div>
-            </div>
+            )}
           </div>
         </div>
       )}
