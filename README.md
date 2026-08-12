@@ -63,6 +63,7 @@ Prediction       Recommendation
 
 | Document | Description |
 |---|---|
+| [docs/TEST_CREDENTIALS.md](docs/TEST_CREDENTIALS.md) | **Seeded test user login credentials reference** |
 | [docs/API_REFERENCE.md](docs/API_REFERENCE.md) | **Full API reference + Postman testing guide** |
 | [docs/THESIS_METHODOLOGY.md](docs/THESIS_METHODOLOGY.md) | Academic methodology narrative |
 | [Database Schema & Access-Control Implementation Instructions.md](Database%20Schema%20%26%20Access-Control%20Implementation%20Instructions.md) | RBAC schema specification |
