@@ -79,13 +79,20 @@ export default function MyRecommendationPage() {
     <div className="space-y-6 max-w-6xl mx-auto">
       {/* Header controls */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <Link
-          href="/faculty-dashboard"
-          className="inline-flex items-center gap-1.5 text-xs text-slate-400 hover:text-white transition-colors"
-        >
-          <ArrowLeft className="w-4 h-4" />
-          <span>Back to Dashboard</span>
-        </Link>
+        <div className="flex items-center gap-3">
+          <img
+            src="/images/logo.png"
+            alt="QSU Recommender"
+            className="w-9 h-9 object-contain"
+          />
+          <Link
+            href="/faculty-dashboard"
+            className="inline-flex items-center gap-1.5 text-xs text-slate-400 hover:text-white transition-colors"
+          >
+            <ArrowLeft className="w-4 h-4" />
+            <span>Back to Dashboard</span>
+          </Link>
+        </div>
 
         {progress?.eligible_for_recommendation && (
           <button

@@ -4,7 +4,7 @@ import React, { useState } from 'react';
 import Link from 'next/link';
 import { useAuth } from '@/context/AuthContext';
 import ThemeToggle from './ThemeToggle';
-import { LogOut, GraduationCap, Building, Info, AlertTriangle } from 'lucide-react';
+import { LogOut, Building, Info, AlertTriangle } from 'lucide-react';
 
 export default function Navbar() {
   const { user, logout } = useAuth();
@@ -31,9 +31,11 @@ export default function Navbar() {
           {/* Brand Logo */}
           <Link href="/dashboard" className="flex items-center gap-3 group">
             <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-emerald-500 to-gold-500 p-0.5 shadow-lg group-hover:scale-105 transition-transform">
-              <div className="w-full h-full bg-slate-950 rounded-[10px] flex items-center justify-center">
-                <GraduationCap className="w-5 h-5 text-emerald-400" />
-              </div>
+              <img
+                src="/images/logo.png"
+                alt="QSU Recommender"
+                className="w-full h-full object-cover rounded-[10px]"
+              />
             </div>
             <div>
               <h1 className="text-base font-bold text-slate-100 tracking-tight flex items-center gap-2">

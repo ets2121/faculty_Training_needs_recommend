@@ -29,6 +29,14 @@ export default function Home() {
           <span>QSU Faculty Training Needs Recommender System</span>
         </div>
 
+        <div className="relative mx-auto max-w-3xl">
+          <img
+            src="/images/hero.png"
+            alt="QSU Recommender Hero"
+            className="mx-auto w-full max-h-[220px] object-contain drop-shadow-2xl"
+          />
+        </div>
+
         <h1 className="text-3xl sm:text-5xl font-extrabold text-white tracking-tight leading-tight">
           AI-Driven Faculty Development & <br />
           <span className="bg-gradient-to-r from-emerald-400 via-teal-300 to-gold-400 bg-clip-text text-transparent">

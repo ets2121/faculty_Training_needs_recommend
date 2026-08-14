@@ -96,6 +96,11 @@ export default function FacultyDashboardPage() {
       <div className="bg-slate-900/60 dark:bg-slate-900/80 border border-slate-800 rounded-3xl p-6 sm:p-8 shadow-xl backdrop-blur-md flex flex-col md:flex-row md:items-center justify-between gap-6">
         <div className="space-y-2">
           <div className="flex items-center gap-3">
+            <img
+              src="/images/logo.png"
+              alt="QSU Recommender"
+              className="w-10 h-10 object-contain"
+            />
             <h1 className="text-2xl font-extrabold text-white tracking-tight">
               Welcome, {data.user.full_name || data.user.username}
             </h1>

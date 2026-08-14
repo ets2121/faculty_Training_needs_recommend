@@ -39,15 +39,17 @@ export default function LoginPage() {
       <div className={`grid grid-cols-1 ${showDemoAccounts ? 'md:grid-cols-2' : 'max-w-md mx-auto'} gap-8 items-start transition-all`}>
         {/* Left / Center: Login Form */}
         <div className="bg-slate-900/60 dark:bg-slate-900/80 border border-slate-800 rounded-3xl p-6 sm:p-8 shadow-2xl backdrop-blur-md space-y-6">
-          <div>
-            <div className="w-12 h-12 rounded-2xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center mb-4">
-              <LogIn className="w-6 h-6 text-emerald-400" />
-            </div>
-            <h1 className="text-2xl font-extrabold text-white tracking-tight">Sign In to QSU Portal</h1>
-            <p className="text-xs text-slate-400 mt-1">
-              Enter your credentials to access your faculty dashboard or administrative panel.
-            </p>
+          <div className="flex items-center gap-3">
+            <img
+              src="/images/logo.png"
+              alt="QSU Recommender"
+              className="w-10 h-10 object-contain"
+            />
+            <h2 className="text-2xl font-extrabold text-white tracking-tight">Sign In to QSU Portal</h2>
           </div>
+          <p className="text-xs text-slate-400 mt-1">
+            Enter your credentials to access your faculty dashboard or administrative panel.
+          </p>
 
           {error && (
             <div className="p-3.5 rounded-xl bg-rose-950/80 border border-rose-500/40 text-rose-200 text-xs font-medium">
