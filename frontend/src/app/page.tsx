@@ -23,39 +23,49 @@ export default function Home() {
   return (
     <div className="space-y-8 max-w-5xl mx-auto py-6">
       {/* Hero Header */}
-      <div className="text-center space-y-6 py-10">
-        <div className="mx-auto w-full max-w-3xl">
+      <div className="relative -mx-6 sm:-mx-8 lg:-mx-10 overflow-hidden border-y border-slate-800 shadow-2xl">
+        <div className="absolute inset-0">
           <img
             src="/images/hero.png"
             alt="QSU Recommender"
-            className="mx-auto w-full max-h-[240px] object-contain drop-shadow-2xl"
+            className="w-full h-full object-cover opacity-35"
           />
+          <div className="absolute inset-0 bg-gradient-to-r from-slate-950 via-slate-900/80 to-slate-900/60" />
         </div>
 
-        <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-semibold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
-          <img src="/images/logo.png" alt="QSU Recommender" className="w-3.5 h-3.5 object-contain" />
-          <span>QSU Faculty Training Needs Recommender System</span>
-        </div>
+        <div className="relative px-6 py-16 sm:py-20 lg:px-10 lg:py-24 text-center space-y-6 max-w-5xl mx-auto">
+          <div className="flex justify-center">
+            <img
+              src="/images/logo.png"
+              alt="QSU Recommender"
+              className="h-14 w-auto object-contain drop-shadow-xl"
+            />
+          </div>
 
-        <h1 className="text-3xl sm:text-5xl font-extrabold text-white tracking-tight leading-tight">
-          AI-Driven Faculty Development & <br />
-          <span className="bg-gradient-to-r from-emerald-400 via-teal-300 to-gold-400 bg-clip-text text-transparent">
-            Training Program Recommendations
-          </span>
-        </h1>
+          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-semibold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+            <span>QSU Faculty Training Needs Recommender System</span>
+          </div>
 
-        <p className="text-sm sm:text-base text-slate-300 dark:text-slate-300 max-w-2xl mx-auto leading-relaxed">
-          A research-backed system matching faculty competency assessments and emerging training needs to institutional catalog programs using machine learning.
-        </p>
+          <h1 className="text-4xl sm:text-5xl font-extrabold text-white tracking-tight leading-tight">
+            AI-Driven Faculty Development & <br className="hidden sm:inline" />
+            <span className="bg-gradient-to-r from-emerald-400 via-teal-300 to-gold-400 bg-clip-text text-transparent">
+              Training Program Recommendations
+            </span>
+          </h1>
 
-        <div className="pt-2 flex items-center justify-center gap-4">
-          <Link
-            href="/login"
-            className="flex items-center gap-2 px-6 py-3 rounded-xl bg-gradient-to-r from-emerald-600 to-emerald-500 hover:from-emerald-500 hover:to-emerald-400 text-white font-bold text-sm shadow-xl shadow-emerald-950/50 transition-all hover:scale-105"
-          >
-            <span>Sign In to Access Portal</span>
-            <ArrowRight className="w-4 h-4" />
-          </Link>
+          <p className="text-sm sm:text-base text-slate-300 max-w-2xl mx-auto leading-relaxed">
+            A research-backed system matching faculty competency assessments and emerging training needs to institutional catalog programs using machine learning.
+          </p>
+
+          <div className="pt-2 flex items-center justify-center gap-4">
+            <Link
+              href="/login"
+              className="flex items-center gap-2 px-6 py-3 rounded-xl bg-gradient-to-r from-emerald-600 to-emerald-500 hover:from-emerald-500 hover:to-emerald-400 text-white font-bold text-sm shadow-xl shadow-emerald-950/50 transition-all hover:scale-105"
+            >
+              <span>Sign In to Access Portal</span>
+              <ArrowRight className="w-4 h-4" />
+            </Link>
+          </div>
         </div>
       </div>
 

@@ -30,15 +30,13 @@ export default function Navbar() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between gap-4">
           {/* Brand Logo */}
           <Link href="/dashboard" className="flex items-center gap-3 group">
-            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-emerald-500 to-gold-500 p-0.5 shadow-lg group-hover:scale-105 transition-transform">
-              <img
-                src="/images/logo.png"
-                alt="QSU Recommender"
-                className="w-full h-full object-cover rounded-[10px]"
-              />
-            </div>
+            <img
+              src="/images/logo.png"
+              alt="QSU Recommender"
+              className="h-9 w-auto object-contain drop-shadow-md"
+            />
             <div>
-              <h1 className="text-base font-bold text-slate-100 tracking-tight flex items-center gap-2">
+              <h1 className="text-sm font-bold text-slate-100 tracking-tight flex items-center gap-2">
                 <span>QSU Recommender</span>
                 <span className="text-[10px] font-mono font-semibold px-1.5 py-0.5 rounded bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
                   v2.0

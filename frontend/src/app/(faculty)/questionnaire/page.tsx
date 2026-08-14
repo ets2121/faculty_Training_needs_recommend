@@ -82,6 +82,9 @@ export default function QuestionnairePage() {
 
   return (
     <div className="space-y-6 max-w-5xl mx-auto">
+      <div className="flex justify-center pt-1">
+        <img src="/images/logo.png" alt="QSU Recommender" className="w-12 h-12 object-contain" />
+      </div>
       {/* Step Progress Component */}
       <ProgressBar
         parts={progress.parts}

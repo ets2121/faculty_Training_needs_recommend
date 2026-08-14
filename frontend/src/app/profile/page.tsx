@@ -177,8 +177,16 @@ export default function ProfilePage() {
   return (
     <div className="max-w-4xl mx-auto space-y-8">
       {/* ── Header Banner ── */}
-      <div className="bg-slate-900/60 dark:bg-slate-900/80 border border-slate-800 rounded-3xl p-6 sm:p-8 shadow-xl backdrop-blur-md flex flex-col sm:flex-row sm:items-center justify-between gap-6">
-        <div className="flex items-center gap-5">
+      <div className="relative overflow-hidden bg-slate-900/60 dark:bg-slate-900/80 border border-slate-800 rounded-3xl p-6 sm:p-8 shadow-xl backdrop-blur-md flex flex-col sm:flex-row sm:items-center justify-between gap-6">
+        <div className="absolute -right-6 -top-6 opacity-[0.06] pointer-events-none select-none">
+          <img
+            src="/images/logo.png"
+            alt="QSU Recommender"
+            className="w-48 h-48 object-contain"
+          />
+        </div>
+
+        <div className="relative z-10 flex items-center gap-5">
           <img
             src="/images/logo.png"
             alt="QSU Recommender"

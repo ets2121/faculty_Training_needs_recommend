@@ -52,14 +52,18 @@ export default function RegisterAdminPage() {
       </button>
 
       <div className="bg-slate-900/60 dark:bg-slate-900/80 border border-slate-800 rounded-3xl p-6 sm:p-8 shadow-2xl backdrop-blur-md space-y-6">
-        <div>
-          <div className="w-12 h-12 rounded-2xl bg-rose-500/10 border border-rose-500/20 flex items-center justify-center mb-3">
-            <Shield className="w-6 h-6 text-rose-400" />
+        <div className="flex items-center gap-3">
+          <img
+            src="/images/logo.png"
+            alt="QSU Recommender"
+            className="w-10 h-10 object-contain"
+          />
+          <div>
+            <h1 className="text-2xl font-extrabold text-white">Register Department Admin Account</h1>
+            <p className="text-xs text-slate-400 mt-1">
+              Create an administrative account for a department chair or head.
+            </p>
           </div>
-          <h1 className="text-2xl font-extrabold text-white">Register Department Admin Account</h1>
-          <p className="text-xs text-slate-400 mt-1">
-            Create an administrative account for a department chair or head.
-          </p>
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-4">

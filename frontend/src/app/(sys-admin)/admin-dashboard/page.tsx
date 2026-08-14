@@ -913,10 +913,10 @@ export default function SystemAdminDashboardPage() {
 
   return (
     <div className="space-y-8 max-w-7xl mx-auto">
-      {/* 1. System Header Banner */}
-      <div className="bg-slate-900/60 dark:bg-slate-900/80 border border-slate-800 rounded-3xl p-6 sm:p-8 shadow-xl backdrop-blur-md flex flex-col md:flex-row md:items-center justify-between gap-6">
+      {/* 1. Header Banner */}
+      <div className="bg-slate-900/60 dark:bg-slate-900/80 border border-slate-800 rounded-3xl p-6 sm:p-8 shadow-xl backdrop-blur-md flex flex-col md:flex-row md:items-end md:justify-between gap-6">
         <div className="space-y-2">
-          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-semibold bg-rose-500/10 text-rose-400 border border-rose-500/20">
+          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-semibold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
             <ShieldAlert className="w-3.5 h-3.5 text-rose-400" />
             <span>System Administrator Portal</span>
           </div>

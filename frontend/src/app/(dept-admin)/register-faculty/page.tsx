@@ -63,14 +63,18 @@ export default function RegisterFacultyPage() {
       </button>
 
       <div className="bg-slate-900/60 dark:bg-slate-900/80 border border-slate-800 rounded-3xl p-6 sm:p-8 shadow-2xl backdrop-blur-md space-y-6">
-        <div>
-          <div className="w-12 h-12 rounded-2xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center mb-3">
-            <UserPlus className="w-6 h-6 text-emerald-400" />
+        <div className="flex items-center gap-3">
+          <img
+            src="/images/logo.png"
+            alt="QSU Recommender"
+            className="w-10 h-10 object-contain"
+          />
+          <div>
+            <h1 className="text-2xl font-extrabold text-white">Create New Faculty Account</h1>
+            <p className="text-xs text-slate-400 mt-1">
+              Department: <strong className="text-emerald-400 font-mono">{deptCode}</strong>. Accounts created here inherit your department scope.
+            </p>
           </div>
-          <h1 className="text-2xl font-extrabold text-white">Create New Faculty Account</h1>
-          <p className="text-xs text-slate-400 mt-1">
-            Department: <strong className="text-emerald-400 font-mono">{deptCode}</strong>. Accounts created here inherit your department scope.
-          </p>
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-4">
