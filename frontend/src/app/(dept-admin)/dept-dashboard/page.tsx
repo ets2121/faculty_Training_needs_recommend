@@ -1,11 +1,14 @@
 'use client';
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useMemo, useCallback } from 'react';
 import Link from 'next/link';
 import api from '@/lib/api';
 import { UserListItem, DepartmentRecommendationResult } from '@/types';
 import StatusBadge from '@/components/StatusBadge';
 import { useToast } from '@/context/ToastContext';
+import SearchInput from '@/components/SearchInput';
+import { TableSkeleton } from '@/components/Skeletons';
+import { ViewEditUserModal, DeleteUserModal } from '@/components/UserModals';
 import {
   Users,
   Building,
@@ -16,6 +19,10 @@ import {
   Target,
   Info,
   Check,
+  Pencil,
+  Key,
+  Trash2,
+  User as UserIcon,
 } from 'lucide-react';
 import { formatPercent } from '@/lib/utils';
 
@@ -64,12 +71,19 @@ function rankColor(rank: number): string {
 
 export default function DeptDashboardPage() {
   const [users, setUsers] = useState<UserListItem[]>([]);
+  const [searchQuery, setSearchQuery] = useState('');
   const [deptResult, setDeptResult] = useState<DepartmentRecommendationResult | null>(null);
   const [loadingUsers, setLoadingUsers] = useState(true);
   const [runningDeptRec, setRunningDeptRec] = useState(false);
+
+  // Modals state
+  const [selectedUserForEdit, setSelectedUserForEdit] = useState<UserListItem | null>(null);
+  const [selectedUserForDelete, setSelectedUserForDelete] = useState<UserListItem | null>(null);
+
   const { showToast } = useToast();
 
-  const loadFaculty = async () => {
+  const loadFaculty = useCallback(async () => {
+    setLoadingUsers(true);
     try {
       const res = await api.get('/users');
       setUsers(res.data.users || []);
@@ -78,11 +92,11 @@ export default function DeptDashboardPage() {
     } finally {
       setLoadingUsers(false);
     }
-  };
+  }, [showToast]);
 
   useEffect(() => {
     loadFaculty();
-  }, []);
+  }, [loadFaculty]);
 
   const handleRunDeptRecommendation = async () => {
     setRunningDeptRec(true);
@@ -101,6 +115,22 @@ export default function DeptDashboardPage() {
 
   const deptCode = users[0]?.department_code || 'BSIT';
 
+  // Filtered faculty list based on debounced search query
+  const filteredUsers = useMemo(() => {
+    if (!searchQuery.trim()) return users;
+    const q = searchQuery.toLowerCase().trim();
+    return users.filter(
+      (u) =>
+        u.username.toLowerCase().includes(q) ||
+        (u.full_name && u.full_name.toLowerCase().includes(q)) ||
+        (u.email && u.email.toLowerCase().includes(q)) ||
+        (u.faculty_code && u.faculty_code.toLowerCase().includes(q)) ||
+        (u.academic_rank && u.academic_rank.toLowerCase().includes(q)) ||
+        (u.specialization && u.specialization.toLowerCase().includes(q)) ||
+        (u.status && u.status.toLowerCase().includes(q))
+    );
+  }, [users, searchQuery]);
+
   return (
     <div className="space-y-8 max-w-6xl mx-auto">
       {/* 1. Header Banner */}
@@ -115,7 +145,7 @@ export default function DeptDashboardPage() {
             {deptCode} Department Recommendations & Monitoring
           </h1>
           <p className="text-xs text-slate-400">
-            Monitor faculty questionnaire completion and run department-wide training priorities.
+            Monitor faculty questionnaire completion, manage department accounts, and generate group training priorities.
           </p>
         </div>
 
@@ -303,45 +333,93 @@ export default function DeptDashboardPage() {
 
       {/* 3. Department Faculty Users Table */}
       <div className="bg-slate-900/60 dark:bg-slate-900/80 border border-slate-800 rounded-3xl p-6 sm:p-8 shadow-xl backdrop-blur-md space-y-4">
-        <div className="flex items-center justify-between gap-4">
-          <div className="flex items-center gap-2">
-            <Users className="w-5 h-5 text-emerald-400" />
-            <h2 className="text-lg font-bold text-white">Department Faculty Roster</h2>
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <div>
+            <div className="flex items-center gap-2">
+              <Users className="w-5 h-5 text-emerald-400" />
+              <h2 className="text-lg font-bold text-white">Department Faculty Roster</h2>
+            </div>
+            <p className="text-xs text-slate-400 mt-0.5">
+              {users.length} Faculty Members registered in {deptCode}
+            </p>
           </div>
-          <span className="text-xs font-mono text-slate-400">
-            {users.length} Faculty Registered
-          </span>
+
+          {/* Search with Debounce */}
+          <div className="w-full sm:w-72">
+            <SearchInput
+              placeholder="Search faculty by name, code, rank..."
+              onChange={(debounced) => setSearchQuery(debounced)}
+            />
+          </div>
         </div>
 
         {loadingUsers ? (
-          <div className="py-12 text-center text-xs text-slate-400 font-mono">Loading department faculty...</div>
+          <TableSkeleton rows={5} cols={5} />
         ) : users.length === 0 ? (
           <div className="py-12 text-center border border-dashed border-slate-800 rounded-2xl text-xs text-slate-400">
             No faculty members registered in this department yet.
+          </div>
+        ) : filteredUsers.length === 0 ? (
+          <div className="py-12 text-center border border-dashed border-slate-800 rounded-2xl text-xs text-slate-400 space-y-1">
+            <p className="text-slate-300 font-semibold">No faculty found matching "{searchQuery}"</p>
+            <p className="text-slate-500">Try clearing the search or searching for a different keyword.</p>
           </div>
         ) : (
           <div className="overflow-x-auto">
             <table className="w-full text-left text-xs text-slate-300">
               <thead className="bg-slate-950/80 text-slate-400 font-semibold border-b border-slate-800 uppercase tracking-wider text-[10px]">
                 <tr>
-                  <th className="p-3.5 rounded-l-xl">Faculty Name</th>
-                  <th className="p-3.5">Username</th>
-                  <th className="p-3.5">Email</th>
+                  <th className="p-3.5 rounded-l-xl">Faculty Name & ID</th>
+                  <th className="p-3.5">Academic Rank & Field</th>
+                  <th className="p-3.5">Contact Email</th>
                   <th className="p-3.5">Questionnaire Status</th>
-                  <th className="p-3.5 rounded-r-xl">Action</th>
+                  <th className="p-3.5 text-right rounded-r-xl">Actions</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-800/60">
-                {users.map((u) => (
-                  <tr key={u.id} className="hover:bg-slate-800/40 transition-colors">
-                    <td className="p-3.5 font-bold text-slate-100">{u.full_name || u.username}</td>
-                    <td className="p-3.5 font-mono text-slate-400">{u.username}</td>
+                {filteredUsers.map((u) => (
+                  <tr key={u.id} className="hover:bg-slate-800/40 transition-colors group">
+                    <td className="p-3.5">
+                      <div className="font-bold text-slate-100">{u.full_name || u.username}</div>
+                      <div className="text-[11px] text-slate-400 font-mono">
+                        @{u.username} {u.faculty_code ? `· [${u.faculty_code}]` : ''}
+                      </div>
+                    </td>
+                    <td className="p-3.5">
+                      <div className="text-slate-200">{u.academic_rank || 'Instructor I'}</div>
+                      <div className="text-[11px] text-slate-400">{u.specialization || u.highest_degree || 'General'}</div>
+                    </td>
                     <td className="p-3.5 text-slate-400">{u.email || '—'}</td>
                     <td className="p-3.5">
                       <StatusBadge status={u.status || 'not_started'} />
                     </td>
-                    <td className="p-3.5">
-                      <span className="text-[11px] text-emerald-400 font-semibold">Active</span>
+                    <td className="p-3.5 text-right">
+                      <div className="flex items-center justify-end gap-1.5">
+                        <button
+                          onClick={() => setSelectedUserForEdit(u)}
+                          className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-slate-800 hover:bg-emerald-600/30 text-slate-300 hover:text-emerald-400 border border-slate-700 text-[11px] font-medium transition-all"
+                          title="View / Edit Profile Details"
+                        >
+                          <Pencil className="w-3 h-3" />
+                          <span className="hidden md:inline">Edit</span>
+                        </button>
+
+                        <button
+                          onClick={() => setSelectedUserForEdit(u)}
+                          className="p-1.5 rounded-lg bg-slate-800 hover:bg-amber-600/30 text-slate-300 hover:text-amber-400 border border-slate-700 transition-all"
+                          title="Emergency Password Reset"
+                        >
+                          <Key className="w-3.5 h-3.5" />
+                        </button>
+
+                        <button
+                          onClick={() => setSelectedUserForDelete(u)}
+                          className="p-1.5 rounded-lg bg-slate-800 hover:bg-rose-600/30 text-slate-300 hover:text-rose-400 border border-slate-700 transition-all"
+                          title="Delete Faculty Account"
+                        >
+                          <Trash2 className="w-3.5 h-3.5" />
+                        </button>
+                      </div>
                     </td>
                   </tr>
                 ))}
@@ -350,6 +428,24 @@ export default function DeptDashboardPage() {
           </div>
         )}
       </div>
+
+      {/* ── Modals ── */}
+      {selectedUserForEdit && (
+        <ViewEditUserModal
+          user={selectedUserForEdit}
+          currentUserRole="department_admin"
+          onClose={() => setSelectedUserForEdit(null)}
+          onUpdated={loadFaculty}
+        />
+      )}
+
+      {selectedUserForDelete && (
+        <DeleteUserModal
+          user={selectedUserForDelete}
+          onClose={() => setSelectedUserForDelete(null)}
+          onDeleted={loadFaculty}
+        />
+      )}
     </div>
   );
 }

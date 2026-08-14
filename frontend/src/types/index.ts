@@ -149,6 +149,13 @@ export interface UserListItem {
   department_code: string | null;
   department_name: string | null;
   status: string;
+  account_status?: string | null;
+  academic_rank?: string | null;
+  highest_degree?: string | null;
+  specialization?: string | null;
+  faculty_code?: string | null;
+  created_at?: string | null;
+  last_login_at?: string | null;
 }
 
 export interface CatalogItem {

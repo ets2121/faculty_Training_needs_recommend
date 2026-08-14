@@ -231,3 +231,39 @@ def register_user(
         "message": f"Account for '{body.username}' ({body.role}) created successfully.",
         "user_id": new_user.id,
     }
+
+
+class ChangePasswordRequest(BaseModel):
+    current_password: str
+    new_password: str
+
+
+@router.post("/change-password")
+def change_password(
+    body: ChangePasswordRequest,
+    request: Request,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    """Allow any authenticated user to change their own password."""
+    if not verify_password(body.current_password, current_user.hashed_password):
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Current password is incorrect.",
+        )
+    if len(body.new_password) < 6:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="New password must be at least 6 characters.",
+        )
+    current_user.hashed_password = hash_password(body.new_password)
+    db.commit()
+
+    log_audit(
+        db, current_user, "change_password",
+        entity_type="user", entity_id=str(current_user.id),
+        ip_address=request.client.host if request.client else None,
+    )
+
+    return {"status": "success", "message": "Password changed successfully."}
+

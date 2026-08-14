@@ -4,7 +4,7 @@ import React from 'react';
 import Link from 'next/link';
 import { useAuth } from '@/context/AuthContext';
 import ThemeToggle from './ThemeToggle';
-import { LogOut, GraduationCap, User as UserIcon, Shield, Building } from 'lucide-react';
+import { LogOut, GraduationCap, User as UserIcon, Shield, Building, Info } from 'lucide-react';
 
 export default function Navbar() {
   const { user, logout } = useAuth();
@@ -48,13 +48,26 @@ export default function Navbar() {
 
         {/* Right Section */}
         <div className="flex items-center gap-3">
+          {/* About link */}
+          <Link
+            href="/about"
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold text-slate-400 hover:text-white hover:bg-slate-800/60 transition-all"
+          >
+            <Info className="w-3.5 h-3.5 text-gold-400" />
+            <span className="hidden sm:inline">About</span>
+          </Link>
+
           <ThemeToggle />
 
           {user && (
             <div className="flex items-center gap-3 pl-3 border-l border-slate-800">
-              {/* User Profile Summary */}
-              <div className="hidden md:flex flex-col items-end text-right">
-                <span className="text-xs font-semibold text-slate-200 leading-tight">
+              {/* User Profile Summary (Clickable to /profile) */}
+              <Link
+                href="/profile"
+                className="hidden md:flex flex-col items-end text-right p-1.5 rounded-xl hover:bg-slate-800/40 transition-colors group"
+                title="View your profile"
+              >
+                <span className="text-xs font-semibold text-slate-200 group-hover:text-emerald-400 leading-tight transition-colors">
                   {user.full_name || user.username}
                 </span>
                 <div className="flex items-center gap-1.5 mt-0.5">
@@ -68,7 +81,7 @@ export default function Navbar() {
                     </span>
                   )}
                 </div>
-              </div>
+              </Link>
 
               {/* Logout Button */}
               <button
