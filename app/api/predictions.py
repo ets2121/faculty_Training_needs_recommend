@@ -46,9 +46,8 @@ def _get_model_or_503(request: Request):
 
 def _store_individual_result(faculty: Faculty, result: dict, requested_by_user_id: int, db: Session) -> None:
     """Persist recommendation result onto the faculty record and log it."""
-    now = datetime.now(timezone.utc)
     faculty.last_recommendation_json = json.dumps(result)
-    faculty.last_recommendation_at = now
+    faculty.last_recommendation_at = datetime.fromisoformat(result["generated_at"]) if result.get("generated_at") else None
     faculty.questionnaire_status = "has_recommendation"
 
     db.add(TrainingRecommendationRequest(
@@ -109,8 +108,10 @@ def individual_recommendation(
 
     model = _get_model_or_503(request)
     record = build_faculty_record(faculty_id, target_faculty, db)
-    result = individual(model, record, db=db)
-
+    from datetime import datetime
+    import zoneinfo
+    generated_at = datetime.now(zoneinfo.ZoneInfo("Asia/Manila")).isoformat()
+    result = individual(model, record, db=db, generated_at=generated_at)
     _store_individual_result(target_faculty, result, current_user.id, db)
     db.commit()
 
@@ -212,14 +213,14 @@ def department_recommendation(
 
     db.commit()
 
-    # Attach metadata to response (generated_at is already set by the service)
+    # Attach metadata to response
     result["department_name"] = dept.name
     result["total_faculty_in_dept"] = len(all_faculty)
     result["eligible_faculty_count"] = len(eligible_faculty)
     result["skipped_faculty"] = skipped
     result["individual_results_stored"] = individual_results_stored
-    if "generated_at" not in result:
-        result["generated_at"] = datetime.now(timezone.utc).isoformat()
+    from datetime import datetime, timezone
+    result["generated_at"] = datetime.now(timezone.utc).isoformat()
 
     # Persist department recommendation to history
     db.add(RecommendationHistory(

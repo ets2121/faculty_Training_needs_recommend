@@ -112,7 +112,7 @@ def match_catalog_items(
     return matches[:top_k]
 
 
-def individual(model: ModelService, record: dict, db: Session | None = None) -> dict[str, Any]:
+def individual(model: ModelService, record: dict, db: Session | None = None, generated_at: str | None = None) -> dict[str, Any]:
     """
     Generates transparent individual recommendation response adhering to
     QSU_Training_Catalog_and_Transparent_API.md format.
@@ -121,8 +121,11 @@ def individual(model: ModelService, record: dict, db: Session | None = None) -> 
     prediction_details = model.predict_transparent([record])[0]
     recommendations = match_catalog_items(prediction_details, record)
 
-    from datetime import datetime, timezone
-    now_iso = datetime.now(timezone.utc).isoformat()
+    if generated_at is None:
+        from datetime import datetime
+        import zoneinfo
+        generated_at = datetime.now(zoneinfo.ZoneInfo("Asia/Manila")).isoformat()
+
     response_payload = {
         "status": "success",
         "model": {
@@ -131,7 +134,7 @@ def individual(model: ModelService, record: dict, db: Session | None = None) -> 
         },
         "prediction": prediction_details,
         "recommendations": recommendations,
-        "generated_at": now_iso,
+        "generated_at": generated_at,
     }
 
     if db is not None:
@@ -150,12 +153,17 @@ def individual(model: ModelService, record: dict, db: Session | None = None) -> 
     return response_payload
 
 
-def department(model: ModelService, records: list[dict], dept_name: str = "BSED", db: Session | None = None) -> dict[str, Any]:
+def department(model: ModelService, records: list[dict], dept_name: str = "BSED", db: Session | None = None, generated_at: str | None = None) -> dict[str, Any]:
     """
     Generates transparent department recommendation response.
     Aggregates faculty predictions and matches department catalog recommendations.
     Records history in MySQL if db session is provided.
     """
+    if generated_at is None:
+        from datetime import datetime
+        import zoneinfo
+        generated_at = datetime.now(zoneinfo.ZoneInfo("Asia/Manila")).isoformat()
+
     transparent_preds = model.predict_transparent(records)
     n = len(records)
 
@@ -194,7 +202,6 @@ def department(model: ModelService, records: list[dict], dept_name: str = "BSED"
     }
     catalog_recs = match_catalog_items(dept_prediction_mock, record={}, top_k=5)
 
-    now_iso = datetime.now(timezone.utc).isoformat()
     response_payload = {
         "status": "success",
         "department": dept_name,
@@ -207,7 +214,7 @@ def department(model: ModelService, records: list[dict], dept_name: str = "BSED"
             "top_categories": top_categories
         },
         "recommendations": catalog_recs,
-        "generated_at": now_iso,
+        "generated_at": generated_at,
     }
 
     # Note: RecommendationHistory for department runs is saved by predictions.py

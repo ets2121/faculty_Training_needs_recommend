@@ -168,7 +168,10 @@ def request_my_recommendation(
         )
 
     record = build_faculty_record(faculty.id, faculty, db)
-    result = individual(model, record, db=db)
+    from datetime import datetime
+    import zoneinfo
+    generated_at = datetime.now(zoneinfo.ZoneInfo("Asia/Manila")).isoformat()
+    result = individual(model, record, db=db, generated_at=generated_at)
 
     # Store result in recommendation requests log
     rec_request = TrainingRecommendationRequest(
@@ -181,9 +184,8 @@ def request_my_recommendation(
     db.add(rec_request)
 
     # Update faculty record with latest recommendation result and status
-    now = datetime.now(timezone.utc)
     faculty.last_recommendation_json = json.dumps(result)
-    faculty.last_recommendation_at = now
+    faculty.last_recommendation_at = datetime.fromisoformat(result["generated_at"]).replace(tzinfo=None) if result.get("generated_at") else None
     faculty.questionnaire_status = "has_recommendation"
 
     db.commit()
