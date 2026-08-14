@@ -96,6 +96,8 @@ export interface RecommendationResult {
     all_predictions: Array<{ training_category: string; probability: number }>;
   };
   recommendations: CatalogRecommendationItem[];
+  generated_at?: string;
+  last_recommendation_at?: string;
   _test_mode?: boolean;
 }
 
@@ -123,6 +125,8 @@ export interface DepartmentRecommendationResult {
     top_categories: DepartmentCategoryPrediction[];
   };
   recommendations: CatalogRecommendationItem[];
+  generated_at?: string;
+  last_recommendation_at?: string;
   _test_mode?: boolean;
 }
 

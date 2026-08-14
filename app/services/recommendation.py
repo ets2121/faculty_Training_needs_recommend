@@ -121,6 +121,8 @@ def individual(model: ModelService, record: dict, db: Session | None = None) -> 
     prediction_details = model.predict_transparent([record])[0]
     recommendations = match_catalog_items(prediction_details, record)
 
+    from datetime import datetime, timezone
+    now_iso = datetime.now(timezone.utc).isoformat()
     response_payload = {
         "status": "success",
         "model": {
@@ -129,6 +131,7 @@ def individual(model: ModelService, record: dict, db: Session | None = None) -> 
         },
         "prediction": prediction_details,
         "recommendations": recommendations,
+        "generated_at": now_iso,
     }
 
     if db is not None:
@@ -191,6 +194,7 @@ def department(model: ModelService, records: list[dict], dept_name: str = "BSED"
     }
     catalog_recs = match_catalog_items(dept_prediction_mock, record={}, top_k=5)
 
+    now_iso = datetime.now(timezone.utc).isoformat()
     response_payload = {
         "status": "success",
         "department": dept_name,
@@ -203,19 +207,10 @@ def department(model: ModelService, records: list[dict], dept_name: str = "BSED"
             "top_categories": top_categories
         },
         "recommendations": catalog_recs,
+        "generated_at": now_iso,
     }
 
-    if db is not None:
-        try:
-            hist = RecommendationHistory(
-                recommendation_type="department",
-                model_version=model.version or "active",
-                request_payload_json=json.dumps({"department": dept_name, "count": n}),
-                response_json=json.dumps(response_payload),
-            )
-            db.add(hist)
-            db.commit()
-        except Exception as e:
-            print(f"Warning recording department recommendation history: {e}")
+    # Note: RecommendationHistory for department runs is saved by predictions.py
+    # (which also attaches department_id). Do NOT save it here to avoid duplicates.
 
     return response_payload

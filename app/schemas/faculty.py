@@ -73,6 +73,8 @@ class TransparentPredictionResponse(BaseModel):
     model: ModelMetadata
     prediction: PredictionSection
     recommendations: list[CatalogRecommendationItem]
+    generated_at: str | None = None
+    last_recommendation_at: str | None = None
 
 
 class DepartmentCategoryPrediction(BaseModel):
@@ -93,6 +95,8 @@ class TransparentDepartmentResponse(BaseModel):
     faculty_count: int
     prediction: DepartmentPredictionSection
     recommendations: list[CatalogRecommendationItem]
+    generated_at: str | None = None
+    last_recommendation_at: str | None = None
 
 
 class CatalogItemSchema(BaseModel):

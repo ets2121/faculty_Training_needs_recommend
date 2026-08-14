@@ -1,12 +1,13 @@
 'use client';
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import Link from 'next/link';
 import api from '@/lib/api';
 import { FullProfileResponse, RecommendationResult } from '@/types';
 import StatusBadge from '@/components/StatusBadge';
 import ProgressBar from '@/components/ProgressBar';
 import RecommendationCard from '@/components/RecommendationCard';
+import { RecommendationSkeleton, ProfileSkeleton } from '@/components/Skeletons';
 import { useToast } from '@/context/ToastContext';
 import { Sparkles, ArrowRight, ClipboardList, BookOpen, RefreshCw, AlertCircle } from 'lucide-react';
 
@@ -15,9 +16,10 @@ export default function FacultyDashboardPage() {
   const [recommendation, setRecommendation] = useState<RecommendationResult | null>(null);
   const [loading, setLoading] = useState(true);
   const [requesting, setRequesting] = useState(false);
+  const [timestamp, setTimestamp] = useState<string | null>(null);
   const { showToast } = useToast();
 
-  const loadProfile = async () => {
+  const loadProfile = useCallback(async () => {
     try {
       const res = await api.get('/profile');
       setData(res.data);
@@ -27,6 +29,7 @@ export default function FacultyDashboardPage() {
           const recRes = await api.get('/profile/last-recommendation');
           if (recRes.data.recommendation) {
             setRecommendation(recRes.data.recommendation);
+            setTimestamp(recRes.data.last_recommendation_at || recRes.data.recommendation.generated_at || null);
           }
         } catch (e) {
           console.error('Failed to load last recommendation:', e);
@@ -37,18 +40,26 @@ export default function FacultyDashboardPage() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [showToast]);
 
   useEffect(() => {
     loadProfile();
-  }, []);
+  }, [loadProfile]);
 
   const handleRequestRecommendation = async () => {
+    // Clear stale result so skeleton shows cleanly and re-run is clearly fresh
+    setRecommendation(null);
+    setTimestamp(null);
     setRequesting(true);
+    showToast('info', 'AI Recommender Running', 'Analyzing your needs assessment and generating recommendations...');
+
     try {
       const res = await api.post('/profile/request-recommendation');
+      // Always use generated_at from API for the authoritative fresh timestamp
+      const freshTimestamp = res.data.generated_at || new Date().toISOString();
       setRecommendation(res.data);
-      showToast('success', 'Recommendation Ready!', 'Your training recommendation has been generated and saved.');
+      setTimestamp(freshTimestamp);
+      showToast('success', 'Recommendation Ready!', 'Your fresh training recommendation has been generated and saved.');
       await loadProfile();
     } catch (err: any) {
       const msg = err.response?.data?.detail || 'Failed to generate recommendation.';
@@ -59,12 +70,7 @@ export default function FacultyDashboardPage() {
   };
 
   if (loading) {
-    return (
-      <div className="flex flex-col items-center justify-center py-20 space-y-3">
-        <div className="w-8 h-8 border-4 border-emerald-500/30 border-t-emerald-500 rounded-full animate-spin" />
-        <p className="text-xs text-slate-400 font-mono">Loading Faculty Profile...</p>
-      </div>
-    );
+    return <ProfileSkeleton />;
   }
 
   if (!data) return null;
@@ -158,9 +164,17 @@ export default function FacultyDashboardPage() {
         </div>
       )}
 
-      {/* 4. Active Recommendation Preview (if available) */}
-      {recommendation && (
-        <RecommendationCard result={recommendation} facultyName={data.user.full_name || data.user.username} />
+      {/* 4. Active Recommendation Preview (or Skeleton when generating) */}
+      {requesting ? (
+        <RecommendationSkeleton message="Analyzing Survey Responses & Generating Recommendations..." />
+      ) : (
+        recommendation && (
+          <RecommendationCard
+            result={recommendation}
+            facultyName={data.user.full_name || data.user.username}
+            timestamp={timestamp}
+          />
+        )
       )}
     </div>
   );

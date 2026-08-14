@@ -2,13 +2,18 @@
 
 import React, { useState } from 'react';
 import { useAuth } from '@/context/AuthContext';
-import { LogIn, KeyRound, User, Lock, Sparkles, UserCheck } from 'lucide-react';
+import { LogIn, KeyRound, User, Lock, Sparkles, UserCheck, Eye, EyeOff } from 'lucide-react';
 
 export default function LoginPage() {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  
+  // Environment variable controls whether demo accounts are available by default
+  const envShowDemo = process.env.NEXT_PUBLIC_SHOW_DEMO_ACCOUNTS !== 'false' && process.env.NEXT_PUBLIC_ENABLE_QUICK_LOGIN !== 'false';
+  const [showDemoAccounts, setShowDemoAccounts] = useState<boolean>(envShowDemo);
+
   const { login } = useAuth();
 
   const handleLogin = async (e: React.FormEvent) => {
@@ -31,8 +36,8 @@ export default function LoginPage() {
 
   return (
     <div className="max-w-4xl mx-auto py-6 space-y-8">
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-8 items-start">
-        {/* Left: Login Form */}
+      <div className={`grid grid-cols-1 ${showDemoAccounts ? 'md:grid-cols-2' : 'max-w-md mx-auto'} gap-8 items-start transition-all`}>
+        {/* Left / Center: Login Form */}
         <div className="bg-slate-900/60 dark:bg-slate-900/80 border border-slate-800 rounded-3xl p-6 sm:p-8 shadow-2xl backdrop-blur-md space-y-6">
           <div>
             <div className="w-12 h-12 rounded-2xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center mb-4">
@@ -96,104 +101,132 @@ export default function LoginPage() {
               )}
             </button>
           </form>
+
+          {/* Toggle Demo Accounts Button */}
+          <div className="pt-2 text-center">
+            <button
+              type="button"
+              onClick={() => setShowDemoAccounts(!showDemoAccounts)}
+              className="inline-flex items-center gap-1.5 text-xs text-slate-400 hover:text-emerald-400 font-medium transition-colors"
+            >
+              {showDemoAccounts ? (
+                <>
+                  <EyeOff className="w-3.5 h-3.5" />
+                  <span>Hide Quick-Fill Test Accounts</span>
+                </>
+              ) : (
+                <>
+                  <Eye className="w-3.5 h-3.5" />
+                  <span>Show Quick-Fill Test Accounts</span>
+                </>
+              )}
+            </button>
+          </div>
         </div>
 
         {/* Right: Quick-Fill Test Accounts Card */}
-        <div className="bg-slate-950/80 border border-slate-800/80 rounded-3xl p-6 sm:p-8 space-y-4">
-          <div className="flex items-center gap-2">
-            <UserCheck className="w-5 h-5 text-gold-400" />
-            <h2 className="text-base font-bold text-white">Quick-Fill Test Accounts</h2>
+        {showDemoAccounts && (
+          <div className="bg-slate-950/80 border border-slate-800/80 rounded-3xl p-6 sm:p-8 space-y-4 animate-fade-in">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <UserCheck className="w-5 h-5 text-gold-400" />
+                <h2 className="text-base font-bold text-white">Quick-Fill Test Accounts</h2>
+              </div>
+              <span className="text-[10px] font-mono text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded border border-emerald-500/20">
+                demo env
+              </span>
+            </div>
+            <p className="text-xs text-slate-400 leading-relaxed">
+              Click any seeded test account below to auto-fill credentials for testing:
+            </p>
+
+            <div className="space-y-2.5 pt-2">
+              <button
+                type="button"
+                onClick={() => autofill('admin', 'admin123')}
+                className="w-full text-left p-3 rounded-xl border border-slate-800 bg-slate-900/60 hover:border-rose-500/40 transition-all flex items-center justify-between group"
+              >
+                <div>
+                  <span className="text-xs font-bold text-slate-200 group-hover:text-rose-400 transition-colors">admin</span>
+                  <span className="text-[11px] text-slate-400 block">System Administrator</span>
+                </div>
+                <span className="text-[10px] font-mono font-semibold px-2 py-0.5 rounded bg-rose-500/10 text-rose-400 border border-rose-500/20">
+                  system_admin
+                </span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => autofill('dept_bsit', 'dept123')}
+                className="w-full text-left p-3 rounded-xl border border-slate-800 bg-slate-900/60 hover:border-gold-500/40 transition-all flex items-center justify-between group"
+              >
+                <div>
+                  <span className="text-xs font-bold text-slate-200 group-hover:text-gold-400 transition-colors">dept_bsit</span>
+                  <span className="text-[11px] text-slate-400 block">BSIT Dept Chair</span>
+                </div>
+                <span className="text-[10px] font-mono font-semibold px-2 py-0.5 rounded bg-gold-500/10 text-gold-400 border border-gold-500/20">
+                  department_admin
+                </span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => autofill('prof_santos', 'faculty123')}
+                className="w-full text-left p-3 rounded-xl border border-slate-800 bg-slate-900/60 hover:border-emerald-500/40 transition-all flex items-center justify-between group"
+              >
+                <div>
+                  <span className="text-xs font-bold text-slate-200 group-hover:text-emerald-400 transition-colors">prof_santos</span>
+                  <span className="text-[11px] text-slate-400 block">Faculty (Active Recommendation)</span>
+                </div>
+                <span className="text-[10px] font-mono font-semibold px-2 py-0.5 rounded bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+                  has_recommendation
+                </span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => autofill('prof_reyes', 'faculty123')}
+                className="w-full text-left p-3 rounded-xl border border-slate-800 bg-slate-900/60 hover:border-emerald-500/40 transition-all flex items-center justify-between group"
+              >
+                <div>
+                  <span className="text-xs font-bold text-slate-200 group-hover:text-emerald-400 transition-colors">prof_reyes</span>
+                  <span className="text-[11px] text-slate-400 block">Faculty (Ready for Request)</span>
+                </div>
+                <span className="text-[10px] font-mono font-semibold px-2 py-0.5 rounded bg-gold-500/10 text-gold-400 border border-gold-500/20">
+                  eligible
+                </span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => autofill('prof_cruz', 'faculty123')}
+                className="w-full text-left p-3 rounded-xl border border-slate-800 bg-slate-900/60 hover:border-sky-500/40 transition-all flex items-center justify-between group"
+              >
+                <div>
+                  <span className="text-xs font-bold text-slate-200 group-hover:text-sky-400 transition-colors">prof_cruz</span>
+                  <span className="text-[11px] text-slate-400 block">Faculty (Part 3 Resume Flow)</span>
+                </div>
+                <span className="text-[10px] font-mono font-semibold px-2 py-0.5 rounded bg-sky-500/10 text-sky-400 border border-sky-500/20">
+                  in_progress
+                </span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => autofill('prof_garcia', 'faculty123')}
+                className="w-full text-left p-3 rounded-xl border border-slate-800 bg-slate-900/60 hover:border-slate-600 transition-all flex items-center justify-between group"
+              >
+                <div>
+                  <span className="text-xs font-bold text-slate-200 group-hover:text-slate-100 transition-colors">prof_garcia</span>
+                  <span className="text-[11px] text-slate-400 block">Faculty (Fresh Onboarding)</span>
+                </div>
+                <span className="text-[10px] font-mono font-semibold px-2 py-0.5 rounded bg-slate-500/10 text-slate-400 border border-slate-500/20">
+                  not_started
+                </span>
+              </button>
+            </div>
           </div>
-          <p className="text-xs text-slate-400 leading-relaxed">
-            Click any seeded test account below to auto-fill credentials for testing:
-          </p>
-
-          <div className="space-y-2.5 pt-2">
-            <button
-              type="button"
-              onClick={() => autofill('admin', 'admin123')}
-              className="w-full text-left p-3 rounded-xl border border-slate-800 bg-slate-900/60 hover:border-rose-500/40 transition-all flex items-center justify-between group"
-            >
-              <div>
-                <span className="text-xs font-bold text-slate-200 group-hover:text-rose-400 transition-colors">admin</span>
-                <span className="text-[11px] text-slate-400 block">System Administrator</span>
-              </div>
-              <span className="text-[10px] font-mono font-semibold px-2 py-0.5 rounded bg-rose-500/10 text-rose-400 border border-rose-500/20">
-                system_admin
-              </span>
-            </button>
-
-            <button
-              type="button"
-              onClick={() => autofill('dept_bsit', 'dept123')}
-              className="w-full text-left p-3 rounded-xl border border-slate-800 bg-slate-900/60 hover:border-gold-500/40 transition-all flex items-center justify-between group"
-            >
-              <div>
-                <span className="text-xs font-bold text-slate-200 group-hover:text-gold-400 transition-colors">dept_bsit</span>
-                <span className="text-[11px] text-slate-400 block">BSIT Dept Chair</span>
-              </div>
-              <span className="text-[10px] font-mono font-semibold px-2 py-0.5 rounded bg-gold-500/10 text-gold-400 border border-gold-500/20">
-                department_admin
-              </span>
-            </button>
-
-            <button
-              type="button"
-              onClick={() => autofill('prof_santos', 'faculty123')}
-              className="w-full text-left p-3 rounded-xl border border-slate-800 bg-slate-900/60 hover:border-emerald-500/40 transition-all flex items-center justify-between group"
-            >
-              <div>
-                <span className="text-xs font-bold text-slate-200 group-hover:text-emerald-400 transition-colors">prof_santos</span>
-                <span className="text-[11px] text-slate-400 block">Faculty (Active Recommendation)</span>
-              </div>
-              <span className="text-[10px] font-mono font-semibold px-2 py-0.5 rounded bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
-                has_recommendation
-              </span>
-            </button>
-
-            <button
-              type="button"
-              onClick={() => autofill('prof_reyes', 'faculty123')}
-              className="w-full text-left p-3 rounded-xl border border-slate-800 bg-slate-900/60 hover:border-emerald-500/40 transition-all flex items-center justify-between group"
-            >
-              <div>
-                <span className="text-xs font-bold text-slate-200 group-hover:text-emerald-400 transition-colors">prof_reyes</span>
-                <span className="text-[11px] text-slate-400 block">Faculty (Ready for Request)</span>
-              </div>
-              <span className="text-[10px] font-mono font-semibold px-2 py-0.5 rounded bg-gold-500/10 text-gold-400 border border-gold-500/20">
-                eligible
-              </span>
-            </button>
-
-            <button
-              type="button"
-              onClick={() => autofill('prof_cruz', 'faculty123')}
-              className="w-full text-left p-3 rounded-xl border border-slate-800 bg-slate-900/60 hover:border-sky-500/40 transition-all flex items-center justify-between group"
-            >
-              <div>
-                <span className="text-xs font-bold text-slate-200 group-hover:text-sky-400 transition-colors">prof_cruz</span>
-                <span className="text-[11px] text-slate-400 block">Faculty (Part 3 Resume Flow)</span>
-              </div>
-              <span className="text-[10px] font-mono font-semibold px-2 py-0.5 rounded bg-sky-500/10 text-sky-400 border border-sky-500/20">
-                in_progress
-              </span>
-            </button>
-
-            <button
-              type="button"
-              onClick={() => autofill('prof_garcia', 'faculty123')}
-              className="w-full text-left p-3 rounded-xl border border-slate-800 bg-slate-900/60 hover:border-slate-600 transition-all flex items-center justify-between group"
-            >
-              <div>
-                <span className="text-xs font-bold text-slate-200 group-hover:text-slate-100 transition-colors">prof_garcia</span>
-                <span className="text-[11px] text-slate-400 block">Faculty (Fresh Onboarding)</span>
-              </div>
-              <span className="text-[10px] font-mono font-semibold px-2 py-0.5 rounded bg-slate-500/10 text-slate-400 border border-slate-500/20">
-                not_started
-              </span>
-            </button>
-          </div>
-        </div>
+        )}
       </div>
     </div>
   );

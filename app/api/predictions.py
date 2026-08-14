@@ -23,7 +23,7 @@ from app.core.security import (
     get_user_role_name,
     log_audit,
 )
-from app.db.models import Department, Faculty, TrainingRecommendationRequest, User
+from app.db.models import Department, Faculty, RecommendationHistory, TrainingRecommendationRequest, User
 from app.db.session import get_db
 from app.api.questionnaire import build_faculty_record, is_eligible_for_recommendation
 from app.services.recommendation import individual, department as dept_recommendation
@@ -212,12 +212,23 @@ def department_recommendation(
 
     db.commit()
 
-    # Attach metadata to response
+    # Attach metadata to response (generated_at is already set by the service)
     result["department_name"] = dept.name
     result["total_faculty_in_dept"] = len(all_faculty)
     result["eligible_faculty_count"] = len(eligible_faculty)
     result["skipped_faculty"] = skipped
     result["individual_results_stored"] = individual_results_stored
+    if "generated_at" not in result:
+        result["generated_at"] = datetime.now(timezone.utc).isoformat()
+
+    # Persist department recommendation to history
+    db.add(RecommendationHistory(
+        department_id=dept.id,
+        recommendation_type="department",
+        model_version=result.get("model", {}).get("version"),
+        response_json=json.dumps(result),
+    ))
+    db.commit()
 
     log_audit(
         db, current_user, "department_recommendation",
@@ -231,6 +242,94 @@ def department_recommendation(
     )
 
     return result
+
+
+@router.get("/department/last")
+def get_department_last_recommendation(
+    department_code: str | None = None,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    """
+    Retrieve the most recent stored department-level recommendation.
+    """
+    role_name = get_user_role_name(current_user, db)
+    if role_name == "faculty":
+        raise HTTPException(status_code=403, detail="Faculty cannot view department recommendations.")
+
+    if role_name == "department_admin":
+        dept_id = get_user_department_id(current_user, db)
+        dept = db.query(Department).filter(Department.id == dept_id).first()
+        if not dept:
+            raise HTTPException(status_code=404, detail="Department not found.")
+    else:
+        if not department_code:
+            raise HTTPException(status_code=400, detail="department_code is required for system admins.")
+        dept = db.query(Department).filter(Department.code == department_code).first()
+        if not dept:
+            raise HTTPException(status_code=404, detail=f"Department '{department_code}' not found.")
+
+    # Primary: match by department_id (new records)
+    last_hist = (
+        db.query(RecommendationHistory)
+        .filter(
+            RecommendationHistory.department_id == dept.id,
+            RecommendationHistory.recommendation_type == "department",
+        )
+        .order_by(RecommendationHistory.created_at.desc())
+        .first()
+    )
+
+    # Fallback: old records stored before department_id tracking — match by code in response_json
+    if not last_hist:
+        candidates = (
+            db.query(RecommendationHistory)
+            .filter(
+                RecommendationHistory.recommendation_type == "department",
+                RecommendationHistory.department_id.is_(None),
+            )
+            .order_by(RecommendationHistory.created_at.desc())
+            .all()
+        )
+        for candidate in candidates:
+            if candidate.response_json:
+                try:
+                    payload = json.loads(candidate.response_json)
+                    if payload.get("department") == dept.code:
+                        last_hist = candidate
+                        # Backfill department_id so future queries use the fast path
+                        candidate.department_id = dept.id
+                        db.commit()
+                        break
+                except Exception:
+                    continue
+
+    if not last_hist or not last_hist.response_json:
+        return {
+            "has_recommendation": False,
+            "department": dept.code,
+            "department_name": dept.name,
+            "message": "No department recommendation has been generated yet.",
+        }
+
+    try:
+        data = json.loads(last_hist.response_json)
+        if isinstance(data, dict):
+            data["has_recommendation"] = True
+            if "generated_at" not in data and last_hist.created_at:
+                data["generated_at"] = last_hist.created_at.isoformat()
+            # Ensure department_name is always present
+            if "department_name" not in data:
+                data["department_name"] = dept.name
+            return data
+    except Exception:
+        pass
+
+    return {
+        "has_recommendation": False,
+        "department": dept.code,
+        "department_name": dept.name,
+    }
 
 
 # ─── Faculty: Get last stored recommendation for a specific faculty (admin use) ──

@@ -2,12 +2,13 @@
 
 import React from 'react';
 import { RecommendationResult, CatalogRecommendationItem } from '@/types';
-import { BookOpen, Check, Sparkles, Target, Info } from 'lucide-react';
+import { BookOpen, Check, Sparkles, Target, Info, Clock, Calendar } from 'lucide-react';
 import { formatPercent } from '@/lib/utils';
 
 interface RecommendationCardProps {
   result: RecommendationResult;
   facultyName?: string;
+  timestamp?: string | null;
 }
 
 // ─── Mini SVG Donut Chart ────────────────────────────────────────────────────
@@ -58,31 +59,49 @@ function rankColor(rank: number): string {
 }
 
 // ─── Main Component ──────────────────────────────────────────────────────────
-export default function RecommendationCard({ result, facultyName }: RecommendationCardProps) {
+export default function RecommendationCard({ result, facultyName, timestamp }: RecommendationCardProps) {
   const predictions = result.prediction?.top_predictions || [];
   const items: CatalogRecommendationItem[] = result.recommendations || [];
+
+  const rawTimestamp = timestamp || result.generated_at || result.last_recommendation_at;
+  const formattedTime = rawTimestamp
+    ? new Date(rawTimestamp).toLocaleString(undefined, {
+        dateStyle: 'medium',
+        timeStyle: 'short',
+      })
+    : null;
 
   return (
     <div className="space-y-8">
 
       {/* ── Header Banner ─────────────────────────────────────────────────── */}
-      <div className="relative overflow-hidden rounded-2xl bg-gradient-to-r from-emerald-950 via-slate-900 to-slate-900 p-5 border border-emerald-500/30 shadow-2xl">
+      <div className="relative overflow-hidden rounded-2xl bg-gradient-to-r from-emerald-950 via-slate-900 to-slate-900 p-5 sm:p-6 border border-emerald-500/30 shadow-2xl">
         <div className="absolute top-0 right-0 p-6 opacity-5 pointer-events-none">
           <Sparkles className="w-40 h-40 text-emerald-400" />
         </div>
-        <div className="relative z-10 flex items-center gap-3">
-          <div className="w-10 h-10 rounded-xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center shrink-0">
-            <Sparkles className="w-5 h-5 text-emerald-400" />
-          </div>
-          <div>
-            <div className="flex items-center gap-2 mb-0.5">
-              <span className="text-xs font-mono font-bold text-emerald-400">AI Recommendation Engine</span>
-              <span className="text-[10px] font-mono text-slate-500">v{result.model?.version}</span>
+        <div className="relative z-10 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <div className="flex items-center gap-3.5">
+            <div className="w-11 h-11 rounded-2xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center shrink-0">
+              <Sparkles className="w-6 h-6 text-emerald-400" />
             </div>
-            <h2 className="text-base font-extrabold text-white tracking-tight">
-              {facultyName ? `Training Recommendations — ${facultyName}` : 'Personalized Training Needs Analysis'}
-            </h2>
+            <div>
+              <div className="flex items-center gap-2 mb-0.5 flex-wrap">
+                <span className="text-xs font-mono font-bold text-emerald-400">AI Recommendation Engine</span>
+                <span className="text-[10px] font-mono text-slate-500">v{result.model?.version}</span>
+              </div>
+              <h2 className="text-base sm:text-lg font-extrabold text-white tracking-tight">
+                {facultyName ? `Training Recommendations — ${facultyName}` : 'Personalized Training Needs Analysis'}
+              </h2>
+            </div>
           </div>
+
+          {/* Timestamp Badge */}
+          {formattedTime && (
+            <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-300 text-xs font-mono shrink-0">
+              <Clock className="w-3.5 h-3.5 text-emerald-400" />
+              <span>Result as of: <strong className="text-white font-semibold">{formattedTime}</strong></span>
+            </div>
+          )}
         </div>
       </div>
 

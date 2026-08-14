@@ -10,7 +10,7 @@ body {
 
 @layer base {
   :root {
-    --bg-main: #f1f5f9;
+    --bg-main: #f8fafc;
     --card-bg: #ffffff;
     --text-main: #0f172a;
     --border-main: #e2e8f0;
@@ -39,39 +39,95 @@ body {
     transition: background-color 0.2s ease, color 0.2s ease;
   }
 
-  /* Light mode body overrides */
+  /* ── Light Mode Color Theme System (High Contrast & Clear Typography) ── */
   html:not(.dark) body {
-    background-color: #f1f5f9;
+    background-color: #f8fafc;
     color: #0f172a;
   }
 
-  /* Light mode card/surface overrides */
+  /* Card and Panel Surfaces */
+  html:not(.dark) .bg-slate-900\/40,
   html:not(.dark) .bg-slate-900\/60,
   html:not(.dark) .bg-slate-900\/80,
-  html:not(.dark) .bg-slate-950\/80,
-  html:not(.dark) .bg-slate-950\/60 {
-    background-color: rgba(255, 255, 255, 0.85) !important;
+  html:not(.dark) .bg-slate-950\/60,
+  html:not(.dark) .bg-slate-950\/80 {
+    background-color: #ffffff !important;
+  }
+
+  html:not(.dark) .bg-slate-900 {
+    background-color: #ffffff !important;
   }
 
   html:not(.dark) .bg-slate-950 {
-    background-color: #f8fafc !important;
+    background-color: #f1f5f9 !important;
   }
 
-  html:not(.dark) .border-slate-800 {
+  /* Borders */
+  html:not(.dark) .border-slate-800,
+  html:not(.dark) .border-slate-800\/80,
+  html:not(.dark) .border-slate-800\/40 {
     border-color: #e2e8f0 !important;
   }
 
+  html:not(.dark) .border-slate-700,
+  html:not(.dark) .border-slate-700\/80 {
+    border-color: #cbd5e1 !important;
+  }
+
+  /* Text inside light surfaces */
   html:not(.dark) .text-slate-400 {
-    color: #475569 !important;
+    color: #64748b !important;
   }
 
   html:not(.dark) .text-slate-300 {
-    color: #334155 !important;
+    color: #475569 !important;
   }
 
-  html:not(.dark) .text-slate-100,
-  html:not(.dark) .text-white {
+  html:not(.dark) .text-slate-200 {
+    color: #1e293b !important;
+  }
+
+  html:not(.dark) .text-slate-100 {
     color: #0f172a !important;
+  }
+
+  /* Headings in cards */
+  html:not(.dark) h1.text-white,
+  html:not(.dark) h2.text-white,
+  html:not(.dark) h3.text-white,
+  html:not(.dark) h4.text-white {
+    color: #0f172a !important;
+  }
+
+  /* Form Inputs in light mode */
+  html:not(.dark) input.bg-slate-950,
+  html:not(.dark) select.bg-slate-950,
+  html:not(.dark) textarea.bg-slate-950 {
+    background-color: #ffffff !important;
+    color: #0f172a !important;
+    border-color: #cbd5e1 !important;
+  }
+
+  html:not(.dark) input::placeholder,
+  html:not(.dark) textarea::placeholder {
+    color: #94a3b8 !important;
+  }
+
+  /* Retain bright white text on primary/action colored buttons and dark gradient banners */
+  html:not(.dark) button.bg-emerald-600,
+  html:not(.dark) button.bg-rose-600,
+  html:not(.dark) button.bg-blue-600,
+  html:not(.dark) .bg-emerald-600,
+  html:not(.dark) .bg-rose-600,
+  html:not(.dark) .bg-gradient-to-r.from-emerald-600,
+  html:not(.dark) .bg-gradient-to-r.from-emerald-950,
+  html:not(.dark) .bg-gradient-to-r.from-emerald-950 * {
+    color: inherit;
+  }
+
+  html:not(.dark) button.bg-emerald-600 *,
+  html:not(.dark) button.bg-rose-600 * {
+    color: #ffffff !important;
   }
 }
 

@@ -7,7 +7,7 @@ import { UserListItem, DepartmentRecommendationResult } from '@/types';
 import StatusBadge from '@/components/StatusBadge';
 import { useToast } from '@/context/ToastContext';
 import SearchInput from '@/components/SearchInput';
-import { TableSkeleton } from '@/components/Skeletons';
+import { TableSkeleton, RecommendationSkeleton } from '@/components/Skeletons';
 import { ViewEditUserModal, DeleteUserModal } from '@/components/UserModals';
 import {
   Users,
@@ -22,7 +22,9 @@ import {
   Pencil,
   Key,
   Trash2,
-  User as UserIcon,
+  Clock,
+  ArrowRight,
+  Brain,
 } from 'lucide-react';
 import { formatPercent } from '@/lib/utils';
 
@@ -44,9 +46,9 @@ function DonutChart({ probability, color = '#10b981' }: { probability: number; c
         stroke={color}
         strokeWidth="7"
         strokeDasharray={`${filled} ${gap}`}
+        strokeDashoffset={circ / 4}
         strokeLinecap="round"
-        transform="rotate(-90 26 26)"
-        style={{ transition: 'stroke-dasharray 0.6s ease' }}
+        className="transition-all duration-700 ease-out"
       />
       <text
         x="26"
@@ -74,6 +76,7 @@ export default function DeptDashboardPage() {
   const [searchQuery, setSearchQuery] = useState('');
   const [deptResult, setDeptResult] = useState<DepartmentRecommendationResult | null>(null);
   const [loadingUsers, setLoadingUsers] = useState(true);
+  const [loadingInitialDeptRec, setLoadingInitialDeptRec] = useState(true);
   const [runningDeptRec, setRunningDeptRec] = useState(false);
 
   // Modals state
@@ -94,15 +97,38 @@ export default function DeptDashboardPage() {
     }
   }, [showToast]);
 
+  const loadLatestDeptRec = useCallback(async () => {
+    setLoadingInitialDeptRec(true);
+    try {
+      const res = await api.get('/recommendations/department/last');
+      if (res.data?.has_recommendation) {
+        setDeptResult(res.data);
+      }
+    } catch {
+      // Recommendation not yet generated
+    } finally {
+      setLoadingInitialDeptRec(false);
+    }
+  }, []);
+
   useEffect(() => {
     loadFaculty();
-  }, [loadFaculty]);
+    loadLatestDeptRec();
+  }, [loadFaculty, loadLatestDeptRec]);
 
   const handleRunDeptRecommendation = async () => {
+    // Clear stale result immediately so the skeleton shows cleanly
+    setDeptResult(null);
     setRunningDeptRec(true);
+    showToast('info', 'Department Aggregation Active', 'Aggregating faculty needs across department...');
     try {
       const res = await api.post('/recommendations/department');
-      setDeptResult(res.data);
+      // Always use the fresh generated_at from the API response
+      const freshResult = {
+        ...res.data,
+        generated_at: res.data.generated_at || new Date().toISOString(),
+      };
+      setDeptResult(freshResult);
       showToast('success', 'Department Recommendation Ready!', `Analyzed ${res.data.eligible_faculty_count} eligible faculty members.`);
       await loadFaculty();
     } catch (err: any) {
@@ -114,6 +140,10 @@ export default function DeptDashboardPage() {
   };
 
   const deptCode = users[0]?.department_code || 'BSIT';
+  const eligibleFacultyCount = useMemo(
+    () => users.filter((u) => u.status === 'eligible' || u.status === 'has_recommendation').length,
+    [users]
+  );
 
   // Filtered faculty list based on debounced search query
   const filteredUsers = useMemo(() => {
@@ -130,6 +160,14 @@ export default function DeptDashboardPage() {
         (u.status && u.status.toLowerCase().includes(q))
     );
   }, [users, searchQuery]);
+
+  const deptTimestamp = deptResult?.generated_at || deptResult?.last_recommendation_at;
+  const formattedDeptTime = deptTimestamp
+    ? new Date(deptTimestamp).toLocaleString(undefined, {
+        dateStyle: 'medium',
+        timeStyle: 'short',
+      })
+    : null;
 
   return (
     <div className="space-y-8 max-w-6xl mx-auto">
@@ -172,34 +210,46 @@ export default function DeptDashboardPage() {
             ) : (
               <>
                 <Sparkles className="w-4 h-4 text-slate-950" />
-                <span>Run Department Recommendation</span>
+                <span>{deptResult ? 'Re-run Recommendation' : 'Run Department Recommendation'}</span>
               </>
             )}
           </button>
         </div>
       </div>
 
-      {/* 2. Department Aggregated Recommendation Results (if generated) */}
-      {deptResult && (
+      {/* 2. Skeleton while running OR Department Aggregated Recommendation Results */}
+      {runningDeptRec || loadingInitialDeptRec ? (
+        <RecommendationSkeleton message="Analyzing Department Training Gaps & Aggregating Recommendations..." />
+      ) : deptResult ? (
         <div className="space-y-8">
           {/* Header Banner */}
-          <div className="relative overflow-hidden rounded-2xl bg-gradient-to-r from-emerald-950 via-slate-900 to-slate-900 p-5 border border-emerald-500/30 shadow-2xl">
+          <div className="relative overflow-hidden rounded-2xl bg-gradient-to-r from-emerald-950 via-slate-900 to-slate-900 p-5 sm:p-6 border border-emerald-500/30 shadow-2xl">
             <div className="absolute top-0 right-0 p-6 opacity-5 pointer-events-none">
               <Sparkles className="w-40 h-40 text-emerald-400" />
             </div>
-            <div className="relative z-10 flex items-center gap-3">
-              <div className="w-10 h-10 rounded-xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center shrink-0">
-                <Sparkles className="w-5 h-5 text-emerald-400" />
-              </div>
-              <div>
-                <div className="flex items-center gap-2 mb-0.5">
-                  <span className="text-xs font-mono font-bold text-emerald-400">Department Recommendation Output</span>
-                  <span className="text-[10px] font-mono text-slate-500">v{deptResult.model?.version}</span>
+            <div className="relative z-10 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+              <div className="flex items-center gap-3.5">
+                <div className="w-11 h-11 rounded-2xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center shrink-0">
+                  <Sparkles className="w-6 h-6 text-emerald-400" />
                 </div>
-                <h2 className="text-base font-extrabold text-white tracking-tight">
-                  Aggregated Training Priorities — {deptResult.department} Department
-                </h2>
+                <div>
+                  <div className="flex items-center gap-2 mb-0.5 flex-wrap">
+                    <span className="text-xs font-mono font-bold text-emerald-400">Department Recommendation Output</span>
+                    <span className="text-[10px] font-mono text-slate-500">v{deptResult.model?.version}</span>
+                  </div>
+                  <h2 className="text-base sm:text-lg font-extrabold text-white tracking-tight">
+                    Aggregated Training Priorities — {deptResult.department} Department
+                  </h2>
+                </div>
               </div>
+
+              {/* Timestamp Badge */}
+              {formattedDeptTime && (
+                <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-300 text-xs font-mono shrink-0">
+                  <Clock className="w-3.5 h-3.5 text-emerald-400" />
+                  <span>Result as of: <strong className="text-white font-semibold">{formattedDeptTime}</strong></span>
+                </div>
+              )}
             </div>
           </div>
 
@@ -251,7 +301,7 @@ export default function DeptDashboardPage() {
               <div>
                 <h3 className="text-base font-extrabold text-white">Recommended Department Training Programs</h3>
                 <p className="text-xs text-slate-400 leading-relaxed mt-0.5">
-                  These matched catalog items represent specific programs that address the aggregated gaps of your department's faculty. Plan department-wide webinars, workshops, or training courses around these high-scoring catalog matches.
+                  These matched catalog items represent specific programs that address the aggregated gaps of your department&apos;s faculty. Plan department-wide webinars, workshops, or training courses around these high-scoring catalog matches.
                 </p>
               </div>
             </div>
@@ -329,6 +379,51 @@ export default function DeptDashboardPage() {
             )}
           </div>
         </div>
+      ) : (
+        /* Empty State / Trigger Card for Department Recommendations */
+        <div className="relative overflow-hidden rounded-3xl border border-slate-800 bg-slate-900/60 p-8 text-center shadow-xl backdrop-blur-md space-y-6">
+          <div className="w-16 h-16 mx-auto rounded-3xl bg-gold-500/10 border border-gold-500/20 flex items-center justify-center text-gold-400">
+            <Brain className="w-8 h-8" />
+          </div>
+
+          <div className="max-w-xl mx-auto space-y-2">
+            <h3 className="text-lg font-bold text-white">
+              Generate {deptCode} Department Training Recommendations
+            </h3>
+            <p className="text-xs text-slate-400 leading-relaxed">
+              Aggregate individual survey responses across all active faculty members in {deptCode} to synthesize department-wide priority training areas and match high-impact catalog courses.
+            </p>
+          </div>
+
+          <div className="flex flex-wrap items-center justify-center gap-4 text-xs font-mono text-slate-300">
+            <div className="px-3.5 py-1.5 rounded-xl bg-slate-950 border border-slate-800 flex items-center gap-2">
+              <span className="w-2 h-2 rounded-full bg-emerald-400" />
+              <span>
+                <strong>{eligibleFacultyCount}</strong> of <strong>{users.length}</strong> Faculty Eligible
+              </span>
+            </div>
+            <div className="px-3.5 py-1.5 rounded-xl bg-slate-950 border border-slate-800 flex items-center gap-2">
+              <Sparkles className="w-3.5 h-3.5 text-gold-400" />
+              <span>Multi-Label AI Prioritization</span>
+            </div>
+          </div>
+
+          <button
+            onClick={handleRunDeptRecommendation}
+            disabled={runningDeptRec || eligibleFacultyCount === 0}
+            className="inline-flex items-center gap-2 px-6 py-3 rounded-2xl bg-gradient-to-r from-gold-600 to-gold-500 hover:from-gold-500 hover:to-gold-400 text-slate-950 font-extrabold text-sm shadow-xl shadow-gold-950/40 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            <Sparkles className="w-4 h-4 text-slate-950" />
+            <span>Generate Department Recommendations</span>
+            <ArrowRight className="w-4 h-4 text-slate-950 ml-1" />
+          </button>
+
+          {eligibleFacultyCount === 0 && users.length > 0 && (
+            <p className="text-[11px] text-amber-400 font-medium">
+              Note: Faculty members must complete the required questionnaire parts (status &quot;eligible&quot; or &quot;has_recommendation&quot;) before department aggregation can run.
+            </p>
+          )}
+        </div>
       )}
 
       {/* 3. Department Faculty Users Table */}
@@ -361,7 +456,7 @@ export default function DeptDashboardPage() {
           </div>
         ) : filteredUsers.length === 0 ? (
           <div className="py-12 text-center border border-dashed border-slate-800 rounded-2xl text-xs text-slate-400 space-y-1">
-            <p className="text-slate-300 font-semibold">No faculty found matching "{searchQuery}"</p>
+            <p className="text-slate-300 font-semibold">No faculty found matching &quot;{searchQuery}&quot;</p>
             <p className="text-slate-500">Try clearing the search or searching for a different keyword.</p>
           </div>
         ) : (
