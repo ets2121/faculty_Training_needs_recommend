@@ -382,8 +382,12 @@ export default function DeptDashboardPage() {
       ) : (
         /* Empty State / Trigger Card for Department Recommendations */
         <div className="relative overflow-hidden rounded-3xl border border-slate-800 bg-slate-900/60 p-8 text-center shadow-xl backdrop-blur-md space-y-6">
-          <div className="w-16 h-16 mx-auto rounded-3xl bg-gold-500/10 border border-gold-500/20 flex items-center justify-center text-gold-400">
-            <Brain className="w-8 h-8" />
+          <div className="flex justify-center">
+            <img
+              src="/images/logo.png"
+              alt="QSU Recommender"
+              className="w-16 h-16 object-contain"
+            />
           </div>
 
           <div className="max-w-xl mx-auto space-y-2">
@@ -403,7 +407,7 @@ export default function DeptDashboardPage() {
               </span>
             </div>
             <div className="px-3.5 py-1.5 rounded-xl bg-slate-950 border border-slate-800 flex items-center gap-2">
-              <Sparkles className="w-3.5 h-3.5 text-gold-400" />
+              <img src="/images/logo.png" alt="QSU Recommender" className="w-3.5 h-3.5 object-contain" />
               <span>Multi-Label AI Prioritization</span>
             </div>
           </div>

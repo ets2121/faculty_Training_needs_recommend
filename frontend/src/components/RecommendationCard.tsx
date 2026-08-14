@@ -77,13 +77,19 @@ export default function RecommendationCard({ result, facultyName, timestamp }: R
       {/* ── Header Banner ─────────────────────────────────────────────────── */}
       <div className="relative overflow-hidden rounded-2xl bg-gradient-to-r from-emerald-950 via-slate-900 to-slate-900 p-5 sm:p-6 border border-emerald-500/30 shadow-2xl">
         <div className="absolute top-0 right-0 p-6 opacity-5 pointer-events-none">
-          <Sparkles className="w-40 h-40 text-emerald-400" />
+          <img
+            src="/images/hero-2.png"
+            alt="QSU Recommender"
+            className="w-40 h-40 object-contain"
+          />
         </div>
         <div className="relative z-10 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div className="flex items-center gap-3.5">
-            <div className="w-11 h-11 rounded-2xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center shrink-0">
-              <Sparkles className="w-6 h-6 text-emerald-400" />
-            </div>
+            <img
+              src="/images/logo.png"
+              alt="QSU Recommender"
+              className="w-11 h-11 object-contain shrink-0"
+            />
             <div>
               <div className="flex items-center gap-2 mb-0.5 flex-wrap">
                 <span className="text-xs font-mono font-bold text-emerald-400">AI Recommendation Engine</span>

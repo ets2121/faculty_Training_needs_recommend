@@ -32,12 +32,16 @@ export default function AboutPage() {
       {/* ── 1. Hero Section ── */}
       <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-emerald-950 via-slate-900 to-slate-950 border border-emerald-500/30 p-8 sm:p-12 shadow-2xl">
         <div className="absolute top-0 right-0 p-8 opacity-10 pointer-events-none">
-          <Brain className="w-72 h-72 text-emerald-400" />
+          <img
+            src="/images/hero-2.png"
+            alt="QSU Recommender"
+            className="w-72 h-72 object-contain"
+          />
         </div>
 
         <div className="relative z-10 space-y-4 max-w-3xl">
           <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-semibold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
-            <Sparkles className="w-3.5 h-3.5" />
+            <img src="/images/logo.png" alt="QSU Recommender" className="w-4 h-4 object-contain" />
             <span>AI-Driven Institutional Decision Support System</span>
           </div>
 

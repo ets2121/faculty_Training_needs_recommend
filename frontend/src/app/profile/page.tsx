@@ -179,11 +179,11 @@ export default function ProfilePage() {
       {/* ── Header Banner ── */}
       <div className="bg-slate-900/60 dark:bg-slate-900/80 border border-slate-800 rounded-3xl p-6 sm:p-8 shadow-xl backdrop-blur-md flex flex-col sm:flex-row sm:items-center justify-between gap-6">
         <div className="flex items-center gap-5">
-          <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-emerald-500 to-gold-500 p-0.5 shadow-xl shrink-0">
-            <div className="w-full h-full bg-slate-950 rounded-[14px] flex items-center justify-center text-emerald-400 font-extrabold text-2xl">
-              {(fullName || authUser?.username || 'U').slice(0, 1).toUpperCase()}
-            </div>
-          </div>
+          <img
+            src="/images/logo.png"
+            alt="QSU Recommender"
+            className="w-16 h-16 object-contain shrink-0"
+          />
 
           <div className="space-y-1">
             <div className="flex items-center gap-2 flex-wrap">

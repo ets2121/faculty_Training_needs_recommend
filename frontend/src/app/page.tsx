@@ -23,18 +23,18 @@ export default function Home() {
   return (
     <div className="space-y-8 max-w-5xl mx-auto py-6">
       {/* Hero Header */}
-      <div className="text-center space-y-4 py-8">
-        <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-semibold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
-          <Sparkles className="w-3.5 h-3.5 text-gold-400" />
-          <span>QSU Faculty Training Needs Recommender System</span>
-        </div>
-
-        <div className="relative mx-auto max-w-3xl">
+      <div className="text-center space-y-6 py-10">
+        <div className="mx-auto w-full max-w-3xl">
           <img
             src="/images/hero.png"
-            alt="QSU Recommender Hero"
-            className="mx-auto w-full max-h-[220px] object-contain drop-shadow-2xl"
+            alt="QSU Recommender"
+            className="mx-auto w-full max-h-[240px] object-contain drop-shadow-2xl"
           />
+        </div>
+
+        <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-semibold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+          <img src="/images/logo.png" alt="QSU Recommender" className="w-3.5 h-3.5 object-contain" />
+          <span>QSU Faculty Training Needs Recommender System</span>
         </div>
 
         <h1 className="text-3xl sm:text-5xl font-extrabold text-white tracking-tight leading-tight">
@@ -48,7 +48,7 @@ export default function Home() {
           A research-backed system matching faculty competency assessments and emerging training needs to institutional catalog programs using machine learning.
         </p>
 
-        <div className="pt-4 flex items-center justify-center gap-4">
+        <div className="pt-2 flex items-center justify-center gap-4">
           <Link
             href="/login"
             className="flex items-center gap-2 px-6 py-3 rounded-xl bg-gradient-to-r from-emerald-600 to-emerald-500 hover:from-emerald-500 hover:to-emerald-400 text-white font-bold text-sm shadow-xl shadow-emerald-950/50 transition-all hover:scale-105"
