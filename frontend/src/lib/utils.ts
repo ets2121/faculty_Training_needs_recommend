@@ -15,30 +15,30 @@ export function getStatusBadgeConfig(status: QuestionnaireStatus | string) {
     case 'has_recommendation':
       return {
         label: 'Recommendation Ready',
-        bg: 'bg-emerald-500/15 text-emerald-400 border-emerald-500/30',
-        dotBg: 'bg-emerald-400',
+        bg: 'bg-brand-green/15 text-brand-green border-brand-green/30',
+        dotBg: 'bg-brand-green',
         description: 'Complete questionnaire and active training recommendations generated.',
       };
     case 'eligible':
       return {
         label: 'Eligible for Recommendation',
-        bg: 'bg-gold-500/15 text-gold-400 border-gold-500/30',
-        dotBg: 'bg-gold-400 animate-ping',
+        bg: 'bg-brand-gold/15 text-brand-gold-dark border-brand-gold/30',
+        dotBg: 'bg-brand-gold animate-ping',
         description: 'Minimum required questionnaire parts complete. Click to request recommendation.',
       };
     case 'in_progress':
       return {
         label: 'In Progress',
-        bg: 'bg-sky-500/15 text-sky-400 border-sky-500/30',
-        dotBg: 'bg-sky-400',
+        bg: 'bg-sky-500/15 text-sky-600 dark:text-sky-400 border-sky-500/30',
+        dotBg: 'bg-sky-500',
         description: 'Questionnaire started but missing required parts (1, 2, 3, 5, or 6).',
       };
     case 'not_started':
     default:
       return {
         label: 'Not Started',
-        bg: 'bg-slate-500/15 text-slate-400 border-slate-500/30',
-        dotBg: 'bg-slate-400',
+        bg: 'bg-light-bg dark:bg-dark-bg text-light-text dark:text-dark-muted border-light-border dark:border-dark-border',
+        dotBg: 'bg-gray-400 dark:bg-gray-500',
         description: 'No questionnaire forms submitted yet.',
       };
   }

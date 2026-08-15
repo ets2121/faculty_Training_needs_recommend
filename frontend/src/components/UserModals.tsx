@@ -133,22 +133,22 @@ export function ViewEditUserModal({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/85 backdrop-blur-sm">
-      <div className="bg-slate-900 border border-slate-700/80 rounded-3xl shadow-2xl max-w-xl w-full max-h-[92vh] flex flex-col">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/30 dark:bg-black/60 backdrop-blur-sm">
+      <div className="bg-white dark:bg-dark-card border border-light-border dark:border-dark-border rounded-3xl shadow-xl max-w-xl w-full max-h-[92vh] flex flex-col">
         {/* Header */}
-        <div className="flex items-start justify-between p-6 border-b border-slate-800">
+        <div className="flex items-start justify-between p-6 border-b border-light-border dark:border-dark-border">
           <div className="flex items-center gap-3">
-            <div className="w-11 h-11 rounded-2xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-emerald-400 font-bold text-sm">
+            <div className="w-11 h-11 rounded-2xl bg-brand-green/10 border border-brand-green/20 flex items-center justify-center text-brand-green font-bold text-sm">
               {user.username.slice(0, 2).toUpperCase()}
             </div>
             <div>
               <div className="flex items-center gap-2">
                 <h3 className="text-base font-extrabold text-white">{user.full_name || user.username}</h3>
-                <span className="text-[10px] font-mono font-bold px-2 py-0.5 rounded border bg-slate-800 text-slate-300 border-slate-700">
+                <span className="text-[10px] font-mono font-bold px-2 py-0.5 rounded border bg-white dark:bg-dark-bg text-light-text dark:text-dark-text border-light-border dark:border-dark-border">
                   {user.role}
                 </span>
               </div>
-              <p className="text-xs text-slate-400 mt-0.5">
+              <p className="text-xs text-light-text dark:text-dark-muted mt-0.5">
                 @{user.username} {user.department_code ? `· ${user.department_code}` : ''}
               </p>
             </div>
@@ -156,20 +156,20 @@ export function ViewEditUserModal({
 
           <button
             onClick={onClose}
-            className="w-8 h-8 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-400 hover:text-white flex items-center justify-center transition-all"
+            className="w-8 h-8 rounded-xl bg-white dark:bg-dark-bg hover:bg-light-bg dark:hover:bg-dark-card text-light-text dark:text-dark-muted hover:text-white flex items-center justify-center transition-all"
           >
             <X className="w-4 h-4" />
           </button>
         </div>
 
         {/* Tab switch */}
-        <div className="flex items-center gap-2 px-6 pt-3 border-b border-slate-800/80">
+        <div className="flex items-center gap-2 px-6 pt-3 border-b border-light-border dark:border-dark-border/80">
           <button
             onClick={() => setActiveTab('details')}
             className={`flex items-center gap-2 pb-2.5 text-xs font-bold transition-all border-b-2 ${
               activeTab === 'details'
-                ? 'text-emerald-400 border-emerald-400'
-                : 'text-slate-400 border-transparent hover:text-white'
+                ? 'text-brand-green border-emerald-400'
+                : 'text-light-text dark:text-dark-muted border-transparent hover:text-white'
             }`}
           >
             <User className="w-3.5 h-3.5" />
@@ -179,8 +179,8 @@ export function ViewEditUserModal({
             onClick={() => setActiveTab('password')}
             className={`flex items-center gap-2 pb-2.5 text-xs font-bold transition-all border-b-2 ${
               activeTab === 'password'
-                ? 'text-amber-400 border-amber-400'
-                : 'text-slate-400 border-transparent hover:text-white'
+                ? 'text-brand-gold border-brand-gold'
+                : 'text-light-text dark:text-dark-muted border-transparent hover:text-white'
             }`}
           >
             <Key className="w-3.5 h-3.5" />
@@ -193,13 +193,13 @@ export function ViewEditUserModal({
           {activeTab === 'details' ? (
             <form id="edit-user-form" onSubmit={handleSaveDetails} className="space-y-4">
               {/* Account Metadata strip */}
-              <div className="grid grid-cols-2 gap-3 p-3 rounded-xl bg-slate-950/60 border border-slate-800 text-[11px]">
-                <div className="flex items-center gap-2 text-slate-400">
-                  <Calendar className="w-3.5 h-3.5 text-slate-500" />
+              <div className="grid grid-cols-2 gap-3 p-3 rounded-xl bg-light-bg dark:bg-dark-bg border border-light-border dark:border-dark-border text-[11px]">
+                <div className="flex items-center gap-2 text-light-text dark:text-dark-muted">
+                  <Calendar className="w-3.5 h-3.5 text-light-text dark:text-dark-muted" />
                   <span>Joined: {user.created_at ? new Date(user.created_at).toLocaleDateString() : '—'}</span>
                 </div>
-                <div className="flex items-center gap-2 text-slate-400">
-                  <Clock className="w-3.5 h-3.5 text-slate-500" />
+                <div className="flex items-center gap-2 text-light-text dark:text-dark-muted">
+                  <Clock className="w-3.5 h-3.5 text-light-text dark:text-dark-muted" />
                   <span>Last Login: {user.last_login_at ? new Date(user.last_login_at).toLocaleDateString() : 'Never'}</span>
                 </div>
               </div>
@@ -207,23 +207,23 @@ export function ViewEditUserModal({
               {/* Full Name & Email */}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div className="space-y-1">
-                  <label className="block text-xs font-semibold text-slate-200">Full Name</label>
+                  <label className="block text-xs font-semibold text-light-text dark:text-dark-text">Full Name</label>
                   <input
                     type="text"
                     value={fullName}
                     onChange={(e) => setFullName(e.target.value)}
                     placeholder="e.g. Dr. Maria Santos"
-                    className="w-full bg-slate-950 border border-slate-700 hover:border-slate-500 focus:border-emerald-500 rounded-xl px-3.5 py-2 text-xs text-white outline-none transition-colors"
+                    className="w-full bg-light-bg dark:bg-dark-bg border border-light-border dark:border-dark-border hover:border-slate-500 focus:border-emerald-500 rounded-xl px-3.5 py-2 text-xs text-white outline-none transition-colors"
                   />
                 </div>
                 <div className="space-y-1">
-                  <label className="block text-xs font-semibold text-slate-200">Email Address</label>
+                  <label className="block text-xs font-semibold text-light-text dark:text-dark-text">Email Address</label>
                   <input
                     type="email"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                     placeholder="e.g. santos@qsu.edu.ph"
-                    className="w-full bg-slate-950 border border-slate-700 hover:border-slate-500 focus:border-emerald-500 rounded-xl px-3.5 py-2 text-xs text-white outline-none transition-colors"
+                    className="w-full bg-light-bg dark:bg-dark-bg border border-light-border dark:border-dark-border hover:border-slate-500 focus:border-emerald-500 rounded-xl px-3.5 py-2 text-xs text-white outline-none transition-colors"
                   />
                 </div>
               </div>
@@ -231,11 +231,11 @@ export function ViewEditUserModal({
               {/* Status (Sys Admin only) */}
               {isSysAdmin && (
                 <div className="space-y-1">
-                  <label className="block text-xs font-semibold text-slate-200">Account Status</label>
+                  <label className="block text-xs font-semibold text-light-text dark:text-dark-text">Account Status</label>
                   <select
                     value={status}
                     onChange={(e) => setStatus(e.target.value)}
-                    className="w-full bg-slate-950 border border-slate-700 hover:border-slate-500 focus:border-emerald-500 rounded-xl px-3.5 py-2 text-xs text-white outline-none transition-colors"
+                    className="w-full bg-light-bg dark:bg-dark-bg border border-light-border dark:border-dark-border hover:border-slate-500 focus:border-emerald-500 rounded-xl px-3.5 py-2 text-xs text-white outline-none transition-colors"
                   >
                     <option value="active">Active (Access allowed)</option>
                     <option value="inactive">Inactive (Account locked)</option>
@@ -245,29 +245,29 @@ export function ViewEditUserModal({
 
               {/* Faculty-specific details */}
               {isFaculty && (
-                <div className="space-y-4 pt-2 border-t border-slate-800">
-                  <h4 className="text-xs font-bold text-emerald-400 uppercase tracking-wider flex items-center gap-1.5">
+                <div className="space-y-4 pt-2 border-t border-light-border dark:border-dark-border">
+                  <h4 className="text-xs font-bold text-brand-green uppercase tracking-wider flex items-center gap-1.5">
                     <GraduationCap className="w-3.5 h-3.5" /> Faculty Academic Info
                   </h4>
 
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div className="space-y-1">
-                      <label className="block text-xs font-semibold text-slate-200">Faculty ID / Code</label>
+                      <label className="block text-xs font-semibold text-light-text dark:text-dark-text">Faculty ID / Code</label>
                       <input
                         type="text"
                         value={facultyCode}
                         onChange={(e) => setFacultyCode(e.target.value)}
                         placeholder="e.g. BSIT-001"
-                        className="w-full bg-slate-950 border border-slate-700 hover:border-slate-500 focus:border-emerald-500 rounded-xl px-3.5 py-2 text-xs text-white font-mono outline-none transition-colors"
+                        className="w-full bg-light-bg dark:bg-dark-bg border border-light-border dark:border-dark-border hover:border-slate-500 focus:border-emerald-500 rounded-xl px-3.5 py-2 text-xs text-white font-mono outline-none transition-colors"
                       />
                     </div>
 
                     <div className="space-y-1">
-                      <label className="block text-xs font-semibold text-slate-200">Academic Rank</label>
+                      <label className="block text-xs font-semibold text-light-text dark:text-dark-text">Academic Rank</label>
                       <select
                         value={academicRank}
                         onChange={(e) => setAcademicRank(e.target.value)}
-                        className="w-full bg-slate-950 border border-slate-700 hover:border-slate-500 focus:border-emerald-500 rounded-xl px-3.5 py-2 text-xs text-white outline-none transition-colors"
+                        className="w-full bg-light-bg dark:bg-dark-bg border border-light-border dark:border-dark-border hover:border-slate-500 focus:border-emerald-500 rounded-xl px-3.5 py-2 text-xs text-white outline-none transition-colors"
                       >
                         {ACADEMIC_RANKS.map((r) => (
                           <option key={r} value={r}>{r}</option>
@@ -278,11 +278,11 @@ export function ViewEditUserModal({
 
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div className="space-y-1">
-                      <label className="block text-xs font-semibold text-slate-200">Highest Educational Attainment</label>
+                      <label className="block text-xs font-semibold text-light-text dark:text-dark-text">Highest Educational Attainment</label>
                       <select
                         value={highestDegree}
                         onChange={(e) => setHighestDegree(e.target.value)}
-                        className="w-full bg-slate-950 border border-slate-700 hover:border-slate-500 focus:border-emerald-500 rounded-xl px-3.5 py-2 text-xs text-white outline-none transition-colors"
+                        className="w-full bg-light-bg dark:bg-dark-bg border border-light-border dark:border-dark-border hover:border-slate-500 focus:border-emerald-500 rounded-xl px-3.5 py-2 text-xs text-white outline-none transition-colors"
                       >
                         {HIGHEST_DEGREES.map((d) => (
                           <option key={d} value={d}>{d}</option>
@@ -291,13 +291,13 @@ export function ViewEditUserModal({
                     </div>
 
                     <div className="space-y-1">
-                      <label className="block text-xs font-semibold text-slate-200">Field of Specialization</label>
+                      <label className="block text-xs font-semibold text-light-text dark:text-dark-text">Field of Specialization</label>
                       <input
                         type="text"
                         value={specialization}
                         onChange={(e) => setSpecialization(e.target.value)}
                         placeholder="e.g. Computer Science, Mathematics"
-                        className="w-full bg-slate-950 border border-slate-700 hover:border-slate-500 focus:border-emerald-500 rounded-xl px-3.5 py-2 text-xs text-white outline-none transition-colors"
+                        className="w-full bg-light-bg dark:bg-dark-bg border border-light-border dark:border-dark-border hover:border-slate-500 focus:border-emerald-500 rounded-xl px-3.5 py-2 text-xs text-white outline-none transition-colors"
                       />
                     </div>
                   </div>
@@ -306,15 +306,15 @@ export function ViewEditUserModal({
             </form>
           ) : (
             <form id="reset-password-form" onSubmit={handleResetPassword} className="space-y-4">
-              <div className="p-4 rounded-2xl bg-amber-500/10 border border-amber-500/20 flex items-start gap-3">
-                <AlertCircle className="w-4 h-4 text-amber-400 shrink-0 mt-0.5" />
-                <div className="text-xs text-amber-200 leading-relaxed">
+              <div className="p-4 rounded-2xl bg-amber-500/10 border border-brand-gold/20 flex items-start gap-3">
+                <AlertCircle className="w-4 h-4 text-brand-gold shrink-0 mt-0.5" />
+                <div className="text-xs text-brand-gold-dark leading-relaxed">
                   <strong>Emergency Password Override:</strong> This feature immediately sets a new password for <span className="font-mono text-white font-bold">{user.username}</span> without requiring their old password.
                 </div>
               </div>
 
               <div className="space-y-1">
-                <label className="block text-xs font-semibold text-slate-200">New Temporary Password *</label>
+                <label className="block text-xs font-semibold text-light-text dark:text-dark-text">New Temporary Password *</label>
                 <div className="relative">
                   <input
                     type={showPassword ? 'text' : 'password'}
@@ -323,28 +323,28 @@ export function ViewEditUserModal({
                     value={newPassword}
                     onChange={(e) => setNewPassword(e.target.value)}
                     placeholder="Enter new password (min. 6 characters)"
-                    className="w-full bg-slate-950 border border-slate-700 hover:border-slate-500 focus:border-amber-500 rounded-xl pl-3.5 pr-10 py-2.5 text-xs text-white outline-none transition-colors"
+                    className="w-full bg-light-bg dark:bg-dark-bg border border-light-border dark:border-dark-border hover:border-slate-500 focus:border-amber-500 rounded-xl pl-3.5 pr-10 py-2.5 text-xs text-white outline-none transition-colors"
                   />
                   <button
                     type="button"
                     onClick={() => setShowPassword(!showPassword)}
-                    className="absolute right-3 top-2.5 text-slate-400 hover:text-white"
+                    className="absolute right-3 top-2.5 text-light-text dark:text-dark-muted hover:text-white"
                   >
                     {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                   </button>
                 </div>
-                <p className="text-[11px] text-slate-500">Instruct the user to change their password upon logging in.</p>
+                <p className="text-[11px] text-light-text dark:text-dark-muted">Instruct the user to change their password upon logging in.</p>
               </div>
             </form>
           )}
         </div>
 
         {/* Footer */}
-        <div className="p-5 border-t border-slate-800 bg-slate-950/40 rounded-b-3xl flex items-center justify-end gap-3">
+        <div className="p-5 border-t border-light-border dark:border-dark-border bg-light-bg/60 dark:bg-dark-bg/60 rounded-b-3xl flex items-center justify-end gap-3">
           <button
             type="button"
             onClick={onClose}
-            className="px-4 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-semibold transition-all"
+            className="px-4 py-2 rounded-xl bg-white dark:bg-dark-bg hover:bg-light-bg dark:hover:bg-dark-card text-light-text dark:text-dark-text text-xs font-semibold transition-all"
           >
             Cancel
           </button>
@@ -354,7 +354,7 @@ export function ViewEditUserModal({
               type="submit"
               form="edit-user-form"
               disabled={saving}
-              className="flex items-center gap-2 px-5 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 disabled:opacity-50 text-white font-bold text-xs shadow-lg shadow-emerald-950/40 transition-all"
+              className="flex items-center gap-2 px-5 py-2 rounded-xl bg-brand-green hover:bg-brand-green-dark disabled:opacity-50 text-white font-bold text-xs shadow-lg transition-all"
             >
               {saving ? <><RefreshCw className="w-3.5 h-3.5 animate-spin" /> Saving...</> : <><Check className="w-3.5 h-3.5" /> Save Changes</>}
             </button>
@@ -363,7 +363,7 @@ export function ViewEditUserModal({
               type="submit"
               form="reset-password-form"
               disabled={saving || newPassword.length < 6}
-              className="flex items-center gap-2 px-5 py-2 rounded-xl bg-amber-600 hover:bg-amber-500 disabled:opacity-50 text-slate-950 font-bold text-xs shadow-lg shadow-amber-950/40 transition-all"
+              className="flex items-center gap-2 px-5 py-2 rounded-xl bg-brand-gold hover:bg-brand-gold-dark disabled:opacity-50 text-white font-bold text-xs shadow-lg transition-all"
             >
               {saving ? <><RefreshCw className="w-3.5 h-3.5 animate-spin" /> Resetting...</> : <><Key className="w-3.5 h-3.5" /> Set New Password</>}
             </button>
@@ -402,18 +402,18 @@ export function DeleteUserModal({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/85 backdrop-blur-sm">
-      <div className="bg-slate-900 border border-rose-500/30 rounded-3xl p-6 sm:p-8 max-w-sm w-full shadow-2xl space-y-4">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/30 dark:bg-black/60 backdrop-blur-sm">
+      <div className="bg-white dark:bg-dark-card border border-rose-500/30 rounded-3xl p-6 sm:p-8 max-w-sm w-full shadow-2xl space-y-4">
         <div className="w-12 h-12 rounded-2xl bg-rose-500/10 border border-rose-500/20 flex items-center justify-center">
-          <Trash2 className="w-6 h-6 text-rose-400" />
+          <Trash2 className="w-6 h-6 text-rose-600 dark:text-rose-600 dark:text-rose-400" />
         </div>
 
         <div>
           <h3 className="text-base font-bold text-white">Delete User Account</h3>
-          <p className="text-xs text-slate-400 mt-1 leading-relaxed">
-            Are you sure you want to delete <strong className="text-slate-200">{user.full_name || user.username}</strong> (<span className="font-mono text-emerald-400">@{user.username}</span>)?
+          <p className="text-xs text-light-text dark:text-dark-muted mt-1 leading-relaxed">
+            Are you sure you want to delete <strong className="text-light-text dark:text-dark-text">{user.full_name || user.username}</strong> (<span className="font-mono text-brand-green">@{user.username}</span>)?
           </p>
-          <p className="text-[11px] text-rose-400/90 mt-2 bg-rose-500/10 p-2.5 rounded-xl border border-rose-500/20">
+          <p className="text-[11px] text-rose-600 dark:text-rose-600 dark:text-rose-400/90 mt-2 bg-rose-500/10 p-2.5 rounded-xl border border-rose-500/20">
             ⚠️ This will permanently remove their survey submissions, questionnaire data, and recommendation records.
           </p>
         </div>
@@ -422,7 +422,7 @@ export function DeleteUserModal({
           <button
             onClick={onClose}
             disabled={deleting}
-            className="flex-1 px-4 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-semibold transition-all"
+            className="flex-1 px-4 py-2.5 rounded-xl bg-white dark:bg-dark-bg hover:bg-light-bg dark:hover:bg-dark-card text-light-text dark:text-dark-text text-xs font-semibold transition-all"
           >
             Cancel
           </button>

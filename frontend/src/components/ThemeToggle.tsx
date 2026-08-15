@@ -12,12 +12,12 @@ export default function ThemeToggle() {
       onClick={toggleTheme}
       type="button"
       aria-label="Toggle Theme"
-      className="relative p-2 rounded-xl border border-slate-700/60 dark:border-slate-800 bg-slate-800/40 dark:bg-slate-900/60 hover:border-emerald-500/50 text-slate-300 dark:text-slate-300 hover:text-emerald-400 dark:hover:text-emerald-400 transition-all duration-200"
+      className="relative p-2 rounded-xl border border-light-border dark:border-dark-border bg-white dark:bg-dark-card hover:border-brand-green text-light-text dark:text-dark-text hover:text-brand-green transition-all duration-200"
     >
       {theme === 'dark' ? (
-        <Sun className="w-4 h-4 text-gold-400 animate-fade-in" />
+        <Sun className="w-4 h-4 text-brand-gold animate-fade-in" />
       ) : (
-        <Moon className="w-4 h-4 text-emerald-600 animate-fade-in" />
+        <Moon className="w-4 h-4 text-brand-green animate-fade-in" />
       )}
     </button>
   );

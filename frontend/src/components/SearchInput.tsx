@@ -42,23 +42,23 @@ export default function SearchInput({
 
   return (
     <div className={`relative flex items-center ${className}`}>
-      <Search className="w-4 h-4 text-slate-500 absolute left-3.5 pointer-events-none" />
+      <Search className="w-4 h-4 text-light-text dark:text-dark-muted absolute left-3.5 pointer-events-none" />
       
       <input
         type="text"
         value={searchTerm}
         onChange={(e) => setSearchTerm(e.target.value)}
         placeholder={placeholder}
-        className="w-full bg-slate-950/80 border border-slate-700/80 hover:border-slate-600 focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500/20 text-xs text-white placeholder-slate-500 rounded-xl pl-9.5 pr-8 py-2.5 outline-none transition-all"
+        className="w-full bg-light-bg dark:bg-dark-bg/80 border border-light-border dark:border-dark-border/80 hover:border-brand-green focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500/20 text-xs text-white placeholder:text-light-text dark:placeholder:text-dark-muted rounded-xl pl-9.5 pr-8 py-2.5 outline-none transition-all"
       />
 
       {isDebouncing && searchTerm ? (
-        <Loader2 className="w-3.5 h-3.5 text-emerald-400 animate-spin absolute right-3" />
+        <Loader2 className="w-3.5 h-3.5 text-brand-green animate-spin absolute right-3" />
       ) : searchTerm ? (
         <button
           type="button"
           onClick={handleClear}
-          className="p-1 rounded-md text-slate-400 hover:text-white hover:bg-slate-800 absolute right-2.5 transition-colors"
+          className="p-1 rounded-md text-light-text dark:text-dark-muted hover:text-white hover:bg-white dark:bg-dark-bg absolute right-2.5 transition-colors"
           title="Clear search"
         >
           <X className="w-3.5 h-3.5" />

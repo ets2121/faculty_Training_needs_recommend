@@ -65,11 +65,11 @@ export default function Sidebar() {
         - overflow-y-auto so it can scroll its OWN content if nav items exceed height
         - The parent layout constrains its height via overflow-hidden on the row container
       */}
-      <aside className="hidden md:flex flex-col w-56 shrink-0 overflow-y-auto bg-slate-950/70 border-r border-slate-800/80 backdrop-blur-md">
+      <aside className="hidden md:flex flex-col w-56 shrink-0 overflow-y-auto bg-light-bg/80 dark:bg-dark-bg/80 border-r border-light-border dark:border-dark-border backdrop-blur-md">
 
         {/* Role section label */}
         <div className="px-4 pt-5 pb-2">
-          <span className="text-[10px] font-bold tracking-widest text-slate-500 uppercase">
+          <span className="text-[10px] font-bold tracking-widest text-light-text dark:text-dark-muted uppercase">
             {roleLabel}
           </span>
         </div>
@@ -87,13 +87,13 @@ export default function Sidebar() {
                 href={item.href}
                 className={`flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-xs font-semibold transition-all duration-150 ${
                   isActive
-                    ? 'bg-emerald-500/15 text-emerald-400 border border-emerald-500/30 shadow-sm'
-                    : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/60 border border-transparent'
+                    ? 'bg-brand-green/15 text-brand-green border border-brand-green/30 shadow-sm'
+                    : 'text-light-text dark:text-dark-text hover:text-brand-green hover:bg-light-bg dark:hover:bg-dark-card border border-transparent'
                 }`}
               >
                 <Icon
                   className={`w-4 h-4 shrink-0 ${
-                    isActive ? 'text-emerald-400' : 'text-slate-500'
+                    isActive ? 'text-brand-green' : 'text-light-text dark:text-dark-muted'
                   }`}
                 />
                 <span>{item.label}</span>
@@ -104,7 +104,7 @@ export default function Sidebar() {
 
         {/* General / System section label */}
         <div className="px-4 pt-6 pb-2">
-          <span className="text-[10px] font-bold tracking-widest text-slate-500 uppercase">
+          <span className="text-[10px] font-bold tracking-widest text-light-text dark:text-dark-muted uppercase">
             General
           </span>
         </div>
@@ -121,13 +121,13 @@ export default function Sidebar() {
                 href={item.href}
                 className={`flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-xs font-semibold transition-all duration-150 ${
                   isActive
-                    ? 'bg-emerald-500/15 text-emerald-400 border border-emerald-500/30 shadow-sm'
-                    : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/60 border border-transparent'
+                    ? 'bg-brand-green/15 text-brand-green border border-brand-green/30 shadow-sm'
+                    : 'text-light-text dark:text-dark-text hover:text-brand-green hover:bg-light-bg dark:hover:bg-dark-card border border-transparent'
                 }`}
               >
                 <Icon
                   className={`w-4 h-4 shrink-0 ${
-                    isActive ? 'text-emerald-400' : 'text-slate-500'
+                    isActive ? 'text-brand-green' : 'text-light-text dark:text-dark-muted'
                   }`}
                 />
                 <span>{item.label}</span>
@@ -137,21 +137,21 @@ export default function Sidebar() {
         </nav>
 
         {/* Bottom info strip */}
-        <div className="mt-auto px-4 py-4 border-t border-slate-800/60">
+        <div className="mt-auto px-4 py-4 border-t border-light-border/60 dark:border-dark-border/60">
           <div className="flex items-center gap-2">
-            <div className="w-7 h-7 rounded-lg bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center shrink-0">
-              <GraduationCap className="w-3.5 h-3.5 text-emerald-400" />
+            <div className="w-7 h-7 rounded-lg bg-brand-green/10 border border-brand-green/20 flex items-center justify-center shrink-0">
+              <GraduationCap className="w-3.5 h-3.5 text-brand-green" />
             </div>
             <div>
-              <p className="text-[10px] font-bold text-slate-300 leading-none">QSU Recommender</p>
-              <p className="text-[9px] text-slate-500 mt-0.5">v2.0 · Production</p>
+              <p className="text-[10px] font-bold text-light-text dark:text-dark-text leading-none">QSU Recommender</p>
+              <p className="text-[9px] text-light-text dark:text-dark-muted mt-0.5">v2.0 · Production</p>
             </div>
           </div>
         </div>
       </aside>
 
       {/* Mobile: horizontal scrollable strip */}
-      <nav className="md:hidden w-full shrink-0 bg-slate-950/80 border-b border-slate-800/80 backdrop-blur-md px-3 py-2 flex items-center gap-2 overflow-x-auto">
+      <nav className="md:hidden w-full shrink-0 bg-light-bg dark:bg-dark-bg/80 border-b border-light-border dark:border-dark-border/80 backdrop-blur-md px-3 py-2 flex items-center gap-2 overflow-x-auto">
         {[...currentNav, ...generalNav].map((item) => {
           const Icon = item.icon;
           const isActive = pathname === item.href;
@@ -162,11 +162,11 @@ export default function Sidebar() {
               href={item.href}
               className={`flex items-center gap-2 px-3 py-2 rounded-xl text-xs font-semibold whitespace-nowrap transition-all shrink-0 ${
                 isActive
-                  ? 'bg-emerald-500/15 text-emerald-400 border border-emerald-500/30'
-                  : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/60 border border-transparent'
+                  ? 'bg-brand-green/15 text-brand-green border border-brand-green/30'
+                  : 'text-light-text dark:text-dark-text hover:text-brand-green hover:bg-light-bg dark:hover:bg-dark-card border border-transparent'
               }`}
             >
-              <Icon className={`w-4 h-4 ${isActive ? 'text-emerald-400' : 'text-slate-500'}`} />
+              <Icon className={`w-4 h-4 ${isActive ? 'text-brand-green' : 'text-light-text dark:text-dark-muted'}`} />
               <span>{item.label}</span>
             </Link>
           );

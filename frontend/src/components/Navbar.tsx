@@ -13,12 +13,12 @@ export default function Navbar() {
   const getRoleLabel = (role?: string) => {
     switch (role) {
       case 'system_admin':
-        return { text: 'System Admin', bg: 'bg-rose-500/10 text-rose-400 border-rose-500/20' };
+        return { text: 'System Admin', bg: 'bg-rose-500/10 text-rose-600 dark:text-rose-600 dark:text-rose-400 border-rose-500/20' };
       case 'department_admin':
-        return { text: 'Department Admin', bg: 'bg-gold-500/10 text-gold-400 border-gold-500/20' };
+        return { text: 'Department Admin', bg: 'bg-brand-gold/10 text-brand-gold-dark border-brand-gold/20' };
       case 'faculty':
       default:
-        return { text: 'Faculty', bg: 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20' };
+        return { text: 'Faculty', bg: 'bg-brand-green/10 text-brand-green border-brand-green/20' };
     }
   };
 
@@ -26,23 +26,23 @@ export default function Navbar() {
 
   return (
     <>
-      <header className="sticky top-0 z-40 w-full border-b border-slate-800/80 dark:border-slate-800/80 bg-slate-950/80 dark:bg-slate-950/80 backdrop-blur-xl transition-colors">
+      <header className="sticky top-0 z-40 w-full border-b border-dark-border dark:border-dark-border bg-white/80 dark:bg-dark-bg/80 backdrop-blur-xl transition-colors">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between gap-4">
           {/* Brand Logo */}
           <Link href="/dashboard" className="flex items-center gap-3 group">
             <img
               src="/images/logo.png"
               alt="QSU Recommender"
-              className="h-9 w-auto object-contain drop-shadow-md"
+              className="h-9 w-auto object-contain"
             />
             <div>
-              <h1 className="text-sm font-bold text-slate-100 tracking-tight flex items-center gap-2">
+              <h1 className="text-sm font-bold text-brand-green tracking-tight flex items-center gap-2">
                 <span>QSU Recommender</span>
-                <span className="text-[10px] font-mono font-semibold px-1.5 py-0.5 rounded bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+                <span className="text-[10px] font-mono font-semibold px-1.5 py-0.5 rounded bg-brand-gold/10 text-brand-gold-dark border border-brand-gold/20">
                   v2.0
                 </span>
               </h1>
-              <p className="text-[11px] text-slate-400 hidden sm:block">
+              <p className="text-[11px] text-light-text dark:text-dark-text opacity-80 hidden sm:block">
                 Faculty Training Needs & Recommendation System
               </p>
             </div>
@@ -53,46 +53,47 @@ export default function Navbar() {
             {/* About link */}
             <Link
               href="/about"
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold text-slate-400 hover:text-white hover:bg-slate-800/60 transition-all"
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold text-light-text dark:text-dark-muted hover:text-brand-green transition-all"
             >
-              <Info className="w-3.5 h-3.5 text-gold-400" />
-              <span className="hidden sm:inline">About</span>
+              <span>About</span>
             </Link>
 
             <ThemeToggle />
 
             {user && (
-              <div className="flex items-center gap-3 pl-3 border-l border-slate-800">
-                {/* User Profile Summary (Clickable to /profile) */}
+              <div className="flex items-center gap-3 pl-3 border-l border-light-border dark:border-dark-border">
                 <Link
                   href="/profile"
-                  className="hidden md:flex flex-col items-end text-right p-1.5 rounded-xl hover:bg-slate-800/40 transition-colors group"
+                  className="hidden md:flex flex-col items-end text-right p-1.5 rounded-xl hover:bg-light-bg dark:hover:bg-dark-card transition-colors group"
                   title="View your profile"
                 >
-                  <span className="text-xs font-semibold text-slate-200 group-hover:text-emerald-400 leading-tight transition-colors">
+                  <span className="text-xs font-semibold text-light-text dark:text-dark-text group-hover:text-brand-green leading-tight transition-colors">
                     {user.full_name || user.username}
                   </span>
                   <div className="flex items-center gap-1.5 mt-0.5">
-                    <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full border ${roleStyle.bg}`}>
-                      {roleStyle.text}
+                    <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full border ${
+                      user.role === 'system_admin'
+                        ? 'bg-rose-500/10 text-rose-600 dark:text-rose-600 dark:text-rose-400 border-rose-500/20'
+                        : user.role === 'department_admin'
+                        ? 'bg-brand-gold/10 text-brand-gold-dark border-brand-gold/20'
+                        : 'bg-brand-green/10 text-brand-green border-brand-green/20'
+                    }`}>
+                      {user.role}
                     </span>
                     {user.department && (
-                      <span className="text-[10px] font-mono text-slate-400 flex items-center gap-1">
-                        <Building className="w-3 h-3 text-slate-500" />
+                      <span className="text-[10px] font-mono text-light-text dark:text-dark-muted">
                         {user.department.code}
                       </span>
                     )}
                   </div>
                 </Link>
 
-                {/* Logout Button (Opens Confirmation Modal) */}
                 <button
                   onClick={() => setShowLogoutConfirm(true)}
                   type="button"
-                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-slate-800 bg-slate-900/60 hover:bg-rose-950/40 hover:border-rose-500/40 text-slate-300 hover:text-rose-400 text-xs font-medium transition-all"
+                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-light-border dark:border-dark-border bg-white dark:bg-dark-card hover:bg-rose-50 dark:hover:bg-rose-950/40 hover:border-brand-green text-light-text dark:text-dark-text hover:text-rose-600 text-xs font-medium transition-all"
                   title="Sign out"
                 >
-                  <LogOut className="w-4 h-4" />
                   <span className="hidden sm:inline">Logout</span>
                 </button>
               </div>
@@ -103,15 +104,15 @@ export default function Navbar() {
 
       {/* ── Logout Confirmation Modal ── */}
       {showLogoutConfirm && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-sm">
-          <div className="bg-slate-900 border border-slate-700/80 rounded-3xl p-6 sm:p-7 max-w-sm w-full shadow-2xl space-y-4">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/30 dark:bg-black/60 backdrop-blur-sm">
+          <div className="bg-white dark:bg-dark-card border border-light-border dark:border-dark-border rounded-3xl p-6 sm:p-7 max-w-sm w-full shadow-2xl space-y-4">
             <div className="w-12 h-12 rounded-2xl bg-rose-500/10 border border-rose-500/20 flex items-center justify-center">
-              <LogOut className="w-6 h-6 text-rose-400" />
+              <LogOut className="w-6 h-6 text-rose-500" />
             </div>
 
             <div>
-              <h3 className="text-base font-bold text-white">Sign Out Confirmation</h3>
-              <p className="text-xs text-slate-400 mt-1 leading-relaxed">
+              <h3 className="text-base font-bold text-light-text dark:text-dark-text">Sign Out Confirmation</h3>
+              <p className="text-xs text-light-text dark:text-dark-muted mt-1 leading-relaxed">
                 Are you sure you want to sign out? You will need your username and password to log in again.
               </p>
             </div>
@@ -120,7 +121,7 @@ export default function Navbar() {
               <button
                 type="button"
                 onClick={() => setShowLogoutConfirm(false)}
-                className="flex-1 px-4 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-semibold transition-all"
+                className="flex-1 px-4 py-2.5 rounded-xl bg-light-bg dark:bg-dark-bg border border-light-border dark:border-dark-border text-light-text dark:text-dark-text text-xs font-semibold transition-all hover:border-brand-green"
               >
                 Cancel
               </button>
@@ -130,7 +131,7 @@ export default function Navbar() {
                   setShowLogoutConfirm(false);
                   logout();
                 }}
-                className="flex-1 px-4 py-2.5 rounded-xl bg-rose-600 hover:bg-rose-500 text-white text-xs font-bold transition-all shadow-lg shadow-rose-950/40"
+                className="flex-1 px-4 py-2.5 rounded-xl bg-brand-green hover:bg-brand-green-dark text-white text-xs font-bold transition-all shadow-lg"
               >
                 Sign Out
               </button>

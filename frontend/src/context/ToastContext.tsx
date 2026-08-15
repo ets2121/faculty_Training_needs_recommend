@@ -48,14 +48,14 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
             key={toast.id}
             className={`pointer-events-auto flex items-start gap-3 p-4 rounded-xl border shadow-xl backdrop-blur-md transition-all animate-slide-up ${
               toast.type === 'success'
-                ? 'bg-emerald-950/90 border-emerald-500/40 text-emerald-100'
+                ? 'bg-brand-green text-white border-brand-green'
                 : toast.type === 'error'
-                ? 'bg-rose-950/90 border-rose-500/40 text-rose-100'
-                : 'bg-slate-900/90 border-slate-700 text-slate-100'
+                ? 'bg-rose-100 dark:bg-rose-950 border-rose-500/40 text-rose-600 dark:text-rose-100'
+                : 'bg-white dark:bg-dark-card/90 border-light-border dark:border-dark-border text-slate-100'
             }`}
           >
-            {toast.type === 'success' && <CheckCircle className="w-5 h-5 text-emerald-400 shrink-0 mt-0.5" />}
-            {toast.type === 'error' && <AlertCircle className="w-5 h-5 text-rose-400 shrink-0 mt-0.5" />}
+            {toast.type === 'success' && <CheckCircle className="w-5 h-5 text-brand-green shrink-0 mt-0.5" />}
+            {toast.type === 'error' && <AlertCircle className="w-5 h-5 text-rose-600 dark:text-rose-600 dark:text-rose-400 shrink-0 mt-0.5" />}
             {toast.type === 'info' && <Info className="w-5 h-5 text-sky-400 shrink-0 mt-0.5" />}
 
             <div className="flex-1 min-w-0">
@@ -65,7 +65,7 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
 
             <button
               onClick={() => removeToast(toast.id)}
-              className="text-slate-400 hover:text-white p-1 rounded-lg transition-colors"
+              className="text-light-text dark:text-dark-muted hover:text-white p-1 rounded-lg transition-colors"
             >
               <X className="w-4 h-4" />
             </button>

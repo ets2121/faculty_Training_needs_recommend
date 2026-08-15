@@ -172,17 +172,17 @@ export default function DeptDashboardPage() {
   return (
     <div className="space-y-8 max-w-6xl mx-auto">
       {/* 1. Header Banner */}
-      <div className="bg-slate-900/60 dark:bg-slate-900/80 border border-slate-800 rounded-3xl p-6 sm:p-8 shadow-xl backdrop-blur-md flex flex-col md:flex-row md:items-end md:justify-between gap-6">
+      <div className="bg-white dark:bg-dark-card border border-light-border dark:border-dark-border rounded-3xl p-6 sm:p-8 shadow-xl backdrop-blur-md flex flex-col md:flex-row md:items-end md:justify-between gap-6">
         <div className="space-y-2">
-          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-semibold bg-gold-500/10 text-gold-400 border border-gold-500/20">
-            <Building className="w-3.5 h-3.5 text-gold-400" />
+          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-semibold bg-brand-green/10 text-brand-green border border-brand-green/20">
+            <Building className="w-3.5 h-3.5 text-brand-green" />
             <span>Department Admin Overview</span>
           </div>
 
-          <h1 className="text-2xl font-extrabold text-white tracking-tight">
+          <h1 className="text-2xl font-extrabold text-brand-green tracking-tight">
             {deptCode} Department Recommendations & Monitoring
           </h1>
-          <p className="text-xs text-slate-400">
+          <p className="text-xs text-light-text dark:text-dark-muted">
             Monitor faculty questionnaire completion, manage department accounts, and generate group training priorities.
           </p>
         </div>
@@ -191,25 +191,24 @@ export default function DeptDashboardPage() {
         <div className="flex flex-wrap items-center gap-3">
           <Link
             href="/register-faculty"
-            className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 text-xs font-semibold transition-all"
+            className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-white dark:bg-dark-bg border border-light-border dark:border-dark-border text-brand-green hover:border-brand-green text-xs font-semibold transition-all"
           >
-            <UserPlus className="w-4 h-4 text-emerald-400" />
+            <UserPlus className="w-4 h-4 text-brand-green" />
             <span>Add Faculty Account</span>
           </Link>
 
           <button
             onClick={handleRunDeptRecommendation}
             disabled={runningDeptRec}
-            className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-gradient-to-r from-gold-600 to-gold-500 hover:from-gold-500 hover:to-gold-400 text-slate-950 font-extrabold text-xs shadow-lg shadow-gold-950/40 transition-all disabled:opacity-50"
+            className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-brand-gold hover:bg-brand-gold-dark text-white font-extrabold text-xs shadow-lg transition-all disabled:opacity-50"
           >
             {runningDeptRec ? (
               <>
-                <RefreshCw className="w-4 h-4 animate-spin text-slate-950" />
+                <RefreshCw className="w-4 h-4 animate-spin text-white" />
                 <span>Aggregating Faculty...</span>
               </>
             ) : (
               <>
-                <Sparkles className="w-4 h-4 text-slate-950" />
                 <span>{deptResult ? 'Re-run Recommendation' : 'Run Department Recommendation'}</span>
               </>
             )}
@@ -223,19 +222,19 @@ export default function DeptDashboardPage() {
       ) : deptResult ? (
         <div className="space-y-8">
           {/* Header Banner */}
-          <div className="relative overflow-hidden rounded-2xl bg-gradient-to-r from-emerald-950 via-slate-900 to-slate-900 p-5 sm:p-6 border border-emerald-500/30 shadow-2xl">
+          <div className="relative overflow-hidden rounded-2xl bg-white dark:bg-dark-card border border-light-border dark:border-dark-border p-5 sm:p-6 shadow-xl">
             <div className="absolute top-0 right-0 p-6 opacity-5 pointer-events-none">
-              <Sparkles className="w-40 h-40 text-emerald-400" />
+              <Sparkles className="w-40 h-40 text-brand-green" />
             </div>
             <div className="relative z-10 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
               <div className="flex items-center gap-3.5">
-                <div className="w-11 h-11 rounded-2xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center shrink-0">
-                  <Sparkles className="w-6 h-6 text-emerald-400" />
+                <div className="w-11 h-11 rounded-2xl bg-brand-green/10 border border-brand-green/20 flex items-center justify-center shrink-0">
+                  <Sparkles className="w-6 h-6 text-brand-green" />
                 </div>
                 <div>
                   <div className="flex items-center gap-2 mb-0.5 flex-wrap">
-                    <span className="text-xs font-mono font-bold text-emerald-400">Department Recommendation Output</span>
-                    <span className="text-[10px] font-mono text-slate-500">v{deptResult.model?.version}</span>
+                    <span className="text-xs font-mono font-bold text-brand-green">Department Recommendation Output</span>
+                    <span className="text-[10px] font-mono text-light-text dark:text-dark-muted">v{deptResult.model?.version}</span>
                   </div>
                   <h2 className="text-base sm:text-lg font-extrabold text-white tracking-tight">
                     Aggregated Training Priorities — {deptResult.department} Department
@@ -245,9 +244,9 @@ export default function DeptDashboardPage() {
 
               {/* Timestamp Badge */}
               {formattedDeptTime && (
-                <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-300 text-xs font-mono shrink-0">
-                  <Clock className="w-3.5 h-3.5 text-emerald-400" />
-                  <span>Result as of: <strong className="text-white font-semibold">{formattedDeptTime}</strong></span>
+                <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-brand-green/10 border border-brand-green/20 text-brand-green text-xs font-mono shrink-0">
+                  <Clock className="w-3.5 h-3.5 text-brand-green" />
+                  <span>Result as of: <strong className="text-brand-green font-semibold">{formattedDeptTime}</strong></span>
                 </div>
               )}
             </div>
@@ -256,10 +255,10 @@ export default function DeptDashboardPage() {
           {/* Section 1: Model Predictions (compact, secondary) */}
           <div className="space-y-3">
             <div className="flex items-start gap-3 px-1">
-              <Target className="w-4 h-4 text-slate-400 mt-0.5 shrink-0" />
+              <Target className="w-4 h-4 text-light-text dark:text-dark-muted mt-0.5 shrink-0" />
               <div>
-                <h3 className="text-sm font-bold text-slate-200">Department Priority Training Categories</h3>
-                <p className="text-xs text-slate-400 leading-relaxed mt-0.5">
+                <h3 className="text-sm font-bold text-light-text dark:text-dark-text">Department Priority Training Categories</h3>
+                <p className="text-xs text-light-text dark:text-dark-muted leading-relaxed mt-0.5">
                   These are the aggregated competency priority areas calculated for your department. The priority score represents a weighted average of individual faculty needs, combined with faculty coverage percentage.
                 </p>
               </div>
@@ -271,7 +270,7 @@ export default function DeptDashboardPage() {
                 return (
                   <div
                     key={cat.training_category}
-                    className="flex items-center gap-3 p-3.5 rounded-xl border border-slate-800/80 bg-slate-900/40 hover:border-slate-700 transition-all"
+                    className="flex items-center gap-3 p-3.5 rounded-xl border border-light-border dark:border-dark-border/80 bg-white dark:bg-dark-card/40 hover:border-light-border dark:border-dark-border transition-all"
                   >
                     <DonutChart probability={cat.department_score} color={color} />
                     <div className="min-w-0 flex-1">
@@ -283,8 +282,8 @@ export default function DeptDashboardPage() {
                           Priority #{cat.rank}
                         </span>
                       </div>
-                      <p className="text-xs font-semibold text-slate-200 leading-snug">{cat.training_category}</p>
-                      <p className="text-[11px] font-mono text-slate-400 mt-0.5">
+                      <p className="text-xs font-semibold text-light-text dark:text-dark-text leading-snug">{cat.training_category}</p>
+                      <p className="text-[11px] font-mono text-light-text dark:text-dark-muted mt-0.5">
                         Coverage: {formatPercent(cat.faculty_coverage)} · {(cat.department_score).toFixed(3)} raw
                       </p>
                     </div>
@@ -297,32 +296,32 @@ export default function DeptDashboardPage() {
           {/* Section 2: Recommended Training Programs (prominent, primary) */}
           <div className="space-y-4">
             <div className="flex items-start gap-3 px-1">
-              <BookOpen className="w-4 h-4 text-gold-400 mt-0.5 shrink-0" />
+              <BookOpen className="w-4 h-4 text-brand-gold mt-0.5 shrink-0" />
               <div>
                 <h3 className="text-base font-extrabold text-white">Recommended Department Training Programs</h3>
-                <p className="text-xs text-slate-400 leading-relaxed mt-0.5">
+                <p className="text-xs text-light-text dark:text-dark-muted leading-relaxed mt-0.5">
                   These matched catalog items represent specific programs that address the aggregated gaps of your department&apos;s faculty. Plan department-wide webinars, workshops, or training courses around these high-scoring catalog matches.
                 </p>
               </div>
             </div>
 
-            <div className="flex items-center gap-2.5 px-4 py-2.5 rounded-xl bg-gold-500/8 border border-gold-500/20">
-              <Info className="w-4 h-4 text-gold-400 shrink-0" />
-              <p className="text-xs text-gold-300">
+            <div className="flex items-center gap-2.5 px-4 py-2.5 rounded-xl bg-brand-gold/8 border border-brand-gold/20">
+              <Info className="w-4 h-4 text-brand-gold shrink-0" />
+              <p className="text-xs text-brand-gold-dark">
                 Programs are sorted by match fit. Use these as primary action items for department faculty development.
               </p>
             </div>
 
             {deptResult.recommendations?.length === 0 ? (
-              <div className="p-10 text-center border border-dashed border-slate-800 rounded-2xl">
-                <p className="text-slate-400 text-sm">No department catalog matches found for these categories.</p>
+              <div className="p-10 text-center border border-dashed border-light-border dark:border-dark-border rounded-2xl">
+                <p className="text-light-text dark:text-dark-muted text-sm">No department catalog matches found for these categories.</p>
               </div>
             ) : (
               <div className="space-y-4">
                 {deptResult.recommendations?.map((item, idx) => (
                   <div
                     key={item.training_id}
-                    className="relative p-5 rounded-2xl border border-slate-800 bg-slate-900/60 hover:border-gold-500/40 hover:bg-slate-900/80 transition-all group shadow-lg"
+                    className="relative p-5 rounded-2xl border border-light-border dark:border-dark-border bg-white dark:bg-dark-card/60 hover:border-brand-gold/40 hover:bg-white dark:bg-dark-card/80 transition-all group shadow-lg"
                   >
                     <div
                       className="absolute left-0 top-4 bottom-4 w-1 rounded-r-full"
@@ -331,31 +330,31 @@ export default function DeptDashboardPage() {
                     <div className="pl-3 flex flex-col md:flex-row md:items-start justify-between gap-4">
                       <div className="flex-1 space-y-2.5">
                         <div className="flex flex-wrap items-center gap-2">
-                          <span className="text-xs font-mono font-bold text-emerald-400 bg-emerald-500/10 px-2.5 py-0.5 rounded border border-emerald-500/20">
+                          <span className="text-xs font-mono font-bold text-brand-green bg-brand-green/10 px-2.5 py-0.5 rounded border border-brand-green/20">
                             {item.training_id}
                           </span>
-                          <span className="text-xs font-semibold text-gold-300 bg-gold-500/10 px-2.5 py-0.5 rounded border border-gold-500/20">
+                          <span className="text-xs font-semibold text-brand-gold-dark bg-brand-gold/10 px-2.5 py-0.5 rounded border border-brand-gold/20">
                             {item.category}
                           </span>
                           {idx === 0 && (
-                            <span className="text-[10px] font-bold text-gold-400 bg-gold-500/10 px-2 py-0.5 rounded border border-gold-500/20">
+                            <span className="text-[10px] font-bold text-brand-gold bg-brand-gold/10 px-2 py-0.5 rounded border border-brand-gold/20">
                               ★ Top Department Match
                             </span>
                           )}
                         </div>
 
-                        <h4 className="text-base font-bold text-slate-100 group-hover:text-gold-300 transition-colors leading-snug">
+                        <h4 className="text-base font-bold text-light-text dark:text-dark-text group-hover:text-brand-gold-dark transition-colors leading-snug">
                           {item.title}
                         </h4>
 
                         {item.description && (
-                          <p className="text-xs text-slate-400 leading-relaxed max-w-2xl">
+                          <p className="text-xs text-light-text dark:text-dark-muted leading-relaxed max-w-2xl">
                             {item.description}
                           </p>
                         )}
 
-                        <div className="flex items-start gap-2 text-xs text-emerald-400/90 bg-emerald-500/5 border border-emerald-500/15 rounded-lg px-3 py-2">
-                          <Check className="w-3.5 h-3.5 text-emerald-400 shrink-0 mt-0.5" />
+                        <div className="flex items-start gap-2 text-xs text-brand-green/90 bg-brand-green/5 border border-brand-green/15 rounded-lg px-3 py-2">
+                          <Check className="w-3.5 h-3.5 text-brand-green shrink-0 mt-0.5" />
                           <span className="leading-relaxed">{item.reason}</span>
                         </div>
                       </div>
@@ -365,10 +364,10 @@ export default function DeptDashboardPage() {
                           probability={item.match_score}
                           color={item.match_score >= 0.7 ? '#10b981' : item.match_score >= 0.4 ? '#f59e0b' : '#64748b'}
                         />
-                        <span className="text-[10px] text-slate-400 text-center mt-1 leading-tight">
+                        <span className="text-[10px] text-light-text dark:text-dark-muted text-center mt-1 leading-tight">
                           Match<br />Score
                         </span>
-                        <span className="text-[10px] font-mono text-slate-500 mt-0.5">
+                        <span className="text-[10px] font-mono text-light-text dark:text-dark-muted mt-0.5">
                           {(item.match_score).toFixed(3)}
                         </span>
                       </div>
@@ -381,7 +380,7 @@ export default function DeptDashboardPage() {
         </div>
       ) : (
         /* Empty State / Trigger Card for Department Recommendations */
-        <div className="relative overflow-hidden rounded-3xl border border-slate-800 bg-slate-900/60 p-8 text-center shadow-xl backdrop-blur-md space-y-6">
+        <div className="relative overflow-hidden rounded-3xl border border-light-border dark:border-dark-border bg-white dark:bg-dark-card/60 p-8 text-center shadow-xl backdrop-blur-md space-y-6">
           <div className="flex justify-center">
             <img
               src="/images/logo.png"
@@ -394,19 +393,19 @@ export default function DeptDashboardPage() {
             <h3 className="text-lg font-bold text-white">
               Generate {deptCode} Department Training Recommendations
             </h3>
-            <p className="text-xs text-slate-400 leading-relaxed">
+            <p className="text-xs text-light-text dark:text-dark-muted leading-relaxed">
               Aggregate individual survey responses across all active faculty members in {deptCode} to synthesize department-wide priority training areas and match high-impact catalog courses.
             </p>
           </div>
 
-          <div className="flex flex-wrap items-center justify-center gap-4 text-xs font-mono text-slate-300">
-            <div className="px-3.5 py-1.5 rounded-xl bg-slate-950 border border-slate-800 flex items-center gap-2">
-              <span className="w-2 h-2 rounded-full bg-emerald-400" />
+          <div className="flex flex-wrap items-center justify-center gap-4 text-xs font-mono text-light-text dark:text-dark-text">
+            <div className="px-3.5 py-1.5 rounded-xl bg-light-bg dark:bg-dark-bg border border-light-border dark:border-dark-border flex items-center gap-2">
+              <span className="w-2 h-2 rounded-full bg-brand-green" />
               <span>
                 <strong>{eligibleFacultyCount}</strong> of <strong>{users.length}</strong> Faculty Eligible
               </span>
             </div>
-            <div className="px-3.5 py-1.5 rounded-xl bg-slate-950 border border-slate-800 flex items-center gap-2">
+            <div className="px-3.5 py-1.5 rounded-xl bg-light-bg dark:bg-dark-bg border border-light-border dark:border-dark-border flex items-center gap-2">
               <img src="/images/logo.png" alt="QSU Recommender" className="w-3.5 h-3.5 object-contain" />
               <span>Multi-Label AI Prioritization</span>
             </div>
@@ -415,15 +414,15 @@ export default function DeptDashboardPage() {
           <button
             onClick={handleRunDeptRecommendation}
             disabled={runningDeptRec || eligibleFacultyCount === 0}
-            className="inline-flex items-center gap-2 px-6 py-3 rounded-2xl bg-gradient-to-r from-gold-600 to-gold-500 hover:from-gold-500 hover:to-gold-400 text-slate-950 font-extrabold text-sm shadow-xl shadow-gold-950/40 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+            className="inline-flex items-center gap-2 px-6 py-3 rounded-2xl bg-brand-gold hover:bg-brand-gold-dark text-white font-extrabold text-sm shadow-xl transition-all disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            <Sparkles className="w-4 h-4 text-slate-950" />
+            <Sparkles className="w-4 h-4 text-white" />
             <span>Generate Department Recommendations</span>
-            <ArrowRight className="w-4 h-4 text-slate-950 ml-1" />
+            <ArrowRight className="w-4 h-4 text-white ml-1" />
           </button>
 
           {eligibleFacultyCount === 0 && users.length > 0 && (
-            <p className="text-[11px] text-amber-400 font-medium">
+            <p className="text-[11px] text-brand-gold font-medium">
               Note: Faculty members must complete the required questionnaire parts (status &quot;eligible&quot; or &quot;has_recommendation&quot;) before department aggregation can run.
             </p>
           )}
@@ -431,14 +430,14 @@ export default function DeptDashboardPage() {
       )}
 
       {/* 3. Department Faculty Users Table */}
-      <div className="bg-slate-900/60 dark:bg-slate-900/80 border border-slate-800 rounded-3xl p-6 sm:p-8 shadow-xl backdrop-blur-md space-y-4">
+      <div className="bg-white dark:bg-dark-card/60 dark:bg-white dark:bg-dark-card/80 border border-light-border dark:border-dark-border rounded-3xl p-6 sm:p-8 shadow-xl backdrop-blur-md space-y-4">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div>
             <div className="flex items-center gap-2">
-              <Users className="w-5 h-5 text-emerald-400" />
+              <Users className="w-5 h-5 text-brand-green" />
               <h2 className="text-lg font-bold text-white">Department Faculty Roster</h2>
             </div>
-            <p className="text-xs text-slate-400 mt-0.5">
+            <p className="text-xs text-light-text dark:text-dark-muted mt-0.5">
               {users.length} Faculty Members registered in {deptCode}
             </p>
           </div>
@@ -455,18 +454,18 @@ export default function DeptDashboardPage() {
         {loadingUsers ? (
           <TableSkeleton rows={5} cols={5} />
         ) : users.length === 0 ? (
-          <div className="py-12 text-center border border-dashed border-slate-800 rounded-2xl text-xs text-slate-400">
+          <div className="py-12 text-center border border-dashed border-light-border dark:border-dark-border rounded-2xl text-xs text-light-text dark:text-dark-muted">
             No faculty members registered in this department yet.
           </div>
         ) : filteredUsers.length === 0 ? (
-          <div className="py-12 text-center border border-dashed border-slate-800 rounded-2xl text-xs text-slate-400 space-y-1">
-            <p className="text-slate-300 font-semibold">No faculty found matching &quot;{searchQuery}&quot;</p>
-            <p className="text-slate-500">Try clearing the search or searching for a different keyword.</p>
+          <div className="py-12 text-center border border-dashed border-light-border dark:border-dark-border rounded-2xl text-xs text-light-text dark:text-dark-muted space-y-1">
+            <p className="text-light-text dark:text-dark-text font-semibold">No faculty found matching &quot;{searchQuery}&quot;</p>
+            <p className="text-light-text dark:text-dark-muted">Try clearing the search or searching for a different keyword.</p>
           </div>
         ) : (
           <div className="overflow-x-auto">
-            <table className="w-full text-left text-xs text-slate-300">
-              <thead className="bg-slate-950/80 text-slate-400 font-semibold border-b border-slate-800 uppercase tracking-wider text-[10px]">
+            <table className="w-full text-left text-xs text-light-text dark:text-dark-text">
+              <thead className="bg-light-bg dark:bg-dark-bg/80 text-light-text dark:text-dark-muted font-semibold border-b border-light-border dark:border-dark-border uppercase tracking-wider text-[10px]">
                 <tr>
                   <th className="p-3.5 rounded-l-xl">Faculty Name & ID</th>
                   <th className="p-3.5">Academic Rank & Field</th>
@@ -477,18 +476,18 @@ export default function DeptDashboardPage() {
               </thead>
               <tbody className="divide-y divide-slate-800/60">
                 {filteredUsers.map((u) => (
-                  <tr key={u.id} className="hover:bg-slate-800/40 transition-colors group">
+                  <tr key={u.id} className="hover:bg-white dark:bg-dark-bg/40 transition-colors group">
                     <td className="p-3.5">
-                      <div className="font-bold text-slate-100">{u.full_name || u.username}</div>
-                      <div className="text-[11px] text-slate-400 font-mono">
+                      <div className="font-bold text-light-text dark:text-dark-text">{u.full_name || u.username}</div>
+                      <div className="text-[11px] text-light-text dark:text-dark-muted font-mono">
                         @{u.username} {u.faculty_code ? `· [${u.faculty_code}]` : ''}
                       </div>
                     </td>
                     <td className="p-3.5">
-                      <div className="text-slate-200">{u.academic_rank || 'Instructor I'}</div>
-                      <div className="text-[11px] text-slate-400">{u.specialization || u.highest_degree || 'General'}</div>
+                      <div className="text-light-text dark:text-dark-text">{u.academic_rank || 'Instructor I'}</div>
+                      <div className="text-[11px] text-light-text dark:text-dark-muted">{u.specialization || u.highest_degree || 'General'}</div>
                     </td>
-                    <td className="p-3.5 text-slate-400">{u.email || '—'}</td>
+                    <td className="p-3.5 text-light-text dark:text-dark-muted">{u.email || '—'}</td>
                     <td className="p-3.5">
                       <StatusBadge status={u.status || 'not_started'} />
                     </td>
@@ -496,7 +495,7 @@ export default function DeptDashboardPage() {
                       <div className="flex items-center justify-end gap-1.5">
                         <button
                           onClick={() => setSelectedUserForEdit(u)}
-                          className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-slate-800 hover:bg-emerald-600/30 text-slate-300 hover:text-emerald-400 border border-slate-700 text-[11px] font-medium transition-all"
+                          className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-white dark:bg-dark-bg hover:bg-emerald-600/30 text-light-text dark:text-dark-text hover:text-brand-green border border-light-border dark:border-dark-border text-[11px] font-medium transition-all"
                           title="View / Edit Profile Details"
                         >
                           <Pencil className="w-3 h-3" />
@@ -505,7 +504,7 @@ export default function DeptDashboardPage() {
 
                         <button
                           onClick={() => setSelectedUserForEdit(u)}
-                          className="p-1.5 rounded-lg bg-slate-800 hover:bg-amber-600/30 text-slate-300 hover:text-amber-400 border border-slate-700 transition-all"
+                          className="p-1.5 rounded-lg bg-white dark:bg-dark-bg hover:bg-amber-600/30 text-light-text dark:text-dark-text hover:text-brand-gold border border-light-border dark:border-dark-border transition-all"
                           title="Emergency Password Reset"
                         >
                           <Key className="w-3.5 h-3.5" />
@@ -513,7 +512,7 @@ export default function DeptDashboardPage() {
 
                         <button
                           onClick={() => setSelectedUserForDelete(u)}
-                          className="p-1.5 rounded-lg bg-slate-800 hover:bg-rose-600/30 text-slate-300 hover:text-rose-400 border border-slate-700 transition-all"
+                          className="p-1.5 rounded-lg bg-white dark:bg-dark-bg hover:bg-rose-600/30 text-light-text dark:text-dark-text hover:text-rose-600 dark:text-rose-600 dark:text-rose-400 border border-light-border dark:border-dark-border transition-all"
                           title="Delete Faculty Account"
                         >
                           <Trash2 className="w-3.5 h-3.5" />

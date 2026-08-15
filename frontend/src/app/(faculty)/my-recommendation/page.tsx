@@ -87,7 +87,7 @@ export default function MyRecommendationPage() {
           />
           <Link
             href="/faculty-dashboard"
-            className="inline-flex items-center gap-1.5 text-xs text-slate-400 hover:text-white transition-colors"
+            className="inline-flex items-center gap-1.5 text-xs text-light-text dark:text-dark-muted hover:text-brand-green transition-colors"
           >
             <ArrowLeft className="w-4 h-4" />
             <span>Back to Dashboard</span>
@@ -98,7 +98,7 @@ export default function MyRecommendationPage() {
           <button
             onClick={handleRequest}
             disabled={requesting}
-            className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs shadow-lg shadow-emerald-950/50 transition-all disabled:opacity-50"
+            className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-brand-green hover:bg-brand-green-dark text-white font-bold text-xs shadow-lg transition-all disabled:opacity-50"
           >
             {requesting ? (
               <>
@@ -107,7 +107,6 @@ export default function MyRecommendationPage() {
               </>
             ) : (
               <>
-                <Sparkles className="w-4 h-4 text-gold-300" />
                 <span>{recommendation ? 'Re-Run Recommendation' : 'Generate Recommendation'}</span>
               </>
             )}
@@ -122,18 +121,18 @@ export default function MyRecommendationPage() {
         <>
           {/* Guidance if not eligible */}
           {!progress?.eligible_for_recommendation && !recommendation && (
-            <div className="p-8 rounded-3xl border border-gold-500/30 bg-gold-500/10 text-center space-y-4 max-w-xl mx-auto">
-              <div className="w-12 h-12 rounded-2xl bg-gold-500/10 border border-gold-500/20 flex items-center justify-center mx-auto">
-                <AlertCircle className="w-6 h-6 text-gold-400" />
+            <div className="p-8 rounded-3xl border border-gold-500/30 bg-brand-gold/10 text-center space-y-4 max-w-xl mx-auto">
+              <div className="w-12 h-12 rounded-2xl bg-brand-gold/10 border border-brand-gold/20 flex items-center justify-center mx-auto">
+                <AlertCircle className="w-6 h-6 text-brand-gold" />
               </div>
               <h2 className="text-lg font-bold text-white">Needs Assessment Incomplete</h2>
-              <p className="text-xs text-slate-300 leading-relaxed">
+              <p className="text-xs text-light-text dark:text-dark-text leading-relaxed">
                 You must complete Parts 1, 2, 3, 5, and 6 of the Needs Assessment Questionnaire before requesting an AI recommendation.
               </p>
               <div className="pt-2">
                 <Link
                   href="/questionnaire"
-                  className="inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold transition-all shadow-lg"
+                  className="inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-brand-green hover:bg-brand-green-dark text-white text-xs font-bold transition-all shadow-lg"
                 >
                   <ClipboardList className="w-4 h-4" />
                   <span>Complete Questionnaire Now</span>

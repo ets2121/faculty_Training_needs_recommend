@@ -10,44 +10,37 @@ const config: Config = {
   theme: {
     extend: {
       colors: {
-        // Emerald Green Primary Palette
-        emerald: {
-          50: '#ecfdf5',
-          100: '#d1fae5',
-          200: '#a7f3d0',
-          300: '#6ee7b7',
-          400: '#34d399',
-          500: '#10b981', // Main Primary
-          600: '#059669', // Dark Accent Primary
-          700: '#047857',
-          800: '#065f46',
-          900: '#064e3b',
-          950: '#022c22',
+        brand: {
+          green: '#159447',
+          'green-dark': '#0f6b35',
+          'green-darker': '#0a4d26',
+          gold: '#D9A62E',
+          'gold-light': '#f0c75e',
+          'gold-dark': '#b8891f',
         },
-        // Orange-Gold Secondary Palette
-        gold: {
-          50: '#fffbeb',
-          100: '#fef3c7',
-          200: '#fde68a',
-          300: '#fcd34d',
-          400: '#fbbf24',
-          500: '#f59e0b', // Main Secondary Gold
-          600: '#d97706', // Rich Gold
-          700: '#b45309',
-          800: '#92400e',
-          900: '#78350f',
-          950: '#451a03',
+        light: {
+          bg: '#FFFFFF',
+          card: '#FFFFFF',
+          text: '#159447',
+          muted: '#5c6e63',
+          border: 'rgba(21, 148, 71, 0.2)',
         },
-        // Deep Dark Mode Backgrounds
         dark: {
-          base: '#030712',    // Ultra deep background
-          surface: '#0f172a', // Card background
-          elevated: '#1e293b', // Modal / Hover
-          border: '#334155',   // Subtle border
-        }
+          bg: '#071A10',
+          card: '#0D2819',
+          text: '#FFFFFF',
+          muted: '#a3b8ab',
+          border: 'rgba(21, 148, 71, 0.25)',
+        },
       },
       fontFamily: {
-        sans: ['Inter', 'system-ui', '-apple-system', 'BlinkMacSystemFont', 'Segoe UI', 'Roboto', 'sans-serif'],
+        sans: ['Montserrat', 'system-ui', '-apple-system', 'BlinkMacSystemFont', 'Segoe UI', 'Roboto', 'sans-serif'],
+      },
+      fontWeight: {
+        heading: '700',
+        subheading: '600',
+        body: '400',
+        button: '600',
       },
       animation: {
         'pulse-slow': 'pulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite',

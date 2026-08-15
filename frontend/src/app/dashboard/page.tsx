@@ -22,8 +22,8 @@ export default function DashboardRedirectPage() {
 
   return (
     <div className="flex flex-col items-center justify-center py-20 space-y-4">
-      <div className="w-10 h-10 border-4 border-emerald-500/30 border-t-emerald-500 rounded-full animate-spin" />
-      <p className="text-xs text-slate-400 font-mono">Routing to your portal dashboard...</p>
+      <div className="w-10 h-10 border-4 border-brand-green/30 border-t-emerald-500 rounded-full animate-spin" />
+      <p className="text-xs text-light-text dark:text-dark-muted font-mono">Routing to your portal dashboard...</p>
     </div>
   );
 }

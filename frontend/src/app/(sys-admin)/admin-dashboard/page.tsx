@@ -172,16 +172,16 @@ function MultiSelect({
     <div ref={containerRef} className="space-y-1">
       {/* Label row */}
       <div className="flex items-center justify-between">
-        <label htmlFor={id} className="flex items-center gap-1.5 text-xs font-semibold text-slate-200">
+        <label htmlFor={id} className="flex items-center gap-1.5 text-xs font-semibold text-light-text dark:text-dark-text">
           {label}
-          {required && <span className="text-rose-400 font-bold">*</span>}
+          {required && <span className="text-brand-green font-bold">*</span>}
           <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded-md bg-blue-500/15 text-blue-400 border border-blue-500/25 text-[9px] font-bold tracking-wide">
             <ListChecks className="w-2.5 h-2.5" />
             MULTI-SELECT
           </span>
         </label>
         {selected.length > 0 && (
-          <span className="text-[10px] font-mono text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded-full border border-emerald-500/20">
+          <span className="text-[10px] font-mono text-brand-green bg-brand-green/10 px-2 py-0.5 rounded-full border border-brand-green/20">
             {selected.length} selected
           </span>
         )}
@@ -189,7 +189,7 @@ function MultiSelect({
 
       {/* Helper hint */}
       {hint && (
-        <p className="text-[11px] text-slate-500 leading-snug">{hint}</p>
+        <p className="text-[11px] text-light-text dark:text-dark-muted leading-snug">{hint}</p>
       )}
 
       {/* Trigger button */}
@@ -198,29 +198,29 @@ function MultiSelect({
           id={id}
           type="button"
           onClick={() => setOpen(!open)}
-          className={`w-full bg-slate-950 border rounded-xl px-3.5 pt-2 pb-2 text-xs text-left text-white focus:outline-none transition-colors min-h-[44px] ${
+          className={`w-full bg-light-bg dark:bg-dark-bg border rounded-xl px-3.5 pt-2 pb-2 text-xs text-left text-light-text dark:text-dark-text focus:outline-none transition-colors min-h-[44px] ${
             hasError
               ? 'border-rose-500/60 focus:border-rose-400'
               : open
-              ? 'border-emerald-500 shadow-[0_0_0_1px_rgba(16,185,129,0.15)]'
-              : 'border-slate-700 hover:border-slate-500'
+              ? 'border-brand-green shadow-[0_0_0_1px_rgba(21,148,71,0.15)]'
+              : 'border-light-border dark:border-dark-border hover:border-slate-500'
           }`}
         >
           <div className="flex items-start justify-between gap-2">
             <span className="flex flex-wrap gap-1.5 flex-1 min-h-[24px]">
               {selected.length === 0 ? (
-                <span className="text-slate-500 text-xs leading-6">Click to select {label.toLowerCase()}...</span>
+                <span className="text-light-text dark:text-dark-muted text-xs leading-6">Click to select {label.toLowerCase()}...</span>
               ) : (
                 selected.map((v) => (
                   <span
                     key={v}
-                    className="inline-flex items-center gap-1 bg-emerald-500/15 text-emerald-300 border border-emerald-500/30 pl-2 pr-1 py-0.5 rounded-md text-[11px] font-medium leading-5"
+                    className="inline-flex items-center gap-1 bg-brand-green/15 text-brand-green border border-brand-green/30 pl-2 pr-1 py-0.5 rounded-md text-[11px] font-medium leading-5"
                   >
                     {v}
                     <button
                       type="button"
                       onClick={(e) => removeChip(e, v)}
-                      className="w-3.5 h-3.5 rounded-full hover:bg-emerald-400/25 flex items-center justify-center transition-colors"
+                      className="w-3.5 h-3.5 rounded-full hover:bg-brand-green/25 flex items-center justify-center transition-colors"
                       aria-label={`Remove ${v}`}
                     >
                       <X className="w-2.5 h-2.5" />
@@ -234,29 +234,29 @@ function MultiSelect({
                 <button
                   type="button"
                   onClick={clearAll}
-                  className="text-slate-500 hover:text-slate-300 p-0.5 rounded transition-colors"
+                  className="text-light-text dark:text-dark-muted hover:text-light-text dark:text-dark-text p-0.5 rounded transition-colors"
                   title="Clear all selections"
                 >
                   <X className="w-3.5 h-3.5" />
                 </button>
               )}
-              <ChevronDown className={`w-4 h-4 text-slate-400 transition-transform duration-200 ${open ? 'rotate-180' : ''}`} />
+              <ChevronDown className={`w-4 h-4 text-light-text dark:text-dark-muted transition-transform duration-200 ${open ? 'rotate-180' : ''}`} />
             </div>
           </div>
         </button>
 
         {/* Dropdown options */}
         {open && (
-          <div className="absolute z-50 mt-1.5 w-full bg-slate-900 border border-slate-600 rounded-xl shadow-2xl shadow-black/50 overflow-hidden">
-            <div className="px-3 py-2 border-b border-slate-800 flex items-center justify-between">
-              <span className="text-[10px] text-slate-500 font-mono">
+          <div className="absolute z-50 mt-1.5 w-full bg-white dark:bg-dark-card border border-brand-green rounded-xl shadow-2xl shadow-black/50 overflow-hidden">
+            <div className="px-3 py-2 border-b border-light-border dark:border-dark-border flex items-center justify-between">
+              <span className="text-[10px] text-light-text dark:text-dark-muted font-mono">
                 {selected.length}/{options.length} selected
               </span>
               {selected.length > 0 && (
                 <button
                   type="button"
                   onClick={(e) => { e.stopPropagation(); onChange([]); }}
-                  className="text-[10px] text-rose-400 hover:text-rose-300 font-semibold transition-colors"
+                  className="text-[10px] text-brand-green hover:text-rose-300 font-semibold transition-colors"
                 >
                   Clear all
                 </button>
@@ -271,19 +271,19 @@ function MultiSelect({
                     type="button"
                     onClick={() => toggle(opt)}
                     className={`w-full px-3.5 py-2.5 text-xs text-left flex items-center gap-3 transition-colors ${
-                      isSelected ? 'bg-emerald-500/10 hover:bg-emerald-500/15' : 'hover:bg-slate-800'
+                      isSelected ? 'bg-brand-green/10 hover:bg-brand-green/15' : 'hover:bg-white dark:bg-dark-bg'
                     }`}
                   >
                     <span
                       className={`w-4 h-4 rounded border flex items-center justify-center shrink-0 transition-colors ${
                         isSelected
-                          ? 'bg-emerald-500 border-emerald-500'
-                          : 'border-slate-600 bg-slate-900'
+                          ? 'bg-brand-green border-brand-green'
+                          : 'border-brand-green bg-white dark:bg-dark-card'
                       }`}
                     >
-                      {isSelected && <Check className="w-2.5 h-2.5 text-white" />}
+                      {isSelected && <Check className="w-2.5 h-2.5 text-light-text dark:text-dark-text" />}
                     </span>
-                    <span className={isSelected ? 'text-emerald-300 font-medium' : 'text-slate-300'}>
+                    <span className={isSelected ? 'text-brand-green font-medium' : 'text-light-text dark:text-dark-text'}>
                       {opt}
                     </span>
                   </button>
@@ -296,7 +296,7 @@ function MultiSelect({
 
       {/* Error message */}
       {hasError && (
-        <p className="flex items-center gap-1 text-[11px] text-rose-400">
+        <p className="flex items-center gap-1 text-[11px] text-brand-green">
           <AlertCircle className="w-3 h-3" /> {error}
         </p>
       )}
@@ -342,23 +342,23 @@ function CatalogFormModal({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/85 backdrop-blur-sm">
-      <div className="bg-slate-900 border border-slate-700/80 rounded-3xl shadow-2xl max-w-2xl w-full max-h-[92vh] flex flex-col">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-light-bg dark:bg-dark-bg/85 backdrop-blur-sm">
+      <div className="bg-white dark:bg-dark-card border border-light-border dark:border-dark-border/80 rounded-3xl shadow-2xl max-w-2xl w-full max-h-[92vh] flex flex-col">
 
         {/* ── Modal Header ── */}
-        <div className="flex items-start justify-between p-6 sm:p-7 border-b border-slate-800">
+        <div className="flex items-start justify-between p-6 sm:p-7 border-b border-light-border dark:border-dark-border">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-2xl bg-gold-500/10 border border-gold-500/20 flex items-center justify-center shrink-0">
-              <BookOpen className="w-5 h-5 text-gold-400" />
+            <div className="w-10 h-10 rounded-2xl bg-brand-gold/10 border border-brand-gold/20 flex items-center justify-center shrink-0">
+              <BookOpen className="w-5 h-5 text-brand-gold" />
             </div>
             <div>
-              <h3 className="text-base font-extrabold text-white tracking-tight">
+              <h3 className="text-base font-extrabold text-brand-green tracking-tight">
                 {mode === 'create' ? 'Add Training Program to Catalog' : `Edit Training Program`}
               </h3>
               {mode === 'edit' && (
-                <p className="text-[11px] font-mono text-emerald-400 mt-0.5">{form.training_id}</p>
+                <p className="text-[11px] font-mono text-brand-green mt-0.5">{form.training_id}</p>
               )}
-              <p className="text-xs text-slate-400 mt-0.5 leading-relaxed">
+              <p className="text-xs text-light-text dark:text-dark-muted mt-0.5 leading-relaxed">
                 {mode === 'create'
                   ? 'Programs are matched to faculty recommendations immediately after saving — no ML retraining needed.'
                   : 'All fields are editable. Changes are saved to the database in real time.'}
@@ -368,7 +368,7 @@ function CatalogFormModal({
           <button
             type="button"
             onClick={onClose}
-            className="w-8 h-8 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-400 hover:text-white flex items-center justify-center transition-all shrink-0 ml-4"
+            className="w-8 h-8 rounded-xl bg-white dark:bg-dark-bg border border-light-border dark:border-dark-border hover:border-brand-green text-light-text dark:text-dark-muted hover:text-light-text dark:text-dark-text flex items-center justify-center transition-all shrink-0 ml-4"
           >
             <X className="w-4 h-4" />
           </button>
@@ -380,7 +380,7 @@ function CatalogFormModal({
 
             {/* ── SECTION 1: Identification ── */}
             <div className="space-y-4">
-              <div className="flex items-center gap-2 text-xs font-bold text-slate-400 uppercase tracking-widest">
+              <div className="flex items-center gap-2 text-xs font-bold text-light-text dark:text-dark-muted uppercase tracking-widest">
                 <Hash className="w-3.5 h-3.5" />
                 <span>Program Identification</span>
               </div>
@@ -388,29 +388,29 @@ function CatalogFormModal({
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 {mode === 'create' && (
                   <div className="space-y-1">
-                    <label className="block text-xs font-semibold text-slate-200">
+                    <label className="block text-xs font-semibold text-light-text dark:text-dark-text">
                       Training ID
-                      <span className="ml-1.5 text-[10px] font-normal text-slate-500">(auto-generated if blank)</span>
+                      <span className="ml-1.5 text-[10px] font-normal text-light-text dark:text-dark-muted">(auto-generated if blank)</span>
                     </label>
                     <input
                       type="text"
                       value={form.training_id || ''}
                       onChange={(e) => setField('training_id', e.target.value)}
                       placeholder="e.g. TRN-015"
-                      className="w-full bg-slate-950 border border-slate-700 hover:border-slate-500 rounded-xl px-3.5 py-2.5 text-xs text-white font-mono placeholder-slate-600 focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500/20 transition-colors"
+                      className="w-full bg-light-bg dark:bg-dark-bg border border-light-border dark:border-dark-border hover:border-slate-500 rounded-xl px-3.5 py-2.5 text-xs text-light-text dark:text-dark-text font-mono placeholder:text-light-text dark:placeholder:text-dark-muted focus:border-brand-green focus:outline-none focus:ring-1 focus:ring-brand-green/20 transition-colors"
                     />
                   </div>
                 )}
 
                 <div className="space-y-1">
-                  <label className="block text-xs font-semibold text-slate-200">
-                    Status <span className="text-rose-400 font-bold">*</span>
+                  <label className="block text-xs font-semibold text-light-text dark:text-dark-text">
+                    Status <span className="text-brand-green font-bold">*</span>
                   </label>
-                  <p className="text-[11px] text-slate-500">Inactive programs are hidden from faculty recommendations.</p>
+                  <p className="text-[11px] text-light-text dark:text-dark-muted">Inactive programs are hidden from faculty recommendations.</p>
                   <select
                     value={form.status || 'active'}
                     onChange={(e) => setField('status', e.target.value)}
-                    className="w-full bg-slate-950 border border-slate-700 hover:border-slate-500 rounded-xl px-3.5 py-2.5 text-xs text-white focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500/20 transition-colors"
+                    className="w-full bg-light-bg dark:bg-dark-bg border border-light-border dark:border-dark-border hover:border-slate-500 rounded-xl px-3.5 py-2.5 text-xs text-light-text dark:text-dark-text focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500/20 transition-colors"
                   >
                     <option value="active">✅  Active — visible to recommender</option>
                     <option value="inactive">🔴  Inactive — hidden from recommendations</option>
@@ -421,15 +421,15 @@ function CatalogFormModal({
 
             {/* ── SECTION 2: Basic Info ── */}
             <div className="space-y-4">
-              <div className="flex items-center gap-2 text-xs font-bold text-slate-400 uppercase tracking-widest">
+              <div className="flex items-center gap-2 text-xs font-bold text-light-text dark:text-dark-muted uppercase tracking-widest">
                 <FileText className="w-3.5 h-3.5" />
                 <span>Program Details</span>
               </div>
 
               {/* Title */}
               <div className="space-y-1">
-                <label className="block text-xs font-semibold text-slate-200">
-                  Program Title <span className="text-rose-400 font-bold">*</span>
+                <label className="block text-xs font-semibold text-light-text dark:text-dark-text">
+                  Program Title <span className="text-brand-green font-bold">*</span>
                 </label>
                 <input
                   type="text"
@@ -437,14 +437,14 @@ function CatalogFormModal({
                   onChange={(e) => setField('title', e.target.value)}
                   onBlur={() => setTouched((p) => ({ ...p, title: true }))}
                   placeholder="e.g. AI in Higher Education: Tools and Applications"
-                  className={`w-full bg-slate-950 border rounded-xl px-3.5 py-2.5 text-sm text-white placeholder-slate-600 focus:outline-none focus:ring-1 transition-colors ${
+                  className={`w-full bg-light-bg dark:bg-dark-bg border rounded-xl px-3.5 py-2.5 text-sm text-light-text dark:text-dark-text placeholder-slate-600 focus:outline-none focus:ring-1 transition-colors ${
                     titleError
                       ? 'border-rose-500/60 focus:border-rose-400 focus:ring-rose-500/15'
-                      : 'border-slate-700 hover:border-slate-500 focus:border-emerald-500 focus:ring-emerald-500/15'
+                      : 'border-light-border dark:border-dark-border hover:border-brand-green focus:border-brand-green focus:ring-emerald-500/15'
                   }`}
                 />
                 {titleError && (
-                  <p className="flex items-center gap-1 text-[11px] text-rose-400">
+                  <p className="flex items-center gap-1 text-[11px] text-brand-green">
                     <AlertCircle className="w-3 h-3" /> {titleError}
                   </p>
                 )}
@@ -452,21 +452,21 @@ function CatalogFormModal({
 
               {/* Description */}
               <div className="space-y-1">
-                <label className="block text-xs font-semibold text-slate-200">Description</label>
-                <p className="text-[11px] text-slate-500">Explain the program objectives, target audience, and key outcomes.</p>
+                <label className="block text-xs font-semibold text-light-text dark:text-dark-text">Description</label>
+                <p className="text-[11px] text-light-text dark:text-dark-muted">Explain the program objectives, target audience, and key outcomes.</p>
                 <textarea
                   value={form.description || ''}
                   onChange={(e) => setField('description', e.target.value)}
                   placeholder="Describe what participants will learn and how it addresses their training needs..."
                   rows={3}
-                  className="w-full bg-slate-950 border border-slate-700 hover:border-slate-500 rounded-xl px-3.5 py-2.5 text-xs text-white placeholder-slate-600 focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500/15 transition-colors resize-none"
+                  className="w-full bg-light-bg dark:bg-dark-bg border border-light-border dark:border-dark-border hover:border-slate-500 rounded-xl px-3.5 py-2.5 text-xs text-light-text dark:text-dark-text placeholder:text-light-text dark:placeholder:text-dark-muted focus:border-brand-green focus:outline-none focus:ring-1 focus:ring-brand-green/15 transition-colors resize-none"
                 />
               </div>
             </div>
 
             {/* ── SECTION 3: Classification ── */}
             <div className="space-y-4">
-              <div className="flex items-center gap-2 text-xs font-bold text-slate-400 uppercase tracking-widest">
+              <div className="flex items-center gap-2 text-xs font-bold text-light-text dark:text-dark-muted uppercase tracking-widest">
                 <Layers className="w-3.5 h-3.5" />
                 <span>Classification & Targeting</span>
               </div>
@@ -495,7 +495,7 @@ function CatalogFormModal({
 
             {/* ── SECTION 4: Delivery Info ── */}
             <div className="space-y-4">
-              <div className="flex items-center gap-2 text-xs font-bold text-slate-400 uppercase tracking-widest">
+              <div className="flex items-center gap-2 text-xs font-bold text-light-text dark:text-dark-muted uppercase tracking-widest">
                 <Monitor className="w-3.5 h-3.5" />
                 <span>Delivery Options</span>
               </div>
@@ -522,7 +522,7 @@ function CatalogFormModal({
 
             {/* ── SECTION 5: Schedule ── */}
             <div className="space-y-4">
-              <div className="flex items-center gap-2 text-xs font-bold text-slate-400 uppercase tracking-widest">
+              <div className="flex items-center gap-2 text-xs font-bold text-light-text dark:text-dark-muted uppercase tracking-widest">
                 <CalendarDays className="w-3.5 h-3.5" />
                 <span>Schedule Availability</span>
               </div>
@@ -541,9 +541,9 @@ function CatalogFormModal({
         </div>
 
         {/* ── Modal Footer ── */}
-        <div className="p-5 sm:p-6 border-t border-slate-800 bg-slate-950/40 rounded-b-3xl flex items-center justify-between gap-4">
-          <div className="text-[11px] text-slate-500 flex items-center gap-1">
-            <span className="text-rose-400 font-bold">*</span>
+        <div className="p-5 sm:p-6 border-t border-light-border dark:border-dark-border bg-light-bg dark:bg-dark-bg/40 rounded-b-3xl flex items-center justify-between gap-4">
+          <div className="text-[11px] text-light-text dark:text-dark-muted flex items-center gap-1">
+            <span className="text-brand-green font-bold">*</span>
             <span>Title and at least one Category are required.</span>
           </div>
 
@@ -551,7 +551,7 @@ function CatalogFormModal({
             <button
               type="button"
               onClick={onClose}
-              className="px-4 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-semibold transition-all"
+              className="px-4 py-2.5 rounded-xl bg-white dark:bg-dark-bg border border-light-border dark:border-dark-border hover:border-brand-green text-light-text dark:text-dark-text text-xs font-semibold transition-all"
             >
               Cancel
             </button>
@@ -559,7 +559,7 @@ function CatalogFormModal({
               type="submit"
               form="catalog-form"
               disabled={saving}
-              className="flex items-center gap-2 px-6 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 disabled:opacity-50 disabled:cursor-not-allowed text-white font-bold text-xs shadow-lg shadow-emerald-950/40 transition-all"
+              className="flex items-center gap-2 px-6 py-2.5 rounded-xl bg-brand-green hover:bg-brand-green-dark disabled:opacity-50 disabled:cursor-not-allowed text-light-text dark:text-dark-text font-bold text-xs shadow-lg shadow-emerald-950/40 transition-all"
             >
               {saving ? (
                 <><RefreshCw className="w-3.5 h-3.5 animate-spin" /> Saving...</>
@@ -592,21 +592,21 @@ function CatalogCard({
     <div
       className={`p-5 rounded-2xl border transition-all group space-y-3 ${
         isActive
-          ? 'border-slate-800 bg-slate-950/80 hover:border-slate-700'
-          : 'border-slate-800/40 bg-slate-950/30 opacity-60'
+          ? 'border-light-border dark:border-dark-border bg-light-bg dark:bg-dark-bg/80 hover:border-light-border dark:border-dark-border'
+          : 'border-light-border dark:border-dark-border/40 bg-light-bg dark:bg-dark-bg/30 opacity-60'
       }`}
     >
       {/* Header */}
       <div className="flex items-start justify-between gap-2">
         <div className="flex items-center gap-2 flex-wrap">
-          <span className="text-xs font-mono font-bold text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded border border-emerald-500/20">
+          <span className="text-xs font-mono font-bold text-brand-green bg-brand-green/10 px-2 py-0.5 rounded border border-brand-green/20">
             {item.training_id}
           </span>
           <span
             className={`text-[10px] font-bold px-2 py-0.5 rounded border ${
               isActive
-                ? 'text-emerald-400 bg-emerald-500/10 border-emerald-500/20'
-                : 'text-slate-500 bg-slate-800 border-slate-700'
+                ? 'text-brand-green bg-brand-green/10 border-brand-green/20'
+                : 'text-light-text dark:text-dark-muted bg-white dark:bg-dark-bg border-light-border dark:border-dark-border'
             }`}
           >
             {item.status}
@@ -618,21 +618,21 @@ function CatalogCard({
           <button
             onClick={() => onEdit(item)}
             title="Edit"
-            className="w-7 h-7 rounded-lg bg-slate-800 hover:bg-gold-600/30 text-slate-400 hover:text-gold-400 flex items-center justify-center transition-all"
+            className="w-7 h-7 rounded-lg bg-white dark:bg-dark-bg hover:bg-brand-gold/30 text-light-text dark:text-dark-muted hover:text-brand-gold flex items-center justify-center transition-all"
           >
             <Pencil className="w-3.5 h-3.5" />
           </button>
           <button
             onClick={() => onToggleStatus(item.training_id, item.status)}
             title={isActive ? 'Deactivate' : 'Activate'}
-            className="w-7 h-7 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-400 hover:text-white flex items-center justify-center transition-all"
+            className="w-7 h-7 rounded-lg bg-white dark:bg-dark-bg border border-light-border dark:border-dark-border hover:border-brand-green text-light-text dark:text-dark-muted hover:text-light-text dark:text-dark-text flex items-center justify-center transition-all"
           >
-            {isActive ? <ToggleRight className="w-3.5 h-3.5 text-emerald-400" /> : <ToggleLeft className="w-3.5 h-3.5" />}
+            {isActive ? <ToggleRight className="w-3.5 h-3.5 text-brand-green" /> : <ToggleLeft className="w-3.5 h-3.5" />}
           </button>
           <button
             onClick={() => onDelete(item.training_id, item.title)}
             title="Delete"
-            className="w-7 h-7 rounded-lg bg-slate-800 hover:bg-rose-600/30 text-slate-400 hover:text-rose-400 flex items-center justify-center transition-all"
+            className="w-7 h-7 rounded-lg bg-white dark:bg-dark-bg hover:bg-rose-600/30 text-light-text dark:text-dark-muted hover:text-brand-green flex items-center justify-center transition-all"
           >
             <Trash2 className="w-3.5 h-3.5" />
           </button>
@@ -640,13 +640,13 @@ function CatalogCard({
       </div>
 
       {/* Title */}
-      <h4 className="font-bold text-slate-100 text-sm leading-snug group-hover:text-white transition-colors">
+      <h4 className="font-bold text-light-text dark:text-dark-text text-sm leading-snug group-hover:text-light-text dark:text-dark-text transition-colors">
         {item.title}
       </h4>
 
       {/* Description */}
       {item.description && (
-        <p className="text-xs text-slate-400 leading-relaxed line-clamp-2">{item.description}</p>
+        <p className="text-xs text-light-text dark:text-dark-muted leading-relaxed line-clamp-2">{item.description}</p>
       )}
 
       {/* Tags row */}
@@ -654,7 +654,7 @@ function CatalogCard({
         {item.categories?.length > 0 && (
           <div className="flex flex-wrap gap-1">
             {item.categories.map((c) => (
-              <span key={c} className="text-[10px] font-mono bg-gold-500/10 text-gold-400 border border-gold-500/20 px-1.5 py-0.5 rounded">
+              <span key={c} className="text-[10px] font-mono bg-brand-gold/10 text-brand-gold border border-brand-gold/20 px-1.5 py-0.5 rounded">
                 {c}
               </span>
             ))}
@@ -663,7 +663,7 @@ function CatalogCard({
         {item.modalities?.length > 0 && (
           <div className="flex flex-wrap gap-1">
             {item.modalities.map((m) => (
-              <span key={m} className="text-[10px] font-mono bg-slate-800 text-slate-400 px-1.5 py-0.5 rounded">
+              <span key={m} className="text-[10px] font-mono bg-white dark:bg-dark-bg text-light-text dark:text-dark-muted px-1.5 py-0.5 rounded">
                 {m}
               </span>
             ))}
@@ -672,7 +672,7 @@ function CatalogCard({
         {item.durations?.length > 0 && (
           <div className="flex flex-wrap gap-1">
             {item.durations.map((d) => (
-              <span key={d} className="text-[10px] font-mono bg-slate-800 text-slate-500 px-1.5 py-0.5 rounded">
+              <span key={d} className="text-[10px] font-mono bg-white dark:bg-dark-bg text-light-text dark:text-dark-muted px-1.5 py-0.5 rounded">
                 ⏱ {d}
               </span>
             ))}
@@ -696,27 +696,27 @@ function DeleteConfirmModal({
   onCancel: () => void;
 }) {
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/85 backdrop-blur-sm">
-      <div className="bg-slate-900 border border-rose-500/30 rounded-3xl p-6 sm:p-8 max-w-sm w-full shadow-2xl space-y-4">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-light-bg dark:bg-dark-bg/85 backdrop-blur-sm">
+      <div className="bg-white dark:bg-dark-card border border-rose-500/30 rounded-3xl p-6 sm:p-8 max-w-sm w-full shadow-2xl space-y-4">
         <div className="w-12 h-12 rounded-2xl bg-rose-500/10 border border-rose-500/20 flex items-center justify-center">
-          <Trash2 className="w-6 h-6 text-rose-400" />
+          <Trash2 className="w-6 h-6 text-brand-green" />
         </div>
         <div>
-          <h3 className="text-base font-bold text-white">Delete Training Program</h3>
-          <p className="text-xs text-slate-400 mt-1 leading-relaxed">
-            This will permanently remove <strong className="text-slate-200">{title}</strong> ({trainingId}) from the catalog. This cannot be undone.
+          <h3 className="text-base font-bold text-light-text dark:text-dark-text">Delete Training Program</h3>
+          <p className="text-xs text-light-text dark:text-dark-muted mt-1 leading-relaxed">
+            This will permanently remove <strong className="text-light-text dark:text-dark-text">{title}</strong> ({trainingId}) from the catalog. This cannot be undone.
           </p>
         </div>
         <div className="flex items-center gap-3">
           <button
             onClick={onCancel}
-            className="flex-1 px-4 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-semibold transition-all"
+            className="flex-1 px-4 py-2 rounded-xl bg-white dark:bg-dark-bg border border-light-border dark:border-dark-border hover:border-brand-green text-light-text dark:text-dark-text text-xs font-semibold transition-all"
           >
             Cancel
           </button>
           <button
             onClick={onConfirm}
-            className="flex-1 px-4 py-2 rounded-xl bg-rose-600 hover:bg-rose-500 text-white text-xs font-bold transition-all"
+            className="flex-1 px-4 py-2 rounded-xl bg-rose-600 hover:bg-rose-500 text-light-text dark:text-dark-text text-xs font-bold transition-all"
           >
             Delete Permanently
           </button>
@@ -914,17 +914,16 @@ export default function SystemAdminDashboardPage() {
   return (
     <div className="space-y-8 max-w-7xl mx-auto">
       {/* 1. Header Banner */}
-      <div className="bg-slate-900/60 dark:bg-slate-900/80 border border-slate-800 rounded-3xl p-6 sm:p-8 shadow-xl backdrop-blur-md flex flex-col md:flex-row md:items-end md:justify-between gap-6">
+      <div className="bg-white dark:bg-dark-card border border-light-border dark:border-dark-border rounded-3xl p-6 sm:p-8 shadow-xl backdrop-blur-md flex flex-col md:flex-row md:items-center md:justify-between gap-6">
         <div className="space-y-2">
-          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-semibold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
-            <ShieldAlert className="w-3.5 h-3.5 text-rose-400" />
+          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-semibold bg-brand-green/10 text-brand-green border border-brand-green/20">
             <span>System Administrator Portal</span>
           </div>
 
-          <h1 className="text-2xl font-extrabold text-white tracking-tight">
+          <h1 className="text-2xl font-extrabold text-brand-green tracking-tight">
             QSU Recommender Management Console
           </h1>
-          <p className="text-xs text-slate-400">
+          <p className="text-xs text-light-text dark:text-dark-muted">
             System-wide user access control, audit logs, training catalog maintenance, and ML model retraining.
           </p>
         </div>
@@ -932,20 +931,20 @@ export default function SystemAdminDashboardPage() {
         <div className="flex flex-wrap items-center gap-3">
           <Link
             href="/register-admin"
-            className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 text-xs font-semibold transition-all"
+            className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-white dark:bg-dark-bg border border-light-border dark:border-dark-border text-brand-green hover:border-brand-green text-xs font-semibold transition-all"
           >
-            <UserPlus className="w-4 h-4 text-emerald-400" />
+            <UserPlus className="w-4 h-4 text-brand-green" />
             <span>Add Dept Admin</span>
           </Link>
 
           <button
             onClick={handleTrainModel}
             disabled={training}
-            className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-gradient-to-r from-emerald-600 to-emerald-500 hover:from-emerald-500 hover:to-emerald-400 text-white font-bold text-xs shadow-lg shadow-emerald-950/50 transition-all disabled:opacity-50"
+            className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-brand-green hover:bg-brand-green-dark text-light-text dark:text-dark-text font-bold text-xs shadow-lg transition-all disabled:opacity-50"
           >
             {training ? (
               <>
-                <RefreshCw className="w-4 h-4 animate-spin text-white" />
+                <RefreshCw className="w-4 h-4 animate-spin text-light-text dark:text-dark-text" />
                 <span>Training ML Pipeline...</span>
               </>
             ) : (
@@ -959,7 +958,7 @@ export default function SystemAdminDashboardPage() {
       </div>
 
       {/* 2. Navigation Tabs */}
-      <div className="flex items-center gap-2 border-b border-slate-800 pb-2">
+      <div className="flex items-center gap-2 border-b border-light-border dark:border-dark-border pb-2">
         {(
           [
             { key: 'users', icon: <Users className="w-4 h-4" />, label: `Users & RBAC (${users.length})` },
@@ -972,8 +971,8 @@ export default function SystemAdminDashboardPage() {
             onClick={() => setActiveTab(tab.key)}
             className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-bold transition-all ${
               activeTab === tab.key
-                ? 'bg-emerald-500/15 text-emerald-400 border border-emerald-500/30'
-                : 'text-slate-400 hover:text-white'
+                ? 'bg-brand-green/15 text-brand-green border border-brand-green/30'
+                : 'text-light-text dark:text-dark-muted hover:text-light-text dark:text-dark-text'
             }`}
           >
             {tab.icon}
@@ -989,11 +988,11 @@ export default function SystemAdminDashboardPage() {
         <>
           {/* ── TAB 1: USERS ── */}
           {activeTab === 'users' && (
-            <div className="bg-slate-900/60 dark:bg-slate-900/80 border border-slate-800 rounded-3xl p-6 sm:p-8 shadow-xl backdrop-blur-md space-y-4">
+            <div className="bg-white dark:bg-dark-card border border-light-border dark:border-dark-border rounded-3xl p-6 sm:p-8 shadow-xl backdrop-blur-md space-y-4">
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                 <div>
-                  <h2 className="text-base font-bold text-white">System User Directory</h2>
-                  <p className="text-xs text-slate-400 mt-0.5">Manage credentials, roles, and profiles across all departments.</p>
+                  <h2 className="text-base font-bold text-light-text dark:text-dark-text">System User Directory</h2>
+                  <p className="text-xs text-light-text dark:text-dark-muted mt-0.5">Manage credentials, roles, and profiles across all departments.</p>
                 </div>
 
                 {/* Debounced Search */}
@@ -1006,14 +1005,14 @@ export default function SystemAdminDashboardPage() {
               </div>
 
               {filteredUsers.length === 0 ? (
-                <div className="py-12 text-center border border-dashed border-slate-800 rounded-2xl text-xs text-slate-400 space-y-1">
-                  <p className="text-slate-300 font-semibold">No users found matching "{userSearch}"</p>
-                  <p className="text-slate-500">Try searching for a username, email, or department code.</p>
+                <div className="py-12 text-center border border-dashed border-light-border dark:border-dark-border rounded-2xl text-xs text-light-text dark:text-dark-muted space-y-1">
+                  <p className="text-light-text dark:text-dark-text font-semibold">No users found matching "{userSearch}"</p>
+                  <p className="text-light-text dark:text-dark-muted">Try searching for a username, email, or department code.</p>
                 </div>
               ) : (
                 <div className="overflow-x-auto">
-                  <table className="w-full text-left text-xs text-slate-300">
-                    <thead className="bg-slate-950/80 text-slate-400 font-semibold border-b border-slate-800 uppercase tracking-wider text-[10px]">
+                  <table className="w-full text-left text-xs text-light-text dark:text-dark-text">
+                    <thead className="bg-light-bg dark:bg-dark-bg/80 text-light-text dark:text-dark-muted font-semibold border-b border-light-border dark:border-dark-border uppercase tracking-wider text-[10px]">
                       <tr>
                         <th className="p-3.5 rounded-l-xl">ID</th>
                         <th className="p-3.5">User</th>
@@ -1027,39 +1026,39 @@ export default function SystemAdminDashboardPage() {
                       {filteredUsers.map((u) => {
                         const isSelf = currentAuthUser?.id === u.id;
                         return (
-                          <tr key={u.id} className="hover:bg-slate-800/40 transition-colors group">
-                            <td className="p-3.5 font-mono text-slate-500">#{u.id}</td>
+                          <tr key={u.id} className="hover:bg-white dark:bg-dark-bg/40 transition-colors group">
+                            <td className="p-3.5 font-mono text-light-text dark:text-dark-muted">#{u.id}</td>
                             <td className="p-3.5">
-                              <div className="font-bold text-slate-100 flex items-center gap-1.5">
+                              <div className="font-bold text-light-text dark:text-dark-text flex items-center gap-1.5">
                                 <span>{u.full_name || u.username}</span>
                                 {isSelf && (
-                                  <span className="text-[9px] font-mono bg-emerald-500/15 text-emerald-400 px-1.5 py-0.2 rounded">
+                                  <span className="text-[9px] font-mono bg-brand-green/15 text-brand-green px-1.5 py-0.2 rounded">
                                     You
                                   </span>
                                 )}
                               </div>
-                              <div className="text-[11px] text-slate-400 font-mono">
+                              <div className="text-[11px] text-light-text dark:text-dark-muted font-mono">
                                 @{u.username} • {u.email || 'No email'}
                               </div>
                             </td>
                             <td className="p-3.5">
                               <span className={`text-[10px] font-mono font-bold px-2 py-0.5 rounded border ${
-                                u.role === 'system_admin' ? 'bg-rose-500/10 text-rose-400 border-rose-500/20' :
-                                u.role === 'department_admin' ? 'bg-gold-500/10 text-gold-400 border-gold-500/20' :
-                                'bg-emerald-500/10 text-emerald-400 border-emerald-500/20'
+                                u.role === 'system_admin' ? 'bg-rose-500/10 text-brand-green border-rose-500/20' :
+                                u.role === 'department_admin' ? 'bg-brand-gold/10 text-brand-gold border-brand-gold/20' :
+                                'bg-brand-green/10 text-brand-green border-brand-green/20'
                               }`}>
                                 {u.role}
                               </span>
                             </td>
-                            <td className="p-3.5 font-mono text-slate-300">{u.department_code || 'System-wide'}</td>
+                            <td className="p-3.5 font-mono text-light-text dark:text-dark-text">{u.department_code || 'System-wide'}</td>
                             <td className="p-3.5">
-                              <span className="text-[11px] text-emerald-400 font-semibold">{u.status}</span>
+                              <span className="text-[11px] text-brand-green font-semibold">{u.status}</span>
                             </td>
                             <td className="p-3.5 text-right">
                               <div className="flex items-center justify-end gap-1.5">
                                 <button
                                   onClick={() => setSelectedUserForEdit(u)}
-                                  className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-slate-800 hover:bg-emerald-600/30 text-slate-300 hover:text-emerald-400 border border-slate-700 text-[11px] font-medium transition-all"
+                                  className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-white dark:bg-dark-bg hover:bg-emerald-600/30 text-light-text dark:text-dark-text hover:text-brand-green border border-light-border dark:border-dark-border text-[11px] font-medium transition-all"
                                   title="View / Edit Profile Details"
                                 >
                                   <Pencil className="w-3 h-3" />
@@ -1068,7 +1067,7 @@ export default function SystemAdminDashboardPage() {
 
                                 <button
                                   onClick={() => setSelectedUserForEdit(u)}
-                                  className="p-1.5 rounded-lg bg-slate-800 hover:bg-amber-600/30 text-slate-300 hover:text-amber-400 border border-slate-700 transition-all"
+                                  className="p-1.5 rounded-lg bg-white dark:bg-dark-bg hover:bg-amber-600/30 text-light-text dark:text-dark-text hover:text-brand-gold border border-light-border dark:border-dark-border transition-all"
                                   title="Emergency Password Reset"
                                 >
                                   <Key className="w-3.5 h-3.5" />
@@ -1077,7 +1076,7 @@ export default function SystemAdminDashboardPage() {
                                 <button
                                   onClick={() => setSelectedUserForDelete(u)}
                                   disabled={isSelf}
-                                  className="p-1.5 rounded-lg bg-slate-800 hover:bg-rose-600/30 text-slate-300 hover:text-rose-400 border border-slate-700 disabled:opacity-30 disabled:cursor-not-allowed transition-all"
+                                  className="p-1.5 rounded-lg bg-white dark:bg-dark-bg hover:bg-rose-600/30 text-light-text dark:text-dark-text hover:text-brand-green border border-light-border dark:border-dark-border disabled:opacity-30 disabled:cursor-not-allowed transition-all"
                                   title={isSelf ? 'Cannot delete your own account' : 'Delete User Account'}
                                 >
                                   <Trash2 className="w-3.5 h-3.5" />
@@ -1096,11 +1095,11 @@ export default function SystemAdminDashboardPage() {
 
           {/* ── TAB 2: AUDIT LOGS ── */}
           {activeTab === 'audit' && (
-            <div className="bg-slate-900/60 dark:bg-slate-900/80 border border-slate-800 rounded-3xl p-6 sm:p-8 shadow-xl backdrop-blur-md space-y-4">
+            <div className="bg-white dark:bg-dark-card border border-light-border dark:border-dark-border rounded-3xl p-6 sm:p-8 shadow-xl backdrop-blur-md space-y-4">
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                 <div>
-                  <h2 className="text-base font-bold text-white">System Audit Log Trail</h2>
-                  <p className="text-xs text-slate-400 mt-0.5">Immutable record of logins, administrative changes, and catalog updates.</p>
+                  <h2 className="text-base font-bold text-light-text dark:text-dark-text">System Audit Log Trail</h2>
+                  <p className="text-xs text-light-text dark:text-dark-muted mt-0.5">Immutable record of logins, administrative changes, and catalog updates.</p>
                 </div>
 
                 <div className="w-full sm:w-72">
@@ -1112,14 +1111,14 @@ export default function SystemAdminDashboardPage() {
               </div>
 
               {filteredAuditLogs.length === 0 ? (
-                <div className="py-12 text-center border border-dashed border-slate-800 rounded-2xl text-xs text-slate-400 space-y-1">
-                  <p className="text-slate-300 font-semibold">No audit logs found matching "{auditSearch}"</p>
-                  <p className="text-slate-500">Try searching for an action (e.g. login, update_user) or username.</p>
+                <div className="py-12 text-center border border-dashed border-light-border dark:border-dark-border rounded-2xl text-xs text-light-text dark:text-dark-muted space-y-1">
+                  <p className="text-light-text dark:text-dark-text font-semibold">No audit logs found matching "{auditSearch}"</p>
+                  <p className="text-light-text dark:text-dark-muted">Try searching for an action (e.g. login, update_user) or username.</p>
                 </div>
               ) : (
                 <div className="overflow-x-auto">
-                  <table className="w-full text-left text-xs text-slate-300">
-                    <thead className="bg-slate-950/80 text-slate-400 font-semibold border-b border-slate-800 uppercase tracking-wider text-[10px]">
+                  <table className="w-full text-left text-xs text-light-text dark:text-dark-text">
+                    <thead className="bg-light-bg dark:bg-dark-bg/80 text-light-text dark:text-dark-muted font-semibold border-b border-light-border dark:border-dark-border uppercase tracking-wider text-[10px]">
                       <tr>
                         <th className="p-3.5 rounded-l-xl">Time</th>
                         <th className="p-3.5">User</th>
@@ -1130,20 +1129,20 @@ export default function SystemAdminDashboardPage() {
                     </thead>
                     <tbody className="divide-y divide-slate-800/60 font-mono">
                       {filteredAuditLogs.map((log) => (
-                        <tr key={log.id} className="hover:bg-slate-800/40 transition-colors">
-                          <td className="p-3.5 text-slate-400">{new Date(log.created_at).toLocaleString()}</td>
-                          <td className="p-3.5 text-slate-200">
+                        <tr key={log.id} className="hover:bg-white dark:bg-dark-bg/40 transition-colors">
+                          <td className="p-3.5 text-light-text dark:text-dark-muted">{new Date(log.created_at).toLocaleString()}</td>
+                          <td className="p-3.5 text-light-text dark:text-dark-text">
                             <strong>{log.username || 'System'}</strong> ({log.role_name || '—'})
                           </td>
                           <td className="p-3.5">
-                            <span className="px-2 py-0.5 rounded bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 font-bold">
+                            <span className="px-2 py-0.5 rounded bg-brand-green/10 text-brand-green border border-brand-green/20 font-bold">
                               {log.action}
                             </span>
                           </td>
-                          <td className="p-3.5 text-slate-300">
+                          <td className="p-3.5 text-light-text dark:text-dark-text">
                             {log.entity_type}:{log.entity_id}
                           </td>
-                          <td className="p-3.5 text-slate-400">{log.ip_address || '127.0.0.1'}</td>
+                          <td className="p-3.5 text-light-text dark:text-dark-muted">{log.ip_address || '127.0.0.1'}</td>
                         </tr>
                       ))}
                     </tbody>
@@ -1155,12 +1154,12 @@ export default function SystemAdminDashboardPage() {
 
           {/* ── TAB 3: CATALOG ── */}
           {activeTab === 'catalog' && (
-            <div className="bg-slate-900/60 dark:bg-slate-900/80 border border-slate-800 rounded-3xl p-6 sm:p-8 shadow-xl backdrop-blur-md space-y-5">
+            <div className="bg-white dark:bg-dark-card border border-light-border dark:border-dark-border rounded-3xl p-6 sm:p-8 shadow-xl backdrop-blur-md space-y-5">
               {/* Catalog Header */}
               <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
                 <div>
-                  <h2 className="text-base font-bold text-white">Training Catalog Management</h2>
-                  <p className="text-xs text-slate-400 mt-0.5">
+                  <h2 className="text-base font-bold text-light-text dark:text-dark-text">Training Catalog Management</h2>
+                  <p className="text-xs text-light-text dark:text-dark-muted mt-0.5">
                     {catalogItems.length} programs registered · hover a card for Edit / Toggle / Delete actions
                   </p>
                 </div>
@@ -1173,7 +1172,7 @@ export default function SystemAdminDashboardPage() {
                     />
                   </div>
 
-                  <label className="flex items-center gap-2 text-xs text-slate-400 cursor-pointer select-none">
+                  <label className="flex items-center gap-2 text-xs text-light-text dark:text-dark-muted cursor-pointer select-none">
                     <input
                       type="checkbox"
                       checked={showInactive}
@@ -1186,7 +1185,7 @@ export default function SystemAdminDashboardPage() {
 
                   <button
                     onClick={openCreateCatalogModal}
-                    className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-gold-600 hover:bg-gold-500 text-slate-950 font-bold text-xs transition-all"
+                    className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-brand-gold hover:bg-brand-gold-dark text-white font-bold text-xs transition-all"
                   >
                     <PlusCircle className="w-4 h-4" />
                     <span>Add Program</span>
@@ -1196,12 +1195,12 @@ export default function SystemAdminDashboardPage() {
 
               {/* Catalog Grid */}
               {filteredCatalogItems.length === 0 ? (
-                <div className="py-16 text-center border border-dashed border-slate-800 rounded-2xl">
-                  <BookOpen className="w-10 h-10 text-slate-700 mx-auto mb-3" />
-                  <p className="text-slate-400 text-sm font-semibold">
+                <div className="py-16 text-center border border-dashed border-light-border dark:border-dark-border rounded-2xl">
+                  <BookOpen className="w-10 h-10 text-light-text dark:text-dark-muted mx-auto mb-3" />
+                  <p className="text-light-text dark:text-dark-muted text-sm font-semibold">
                     {catalogSearch ? `No programs found matching "${catalogSearch}"` : 'No catalog programs found.'}
                   </p>
-                  <p className="text-xs text-slate-500 mt-1">
+                  <p className="text-xs text-light-text dark:text-dark-muted mt-1">
                     {catalogSearch ? 'Try a different search term or clear the filter.' : 'Click "Add Program" to create the first entry.'}
                   </p>
                 </div>

@@ -14,26 +14,26 @@ export default function ProgressBar({ parts, currentPart, onSelectPart }: Progre
   const percent = Math.round((completedCount / totalCount) * 100);
 
   return (
-    <div className="w-full bg-slate-900/60 dark:bg-slate-900/80 border border-slate-800 rounded-2xl p-5 shadow-lg backdrop-blur-md">
+    <div className="w-full bg-white dark:bg-dark-card dark:bg-white dark:bg-dark-card/80 border border-light-border dark:border-dark-border rounded-2xl p-5 shadow-lg backdrop-blur-md">
       {/* Header Info */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
         <div>
-          <h3 className="text-sm font-semibold text-slate-100 dark:text-slate-100 flex items-center gap-2">
+          <h3 className="text-sm font-semibold text-light-text dark:text-dark-text dark:text-light-text dark:text-dark-text flex items-center gap-2">
             <span>Questionnaire Progress</span>
-            <span className="text-xs px-2.5 py-0.5 rounded-md bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 font-mono">
+            <span className="text-xs px-2.5 py-0.5 rounded-md bg-brand-green/10 text-brand-green border border-brand-green/20 font-mono">
               {completedCount} of {totalCount} Parts Done ({percent}%)
             </span>
           </h3>
-          <p className="text-xs text-slate-400 dark:text-slate-400 mt-1">
+          <p className="text-xs text-light-text dark:text-dark-muted dark:text-light-text dark:text-dark-muted mt-1">
             Complete Parts 1, 2, 3, 5, and 6 to unlock your personalized training recommendations.
           </p>
         </div>
       </div>
 
       {/* Progress Bar Line */}
-      <div className="relative w-full h-2.5 bg-slate-800 rounded-full overflow-hidden mb-6">
+      <div className="relative w-full h-2.5 bg-white dark:bg-dark-bg rounded-full overflow-hidden mb-6">
         <div
-          className="h-full bg-gradient-to-r from-emerald-500 to-gold-400 transition-all duration-500 ease-out rounded-full"
+          className="h-full bg-gradient-to-r from-brand-green to-brand-gold transition-all duration-500 ease-out rounded-full"
           style={{ width: `${percent}%` }}
         />
       </div>
@@ -57,27 +57,27 @@ export default function ProgressBar({ parts, currentPart, onSelectPart }: Progre
               onClick={() => onSelectPart && !isLocked && onSelectPart(p.part_number)}
               className={`flex flex-col items-center justify-center p-3 rounded-xl border text-center transition-all text-xs relative ${
                 isCurrent
-                  ? 'bg-emerald-950/80 border-emerald-500 text-emerald-300 ring-2 ring-emerald-500/30'
+                  ? 'bg-brand-green/20 border-brand-green text-brand-green ring-2 ring-brand-green/30'
                   : isComplete
-                  ? 'bg-slate-800/80 border-emerald-500/30 text-slate-200 hover:border-emerald-500/60'
+                  ? 'bg-white dark:bg-dark-bg/80 border-brand-green/30 text-light-text dark:text-dark-text hover:border-brand-green/60'
                   : isLocked
-                  ? 'bg-slate-900/30 border-slate-800/60 text-slate-500 cursor-not-allowed opacity-60'
-                  : 'bg-slate-900/60 border-slate-700/60 text-slate-300 hover:border-slate-600'
+                  ? 'bg-white dark:bg-dark-card/30 border-light-border dark:border-dark-border/60 text-light-text dark:text-dark-muted cursor-not-allowed opacity-60'
+                  : 'bg-white dark:bg-dark-card border-light-border/60 dark:border-dark-border/60 text-light-text dark:text-dark-text hover:border-brand-green'
               }`}
             >
               {isRequired && (
-                <span className="absolute top-1 right-1 text-[10px] text-gold-400 font-bold" title="Required for ML Recommendation">
+                <span className="absolute top-1 right-1 text-[10px] text-brand-gold font-bold" title="Required for ML Recommendation">
                   *
                 </span>
               )}
 
               <div className="mb-1.5">
                 {isComplete ? (
-                  <CheckCircle2 className="w-4 h-4 text-emerald-400" />
+                  <CheckCircle2 className="w-4 h-4 text-brand-green" />
                 ) : isLocked ? (
-                  <Lock className="w-4 h-4 text-slate-500" />
+                  <Lock className="w-4 h-4 text-light-text dark:text-dark-muted" />
                 ) : (
-                  <Circle className={`w-4 h-4 ${isCurrent ? 'text-emerald-400' : 'text-slate-400'}`} />
+                  <Circle className={`w-4 h-4 ${isCurrent ? 'text-brand-green' : 'text-light-text dark:text-dark-muted'}`} />
                 )}
               </div>
 

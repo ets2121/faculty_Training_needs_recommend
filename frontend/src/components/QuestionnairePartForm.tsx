@@ -83,17 +83,17 @@ export default function QuestionnairePartForm({
   };
 
   return (
-    <form onSubmit={handleSubmit} className="bg-slate-900/60 dark:bg-slate-900/80 border border-slate-800 rounded-2xl p-6 shadow-xl backdrop-blur-md space-y-6">
-      <div className="flex items-center justify-between gap-3 border-b border-slate-800 pb-4">
+    <form onSubmit={handleSubmit} className="bg-white dark:bg-dark-card/60 dark:bg-white dark:bg-dark-card/80 border border-light-border dark:border-dark-border rounded-2xl p-6 shadow-xl backdrop-blur-md space-y-6">
+      <div className="flex items-center justify-between gap-3 border-b border-light-border dark:border-dark-border pb-4">
         <div>
-          <span className="text-xs font-mono font-bold text-gold-400 bg-gold-500/10 px-2.5 py-0.5 rounded border border-gold-500/20">
+          <span className="text-xs font-mono font-bold text-brand-gold bg-brand-gold/10 px-2.5 py-0.5 rounded border border-brand-gold/20">
             Part {partNumber} of 8
           </span>
           <h2 className="text-lg font-bold text-white mt-1">{label}</h2>
         </div>
 
         {partNumber in { 1: 1, 2: 1, 3: 1, 5: 1, 6: 1 } && (
-          <span className="text-xs font-semibold text-emerald-400 bg-emerald-500/10 px-2.5 py-1 rounded-full border border-emerald-500/20">
+          <span className="text-xs font-semibold text-brand-green bg-brand-green/10 px-2.5 py-1 rounded-full border border-brand-green/20">
             Required for ML Recommendation
           </span>
         )}
@@ -103,11 +103,11 @@ export default function QuestionnairePartForm({
       {partNumber === 1 && (
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div>
-            <label className="block text-xs font-medium text-slate-300 mb-1">Department</label>
+            <label className="block text-xs font-medium text-light-text dark:text-dark-text mb-1">Department</label>
             <select
               value={formData.department || 'BSIT'}
               onChange={(e) => setFormData({ ...formData, department: e.target.value })}
-              className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3.5 py-2.5 text-sm text-slate-100 focus:border-emerald-500 focus:outline-none"
+              className="w-full bg-light-bg dark:bg-dark-bg border border-light-border dark:border-dark-border rounded-xl px-3.5 py-2.5 text-sm text-slate-100 focus:border-emerald-500 focus:outline-none"
             >
               {['BSIT', 'BSED', 'BSCE', 'BEED', 'BSBA', 'BSCS', 'BAELS', 'BSMATH', 'BSHM', 'BSMidwifery'].map((d) => (
                 <option key={d} value={d}>{d}</option>
@@ -116,23 +116,23 @@ export default function QuestionnairePartForm({
           </div>
 
           <div>
-            <label className="block text-xs font-medium text-slate-300 mb-1">Age</label>
+            <label className="block text-xs font-medium text-light-text dark:text-dark-text mb-1">Age</label>
             <input
               type="number"
               min={18}
               max={80}
               value={formData.age || 35}
               onChange={(e) => setFormData({ ...formData, age: parseInt(e.target.value) || 35 })}
-              className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3.5 py-2.5 text-sm text-slate-100 focus:border-emerald-500 focus:outline-none"
+              className="w-full bg-light-bg dark:bg-dark-bg border border-light-border dark:border-dark-border rounded-xl px-3.5 py-2.5 text-sm text-slate-100 focus:border-emerald-500 focus:outline-none"
             />
           </div>
 
           <div>
-            <label className="block text-xs font-medium text-slate-300 mb-1">Sex</label>
+            <label className="block text-xs font-medium text-light-text dark:text-dark-text mb-1">Sex</label>
             <select
               value={formData.sex || 'Female'}
               onChange={(e) => setFormData({ ...formData, sex: e.target.value })}
-              className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3.5 py-2.5 text-sm text-slate-100 focus:border-emerald-500 focus:outline-none"
+              className="w-full bg-light-bg dark:bg-dark-bg border border-light-border dark:border-dark-border rounded-xl px-3.5 py-2.5 text-sm text-slate-100 focus:border-emerald-500 focus:outline-none"
             >
               <option value="Female">Female</option>
               <option value="Male">Male</option>
@@ -141,11 +141,11 @@ export default function QuestionnairePartForm({
           </div>
 
           <div>
-            <label className="block text-xs font-medium text-slate-300 mb-1">Employment Status</label>
+            <label className="block text-xs font-medium text-light-text dark:text-dark-text mb-1">Employment Status</label>
             <select
               value={formData.employment_status || 'Permanent'}
               onChange={(e) => setFormData({ ...formData, employment_status: e.target.value })}
-              className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3.5 py-2.5 text-sm text-slate-100 focus:border-emerald-500 focus:outline-none"
+              className="w-full bg-light-bg dark:bg-dark-bg border border-light-border dark:border-dark-border rounded-xl px-3.5 py-2.5 text-sm text-slate-100 focus:border-emerald-500 focus:outline-none"
             >
               <option value="Permanent">Permanent / Regular</option>
               <option value="Temporary">Temporary</option>
@@ -159,11 +159,11 @@ export default function QuestionnairePartForm({
       {partNumber === 2 && (
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div>
-            <label className="block text-xs font-medium text-slate-300 mb-1">Highest Degree</label>
+            <label className="block text-xs font-medium text-light-text dark:text-dark-text mb-1">Highest Degree</label>
             <select
               value={formData.highest_educational_attainment || "Master's Degree"}
               onChange={(e) => setFormData({ ...formData, highest_educational_attainment: e.target.value })}
-              className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3.5 py-2.5 text-sm text-slate-100 focus:border-emerald-500 focus:outline-none"
+              className="w-full bg-light-bg dark:bg-dark-bg border border-light-border dark:border-dark-border rounded-xl px-3.5 py-2.5 text-sm text-slate-100 focus:border-emerald-500 focus:outline-none"
             >
               <option value="Bachelor's Degree">Bachelor's Degree</option>
               <option value="Master's Degree">Master's Degree</option>
@@ -173,12 +173,12 @@ export default function QuestionnairePartForm({
           </div>
 
           <div>
-            <label className="block text-xs font-medium text-slate-300 mb-1">Field of Specialization</label>
+            <label className="block text-xs font-medium text-light-text dark:text-dark-text mb-1">Field of Specialization</label>
             <input
               type="text"
               value={formData.field_of_specialization || 'Computer Science'}
               onChange={(e) => setFormData({ ...formData, field_of_specialization: e.target.value })}
-              className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3.5 py-2.5 text-sm text-slate-100 focus:border-emerald-500 focus:outline-none"
+              className="w-full bg-light-bg dark:bg-dark-bg border border-light-border dark:border-dark-border rounded-xl px-3.5 py-2.5 text-sm text-slate-100 focus:border-emerald-500 focus:outline-none"
             />
           </div>
         </div>
@@ -188,11 +188,11 @@ export default function QuestionnairePartForm({
       {partNumber === 3 && (
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div>
-            <label className="block text-xs font-medium text-slate-300 mb-1">Academic Rank</label>
+            <label className="block text-xs font-medium text-light-text dark:text-dark-text mb-1">Academic Rank</label>
             <select
               value={formData.academic_rank || 'Assistant Professor'}
               onChange={(e) => setFormData({ ...formData, academic_rank: e.target.value })}
-              className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3.5 py-2.5 text-sm text-slate-100 focus:border-emerald-500 focus:outline-none"
+              className="w-full bg-light-bg dark:bg-dark-bg border border-light-border dark:border-dark-border rounded-xl px-3.5 py-2.5 text-sm text-slate-100 focus:border-emerald-500 focus:outline-none"
             >
               <option value="Instructor I">Instructor I</option>
               <option value="Instructor II">Instructor II</option>
@@ -203,11 +203,11 @@ export default function QuestionnairePartForm({
           </div>
 
           <div>
-            <label className="block text-xs font-medium text-slate-300 mb-1">Years Teaching</label>
+            <label className="block text-xs font-medium text-light-text dark:text-dark-text mb-1">Years Teaching</label>
             <select
               value={formData.years_teaching || '5-10 years'}
               onChange={(e) => setFormData({ ...formData, years_teaching: e.target.value })}
-              className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3.5 py-2.5 text-sm text-slate-100 focus:border-emerald-500 focus:outline-none"
+              className="w-full bg-light-bg dark:bg-dark-bg border border-light-border dark:border-dark-border rounded-xl px-3.5 py-2.5 text-sm text-slate-100 focus:border-emerald-500 focus:outline-none"
             >
               <option value="1-4 years">1-4 years</option>
               <option value="5-10 years">5-10 years</option>
@@ -217,21 +217,21 @@ export default function QuestionnairePartForm({
           </div>
 
           <div>
-            <label className="block text-xs font-medium text-slate-300 mb-1">Administrative Designation</label>
+            <label className="block text-xs font-medium text-light-text dark:text-dark-text mb-1">Administrative Designation</label>
             <input
               type="text"
               value={formData.administrative_designation || 'None'}
               onChange={(e) => setFormData({ ...formData, administrative_designation: e.target.value })}
-              className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3.5 py-2.5 text-sm text-slate-100 focus:border-emerald-500 focus:outline-none"
+              className="w-full bg-light-bg dark:bg-dark-bg border border-light-border dark:border-dark-border rounded-xl px-3.5 py-2.5 text-sm text-slate-100 focus:border-emerald-500 focus:outline-none"
             />
           </div>
 
           <div>
-            <label className="block text-xs font-medium text-slate-300 mb-1">Trainings Attended (Last 3 Years)</label>
+            <label className="block text-xs font-medium text-light-text dark:text-dark-text mb-1">Trainings Attended (Last 3 Years)</label>
             <select
               value={formData.trainings_last_3_years || '3-5'}
               onChange={(e) => setFormData({ ...formData, trainings_last_3_years: e.target.value })}
-              className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3.5 py-2.5 text-sm text-slate-100 focus:border-emerald-500 focus:outline-none"
+              className="w-full bg-light-bg dark:bg-dark-bg border border-light-border dark:border-dark-border rounded-xl px-3.5 py-2.5 text-sm text-slate-100 focus:border-emerald-500 focus:outline-none"
             >
               <option value="0">0 (None)</option>
               <option value="1-2">1-2</option>
@@ -246,13 +246,13 @@ export default function QuestionnairePartForm({
       {partNumber === 4 && (
         <div className="space-y-4">
           <div>
-            <label className="block text-xs font-medium text-slate-300 mb-2">Training Areas Previously Attended</label>
+            <label className="block text-xs font-medium text-light-text dark:text-dark-text mb-2">Training Areas Previously Attended</label>
             <div className="grid grid-cols-2 gap-2">
               {['Instruction', 'Research', 'Technology Integration', 'Community Extension', 'Leadership'].map((area) => {
                 const currentAreas = formData.training_areas || [];
                 const checked = currentAreas.includes(area);
                 return (
-                  <label key={area} className="flex items-center gap-2 p-2.5 rounded-xl border border-slate-800 bg-slate-950 text-xs text-slate-200 cursor-pointer">
+                  <label key={area} className="flex items-center gap-2 p-2.5 rounded-xl border border-light-border dark:border-dark-border bg-light-bg dark:bg-dark-bg text-xs text-light-text dark:text-dark-text cursor-pointer">
                     <input
                       type="checkbox"
                       checked={checked}
@@ -262,7 +262,7 @@ export default function QuestionnairePartForm({
                           : currentAreas.filter((a: string) => a !== area);
                         setFormData({ ...formData, training_areas: updated });
                       }}
-                      className="rounded border-slate-700 text-emerald-500 focus:ring-emerald-500"
+                      className="rounded border-light-border dark:border-dark-border text-brand-green focus:ring-emerald-500"
                     />
                     <span>{area}</span>
                   </label>
@@ -276,7 +276,7 @@ export default function QuestionnairePartForm({
       {/* Part 5: Competency Assessment */}
       {partNumber === 5 && (
         <div className="space-y-4">
-          <p className="text-xs text-slate-400">Rate your current proficiency (1=Low, 5=High) and perceived importance (1=Low, 5=High):</p>
+          <p className="text-xs text-light-text dark:text-dark-muted">Rate your current proficiency (1=Low, 5=High) and perceived importance (1=Low, 5=High):</p>
           {[
             { key: 'research_competency', label: 'Research & Publication Writing' },
             { key: 'computer_literacy_digital_technologies', label: 'Computer Literacy & Digital Technologies' },
@@ -285,11 +285,11 @@ export default function QuestionnairePartForm({
           ].map((item) => {
             const compData = formData.competency?.[item.key] || { proficiency: 3, importance: 5 };
             return (
-              <div key={item.key} className="p-4 rounded-xl border border-slate-800 bg-slate-950/60 space-y-3">
-                <h4 className="text-sm font-semibold text-slate-100">{item.label}</h4>
+              <div key={item.key} className="p-4 rounded-xl border border-light-border dark:border-dark-border bg-light-bg dark:bg-dark-bg/60 space-y-3">
+                <h4 className="text-sm font-semibold text-light-text dark:text-dark-text">{item.label}</h4>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div>
-                    <span className="text-xs text-slate-400 block mb-1">Proficiency: <strong className="text-emerald-400">{compData.proficiency} / 5</strong></span>
+                    <span className="text-xs text-light-text dark:text-dark-muted block mb-1">Proficiency: <strong className="text-brand-green">{compData.proficiency} / 5</strong></span>
                     <input
                       type="range"
                       min={1}
@@ -305,11 +305,11 @@ export default function QuestionnairePartForm({
                           }
                         });
                       }}
-                      className="w-full accent-emerald-500"
+                      className="w-full accent-brand-green"
                     />
                   </div>
                   <div>
-                    <span className="text-xs text-slate-400 block mb-1">Importance: <strong className="text-gold-400">{compData.importance} / 5</strong></span>
+                    <span className="text-xs text-light-text dark:text-dark-muted block mb-1">Importance: <strong className="text-brand-gold">{compData.importance} / 5</strong></span>
                     <input
                       type="range"
                       min={1}
@@ -325,7 +325,7 @@ export default function QuestionnairePartForm({
                           }
                         });
                       }}
-                      className="w-full accent-gold-500"
+                      className="w-full accent-brand-gold"
                     />
                   </div>
                 </div>
@@ -338,7 +338,7 @@ export default function QuestionnairePartForm({
       {/* Part 6: Emerging Training Needs */}
       {partNumber === 6 && (
         <div className="space-y-3">
-          <p className="text-xs text-slate-400">Rate your interest/urgency for the following training topics (1=Not Needed, 5=High Need):</p>
+          <p className="text-xs text-light-text dark:text-dark-muted">Rate your interest/urgency for the following training topics (1=Not Needed, 5=High Need):</p>
           {[
             { key: 'artificial_intelligence', label: 'Artificial Intelligence in Education' },
             { key: 'machine_learning', label: 'Machine Learning & Data Science' },
@@ -348,8 +348,8 @@ export default function QuestionnairePartForm({
           ].map((item) => {
             const needVal = formData.emerging_training_needs?.[item.key] || 4;
             return (
-              <div key={item.key} className="flex items-center justify-between p-3.5 rounded-xl border border-slate-800 bg-slate-950/60 gap-4">
-                <span className="text-xs font-semibold text-slate-200">{item.label}</span>
+              <div key={item.key} className="flex items-center justify-between p-3.5 rounded-xl border border-light-border dark:border-dark-border bg-light-bg dark:bg-dark-bg/60 gap-4">
+                <span className="text-xs font-semibold text-light-text dark:text-dark-text">{item.label}</span>
                 <div className="flex items-center gap-2 shrink-0">
                   <input
                     type="range"
@@ -366,9 +366,9 @@ export default function QuestionnairePartForm({
                         }
                       });
                     }}
-                    className="w-28 sm:w-40 accent-emerald-500"
+                    className="w-28 sm:w-40 accent-brand-green"
                   />
-                  <span className="text-xs font-mono font-bold text-emerald-400 w-6 text-right">{needVal}</span>
+                  <span className="text-xs font-mono font-bold text-brand-green w-6 text-right">{needVal}</span>
                 </div>
               </div>
             );
@@ -380,9 +380,9 @@ export default function QuestionnairePartForm({
       {partNumber === 7 && (
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
           <div>
-            <label className="block text-xs font-medium text-slate-300 mb-2">Preferred Modality</label>
+            <label className="block text-xs font-medium text-light-text dark:text-dark-text mb-2">Preferred Modality</label>
             {['Webinar', 'Blended Learning', 'Face-to-Face', 'Online Self-Paced'].map((mod) => (
-              <label key={mod} className="flex items-center gap-2 mb-2 text-xs text-slate-200">
+              <label key={mod} className="flex items-center gap-2 mb-2 text-xs text-light-text dark:text-dark-text">
                 <input
                   type="checkbox"
                   checked={(formData.preferred_learning_modality || []).includes(mod)}
@@ -391,7 +391,7 @@ export default function QuestionnairePartForm({
                     const updated = e.target.checked ? [...current, mod] : current.filter((m: string) => m !== mod);
                     setFormData({ ...formData, preferred_learning_modality: updated });
                   }}
-                  className="rounded border-slate-700 text-emerald-500"
+                  className="rounded border-light-border dark:border-dark-border text-brand-green"
                 />
                 <span>{mod}</span>
               </label>
@@ -399,9 +399,9 @@ export default function QuestionnairePartForm({
           </div>
 
           <div>
-            <label className="block text-xs font-medium text-slate-300 mb-2">Preferred Schedule</label>
+            <label className="block text-xs font-medium text-light-text dark:text-dark-text mb-2">Preferred Schedule</label>
             {['Saturdays', 'Weekdays', 'Sundays'].map((sched) => (
-              <label key={sched} className="flex items-center gap-2 mb-2 text-xs text-slate-200">
+              <label key={sched} className="flex items-center gap-2 mb-2 text-xs text-light-text dark:text-dark-text">
                 <input
                   type="checkbox"
                   checked={(formData.preferred_schedule || []).includes(sched)}
@@ -410,7 +410,7 @@ export default function QuestionnairePartForm({
                     const updated = e.target.checked ? [...current, sched] : current.filter((s: string) => s !== sched);
                     setFormData({ ...formData, preferred_schedule: updated });
                   }}
-                  className="rounded border-slate-700 text-emerald-500"
+                  className="rounded border-light-border dark:border-dark-border text-brand-green"
                 />
                 <span>{sched}</span>
               </label>
@@ -418,9 +418,9 @@ export default function QuestionnairePartForm({
           </div>
 
           <div>
-            <label className="block text-xs font-medium text-slate-300 mb-2">Preferred Duration</label>
+            <label className="block text-xs font-medium text-light-text dark:text-dark-text mb-2">Preferred Duration</label>
             {['One day', 'Two days', 'Three days', 'One week'].map((dur) => (
-              <label key={dur} className="flex items-center gap-2 mb-2 text-xs text-slate-200">
+              <label key={dur} className="flex items-center gap-2 mb-2 text-xs text-light-text dark:text-dark-text">
                 <input
                   type="checkbox"
                   checked={(formData.preferred_duration || []).includes(dur)}
@@ -429,7 +429,7 @@ export default function QuestionnairePartForm({
                     const updated = e.target.checked ? [...current, dur] : current.filter((d: string) => d !== dur);
                     setFormData({ ...formData, preferred_duration: updated });
                   }}
-                  className="rounded border-slate-700 text-emerald-500"
+                  className="rounded border-light-border dark:border-dark-border text-brand-green"
                 />
                 <span>{dur}</span>
               </label>
@@ -441,7 +441,7 @@ export default function QuestionnairePartForm({
       {/* Part 8: Barriers to Training */}
       {partNumber === 8 && (
         <div className="space-y-3">
-          <p className="text-xs text-slate-400">Rate the impact of these barriers on your training participation (1=Low Impact, 5=Severe Barrier):</p>
+          <p className="text-xs text-light-text dark:text-dark-muted">Rate the impact of these barriers on your training participation (1=Low Impact, 5=Severe Barrier):</p>
           {[
             { key: 'heavy_teaching_workload', label: 'Heavy Teaching Workload' },
             { key: 'time_constraints', label: 'Time Constraints' },
@@ -450,8 +450,8 @@ export default function QuestionnairePartForm({
           ].map((item) => {
             const bVal = formData.barriers?.[item.key] || 3;
             return (
-              <div key={item.key} className="flex items-center justify-between p-3.5 rounded-xl border border-slate-800 bg-slate-950/60 gap-4">
-                <span className="text-xs font-semibold text-slate-200">{item.label}</span>
+              <div key={item.key} className="flex items-center justify-between p-3.5 rounded-xl border border-light-border dark:border-dark-border bg-light-bg dark:bg-dark-bg/60 gap-4">
+                <span className="text-xs font-semibold text-light-text dark:text-dark-text">{item.label}</span>
                 <div className="flex items-center gap-2 shrink-0">
                   <input
                     type="range"
@@ -465,9 +465,9 @@ export default function QuestionnairePartForm({
                         barriers: { ...formData.barriers, [item.key]: val }
                       });
                     }}
-                    className="w-28 sm:w-40 accent-gold-500"
+                    className="w-28 sm:w-40 accent-brand-gold"
                   />
-                  <span className="text-xs font-mono font-bold text-gold-400 w-6 text-right">{bVal}</span>
+                  <span className="text-xs font-mono font-bold text-brand-gold w-6 text-right">{bVal}</span>
                 </div>
               </div>
             );
@@ -476,12 +476,12 @@ export default function QuestionnairePartForm({
       )}
 
       {/* Form Action Controls */}
-      <div className="flex items-center justify-between pt-4 border-t border-slate-800">
+      <div className="flex items-center justify-between pt-4 border-t border-light-border dark:border-dark-border">
         {onPrevPart && partNumber > 1 ? (
           <button
             type="button"
             onClick={onPrevPart}
-            className="flex items-center gap-2 px-4 py-2.5 rounded-xl border border-slate-800 bg-slate-950 text-slate-300 hover:text-white hover:border-slate-700 text-xs font-semibold transition-all"
+            className="flex items-center gap-2 px-4 py-2.5 rounded-xl border border-light-border dark:border-dark-border bg-light-bg dark:bg-dark-bg text-light-text dark:text-dark-text hover:text-white hover:border-light-border dark:border-dark-border text-xs font-semibold transition-all"
           >
             <ArrowLeft className="w-4 h-4" />
             <span>Previous Part</span>
@@ -491,7 +491,7 @@ export default function QuestionnairePartForm({
         <button
           type="submit"
           disabled={saving}
-          className="flex items-center gap-2 px-6 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold shadow-lg shadow-emerald-950/50 transition-all disabled:opacity-50"
+          className="flex items-center gap-2 px-6 py-2.5 rounded-xl bg-brand-green hover:bg-brand-green-dark text-white text-xs font-bold shadow-lg transition-all disabled:opacity-50"
         >
           {saving ? (
             <span>Saving...</span>

@@ -93,7 +93,7 @@ export default function FacultyDashboardPage() {
   return (
     <div className="space-y-8 max-w-6xl mx-auto">
       {/* 1. Header Banner */}
-      <div className="bg-slate-900/60 dark:bg-slate-900/80 border border-slate-800 rounded-3xl p-6 sm:p-8 shadow-xl backdrop-blur-md flex flex-col md:flex-row md:items-center md:justify-between gap-6">
+      <div className="bg-white dark:bg-dark-card border border-light-border dark:border-dark-border rounded-3xl p-6 sm:p-8 shadow-xl backdrop-blur-md flex flex-col md:flex-row md:items-center md:justify-between gap-6">
         <div className="space-y-2">
           <div className="flex items-center gap-3">
             <img
@@ -101,14 +101,14 @@ export default function FacultyDashboardPage() {
               alt="QSU Recommender"
               className="w-10 h-10 object-contain"
             />
-            <h1 className="text-2xl font-extrabold text-white tracking-tight">
+            <h1 className="text-2xl font-extrabold text-brand-green tracking-tight">
               Welcome, {data.user.full_name || data.user.username}
             </h1>
             <StatusBadge status={qProgress.questionnaire_status} />
           </div>
 
-          <p className="text-xs text-slate-400">
-            {faculty.department?.name || 'Faculty Member'} • Rank: <span className="text-slate-200">{faculty.academic_rank || 'N/A'}</span> • Degree: <span className="text-slate-200">{faculty.highest_degree || 'N/A'}</span>
+          <p className="text-xs text-light-text dark:text-dark-muted">
+            {faculty.department?.name || 'Faculty Member'} • Rank: <span className="text-brand-green font-semibold">{faculty.academic_rank || 'N/A'}</span> • Degree: <span className="text-brand-green font-semibold">{faculty.highest_degree || 'N/A'}</span>
           </p>
         </div>
 
@@ -116,9 +116,8 @@ export default function FacultyDashboardPage() {
         <div className="flex flex-wrap items-center gap-3">
           <Link
             href="/questionnaire"
-            className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 text-xs font-semibold transition-all"
+            className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-white dark:bg-dark-bg border border-light-border dark:border-dark-border text-brand-green hover:border-brand-green text-xs font-semibold transition-all"
           >
-            <ClipboardList className="w-4 h-4 text-emerald-400" />
             <span>Fill Assessment</span>
           </Link>
 
@@ -126,7 +125,7 @@ export default function FacultyDashboardPage() {
             <button
               onClick={handleRequestRecommendation}
               disabled={requesting}
-              className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-gradient-to-r from-emerald-600 to-emerald-500 hover:from-emerald-500 hover:to-emerald-400 text-white font-bold text-xs shadow-lg shadow-emerald-950/50 transition-all disabled:opacity-50"
+              className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-brand-green hover:bg-brand-green-dark text-white font-bold text-xs shadow-lg transition-all disabled:opacity-50"
             >
               {requesting ? (
                 <>
@@ -135,7 +134,6 @@ export default function FacultyDashboardPage() {
                 </>
               ) : (
                 <>
-                  <Sparkles className="w-4 h-4 text-gold-300" />
                   <span>{qProgress.has_existing_recommendation ? 'Re-Run Recommendation' : 'Request Recommendation'}</span>
                 </>
               )}
@@ -149,17 +147,17 @@ export default function FacultyDashboardPage() {
 
       {/* 3. Status Action Guidance Card */}
       {!qProgress.eligible_for_recommendation && (
-        <div className="p-6 rounded-2xl border border-gold-500/30 bg-gold-500/10 backdrop-blur-md flex items-start gap-4">
-          <AlertCircle className="w-6 h-6 text-gold-400 shrink-0 mt-0.5" />
+        <div className="p-6 rounded-2xl border border-gold-500/30 bg-brand-gold/10 backdrop-blur-md flex items-start gap-4">
+          <AlertCircle className="w-6 h-6 text-brand-gold shrink-0 mt-0.5" />
           <div className="space-y-1">
-            <h3 className="text-sm font-bold text-gold-300">Minimum Requirements Needed</h3>
-            <p className="text-xs text-slate-300 leading-relaxed">
+            <h3 className="text-sm font-bold text-brand-gold-dark">Minimum Requirements Needed</h3>
+            <p className="text-xs text-light-text dark:text-dark-text leading-relaxed">
               To generate ML-backed recommendations, please complete Parts 1, 2, 3, 5, and 6 of the Needs Assessment Questionnaire.
             </p>
             <div className="pt-2">
               <Link
                 href="/questionnaire"
-                className="inline-flex items-center gap-2 text-xs font-bold text-gold-400 hover:underline"
+                className="inline-flex items-center gap-2 text-xs font-bold text-brand-gold hover:underline"
               >
                 <span>Complete Needs Assessment Now</span>
                 <ArrowRight className="w-3.5 h-3.5" />

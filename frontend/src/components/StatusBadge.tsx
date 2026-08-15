@@ -20,7 +20,7 @@ export default function StatusBadge({ status, className = '', showDescription = 
         {config.label}
       </span>
       {showDescription && (
-        <p className="text-xs text-slate-400 dark:text-slate-400 mt-1 max-w-sm leading-relaxed">
+        <p className="text-xs text-light-text dark:text-dark-muted dark:text-light-text dark:text-dark-muted mt-1 max-w-sm leading-relaxed">
           {config.description}
         </p>
       )}

@@ -45,13 +45,13 @@ export default function RegisterAdminPage() {
       <button
         onClick={() => router.back()}
         type="button"
-        className="inline-flex items-center gap-1.5 text-xs text-slate-400 hover:text-white transition-colors"
+        className="inline-flex items-center gap-1.5 text-xs text-light-text dark:text-dark-muted hover:text-brand-green transition-colors"
       >
         <ArrowLeft className="w-4 h-4" />
         <span>Back to System Administration Console</span>
       </button>
 
-      <div className="bg-slate-900/60 dark:bg-slate-900/80 border border-slate-800 rounded-3xl p-6 sm:p-8 shadow-2xl backdrop-blur-md space-y-6">
+      <div className="bg-white dark:bg-dark-card border border-light-border dark:border-dark-border rounded-3xl p-6 sm:p-8 shadow-2xl backdrop-blur-md space-y-6">
         <div className="flex items-center gap-3">
           <img
             src="/images/logo.png"
@@ -59,8 +59,8 @@ export default function RegisterAdminPage() {
             className="w-10 h-10 object-contain"
           />
           <div>
-            <h1 className="text-2xl font-extrabold text-white">Register Department Admin Account</h1>
-            <p className="text-xs text-slate-400 mt-1">
+            <h1 className="text-2xl font-extrabold text-brand-green">Register Department Admin Account</h1>
+            <p className="text-xs text-light-text dark:text-dark-muted mt-1">
               Create an administrative account for a department chair or head.
             </p>
           </div>
@@ -69,11 +69,11 @@ export default function RegisterAdminPage() {
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
-              <label className="block text-xs font-semibold text-slate-300 mb-1.5">Department *</label>
+              <label className="block text-xs font-semibold text-light-text dark:text-dark-text mb-1.5">Department *</label>
               <select
                 value={deptCode}
                 onChange={(e) => setDeptCode(e.target.value)}
-                className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3.5 py-2.5 text-sm text-white focus:border-emerald-500 focus:outline-none"
+                className="w-full bg-white dark:bg-dark-bg border border-light-border dark:border-dark-border rounded-xl px-3.5 py-2.5 text-sm text-light-text dark:text-dark-text focus:border-brand-green focus:outline-none"
               >
                 {['BSIT', 'BSED', 'BSCE', 'BEED', 'BSBA', 'BSCS', 'BAELS', 'BSMATH', 'BSHM', 'BSMidwifery'].map((d) => (
                   <option key={d} value={d}>{d}</option>
@@ -82,50 +82,50 @@ export default function RegisterAdminPage() {
             </div>
 
             <div>
-              <label className="block text-xs font-semibold text-slate-300 mb-1.5">Username *</label>
+              <label className="block text-xs font-semibold text-light-text dark:text-dark-text mb-1.5">Username *</label>
               <input
                 type="text"
                 required
                 value={username}
                 onChange={(e) => setUsername(e.target.value)}
                 placeholder="e.g. dept_bsit"
-                className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3.5 py-2.5 text-sm text-white focus:border-emerald-500 focus:outline-none"
+                className="w-full bg-white dark:bg-dark-bg border border-light-border dark:border-dark-border rounded-xl px-3.5 py-2.5 text-sm text-light-text dark:text-dark-text placeholder:text-light-text dark:placeholder:text-dark-muted focus:border-brand-green focus:outline-none"
               />
             </div>
 
             <div>
-              <label className="block text-xs font-semibold text-slate-300 mb-1.5">Password *</label>
+              <label className="block text-xs font-semibold text-light-text dark:text-dark-text mb-1.5">Password *</label>
               <input
                 type="password"
                 required
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 placeholder="Temporary password"
-                className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3.5 py-2.5 text-sm text-white focus:border-emerald-500 focus:outline-none"
+                className="w-full bg-white dark:bg-dark-bg border border-light-border dark:border-dark-border rounded-xl px-3.5 py-2.5 text-sm text-light-text dark:text-dark-text placeholder:text-light-text dark:placeholder:text-dark-muted focus:border-brand-green focus:outline-none"
               />
             </div>
 
             <div>
-              <label className="block text-xs font-semibold text-slate-300 mb-1.5">Full Name *</label>
+              <label className="block text-xs font-semibold text-light-text dark:text-dark-text mb-1.5">Full Name *</label>
               <input
                 type="text"
                 required
                 value={fullName}
                 onChange={(e) => setFullName(e.target.value)}
                 placeholder="e.g. Dr. Maria Clara"
-                className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3.5 py-2.5 text-sm text-white focus:border-emerald-500 focus:outline-none"
+                className="w-full bg-white dark:bg-dark-bg border border-light-border dark:border-dark-border rounded-xl px-3.5 py-2.5 text-sm text-light-text dark:text-dark-text placeholder:text-light-text dark:placeholder:text-dark-muted focus:border-brand-green focus:outline-none"
               />
             </div>
           </div>
 
           <div>
-            <label className="block text-xs font-semibold text-slate-300 mb-1.5">Email Address</label>
+            <label className="block text-xs font-semibold text-light-text dark:text-dark-text mb-1.5">Email Address</label>
             <input
               type="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               placeholder="clara@qsu.edu.ph"
-              className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3.5 py-2.5 text-sm text-white focus:border-emerald-500 focus:outline-none"
+              className="w-full bg-white dark:bg-dark-bg border border-light-border dark:border-dark-border rounded-xl px-3.5 py-2.5 text-sm text-light-text dark:text-dark-text placeholder:text-light-text dark:placeholder:text-dark-muted focus:border-brand-green focus:outline-none"
             />
           </div>
 
@@ -133,7 +133,7 @@ export default function RegisterAdminPage() {
             <button
               type="submit"
               disabled={submitting}
-              className="w-full flex items-center justify-center gap-2 py-3 px-4 rounded-xl bg-rose-600 hover:bg-rose-500 text-white font-bold text-sm shadow-lg shadow-rose-950/50 transition-all disabled:opacity-50"
+              className="w-full flex items-center justify-center gap-2 py-3 px-4 rounded-xl bg-brand-green hover:bg-brand-green-dark text-white font-bold text-sm shadow-lg transition-all disabled:opacity-50"
             >
               {submitting ? (
                 <span>Creating Admin Account...</span>
