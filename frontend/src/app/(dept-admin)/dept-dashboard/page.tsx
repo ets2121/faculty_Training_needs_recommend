@@ -359,7 +359,7 @@ export default function DeptDashboardPage() {
                         </div>
                       </div>
 
-                      <div className="flex flex-col items-center justify-center min-w-[90px] shrink-0">
+                      <div className="flex flex-col items-center justify-center shrink-0 sm:min-w-[90px]">
                         <DonutChart
                           probability={item.match_score}
                           color={item.match_score >= 0.7 ? '#10b981' : item.match_score >= 0.4 ? '#f59e0b' : '#64748b'}
