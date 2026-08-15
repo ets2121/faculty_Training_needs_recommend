@@ -93,7 +93,7 @@ export default function Sidebar() {
               >
                 <Icon
                   className={`w-4 h-4 shrink-0 ${
-                    isActive ? 'text-brand-green' : 'text-light-text dark:text-dark-muted'
+                    isActive ? 'text-light-text dark:text-white' : 'text-light-text dark:text-dark-muted'
                   }`}
                 />
                 <span>{item.label}</span>
@@ -127,7 +127,7 @@ export default function Sidebar() {
               >
                 <Icon
                   className={`w-4 h-4 shrink-0 ${
-                    isActive ? 'text-brand-green' : 'text-light-text dark:text-dark-muted'
+                    isActive ? 'text-light-text dark:text-white' : 'text-light-text dark:text-dark-muted'
                   }`}
                 />
                 <span>{item.label}</span>
@@ -166,7 +166,7 @@ export default function Sidebar() {
                   : 'text-light-text dark:text-dark-text hover:text-brand-green hover:bg-light-bg dark:hover:bg-dark-card border border-transparent'
               }`}
             >
-              <Icon className={`w-4 h-4 ${isActive ? 'text-brand-green' : 'text-light-text dark:text-dark-muted'}`} />
+              <Icon className={`w-4 h-4 ${isActive ? 'text-light-text dark:text-white' : 'text-light-text dark:text-dark-muted'}`} />
               <span>{item.label}</span>
             </Link>
           );

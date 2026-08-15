@@ -195,12 +195,12 @@ export default function ProfilePage() {
 
           <div className="space-y-1">
             <div className="flex items-center gap-2 flex-wrap">
-              <h1 className="text-2xl font-extrabold text-brand-green tracking-tight">
+              <h1 className="text-2xl font-extrabold text-light-text dark:text-white tracking-tight">
                 {fullName || authUser?.username}
               </h1>
               <span className={`text-[10px] font-mono font-bold px-2 py-0.5 rounded border ${
                 authUser?.role === 'system_admin'
-                  ? 'bg-rose-500/10 text-rose-600 dark:text-rose-600 dark:text-rose-600 dark:text-rose-400 border-rose-500/20'
+                  ? 'bg-rose-500/10 text-rose-600 dark:text-rose-400 border-rose-500/20'
                   : authUser?.role === 'department_admin'
                   ? 'bg-brand-gold/10 text-brand-gold-dark border-brand-gold/20'
                   : 'bg-brand-green/10 text-brand-green border-brand-green/20'
@@ -261,9 +261,9 @@ export default function ProfilePage() {
 
       {/* ── TAB 1: Edit Profile ── */}
       {activeTab === 'profile' && (
-        <div className="bg-white dark:bg-dark-card/60 dark:bg-white dark:bg-dark-card/80 border border-light-border dark:border-dark-border rounded-3xl p-6 sm:p-8 shadow-xl backdrop-blur-md space-y-6">
+        <div className="bg-white dark:bg-dark-card border border-light-border dark:border-dark-border rounded-3xl p-6 sm:p-8 shadow-xl backdrop-blur-md space-y-6">
           <div>
-            <h2 className="text-base font-bold text-white">Institutional & Personal Details</h2>
+            <h2 className="text-base font-bold text-light-text dark:text-white">Institutional & Personal Details</h2>
             <p className="text-xs text-light-text dark:text-dark-muted mt-0.5">
               Keep your contact and academic profile current to ensure accurate recommendation matching.
             </p>
@@ -279,7 +279,7 @@ export default function ProfilePage() {
                   value={fullName}
                   onChange={(e) => setFullName(e.target.value)}
                   placeholder="e.g. Dr. Maria Santos"
-                  className="w-full bg-light-bg dark:bg-dark-bg border border-light-border dark:border-dark-border hover:border-brand-green focus:border-brand-green rounded-xl px-3.5 py-2.5 text-xs text-white outline-none transition-colors"
+                  className="w-full bg-light-bg dark:bg-dark-bg border border-light-border dark:border-dark-border hover:border-brand-green focus:border-brand-green rounded-xl px-3.5 py-2.5 text-xs text-light-text dark:text-dark-text placeholder:text-light-text dark:placeholder:text-dark-muted outline-none transition-colors"
                 />
               </div>
 
@@ -290,15 +290,16 @@ export default function ProfilePage() {
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   placeholder="e.g. santos@qsu.edu.ph"
-                  className="w-full bg-light-bg dark:bg-dark-bg border border-light-border dark:border-dark-border hover:border-brand-green focus:border-brand-green rounded-xl px-3.5 py-2.5 text-xs text-white outline-none transition-colors"
+                  className="w-full bg-light-bg dark:bg-dark-bg border border-light-border dark:border-dark-border hover:border-brand-green focus:border-brand-green rounded-xl px-3.5 py-2.5 text-xs text-light-text dark:text-dark-text placeholder:text-light-text dark:placeholder:text-dark-muted outline-none transition-colors"
                 />
               </div>
             </div>
 
             {isFaculty && (
               <div className="space-y-4 pt-4 border-t border-light-border dark:border-dark-border">
-                <h3 className="text-xs font-bold text-brand-green uppercase tracking-wider flex items-center gap-1.5">
-                  <GraduationCap className="w-4 h-4" /> Academic & Specialization Attributes
+                <h3 className="text-xs font-bold text-light-text dark:text-white uppercase tracking-wider flex items-center gap-1.5">
+                  <GraduationCap className="w-4 h-4" />
+                  Academic & Specialization Attributes
                 </h3>
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -307,7 +308,7 @@ export default function ProfilePage() {
                     <select
                       value={academicRank}
                       onChange={(e) => setAcademicRank(e.target.value)}
-                      className="w-full bg-light-bg dark:bg-dark-bg border border-light-border dark:border-dark-border hover:border-brand-green focus:border-brand-green rounded-xl px-3.5 py-2.5 text-xs text-white outline-none transition-colors"
+                      className="w-full bg-light-bg dark:bg-dark-bg border border-light-border dark:border-dark-border hover:border-brand-green focus:border-brand-green rounded-xl px-3.5 py-2.5 text-xs text-light-text dark:text-dark-text placeholder:text-light-text dark:placeholder:text-dark-muted outline-none transition-colors"
                     >
                       {ACADEMIC_RANKS.map((r) => (
                         <option key={r} value={r}>{r}</option>
@@ -320,7 +321,7 @@ export default function ProfilePage() {
                     <select
                       value={highestDegree}
                       onChange={(e) => setHighestDegree(e.target.value)}
-                      className="w-full bg-light-bg dark:bg-dark-bg border border-light-border dark:border-dark-border hover:border-brand-green focus:border-brand-green rounded-xl px-3.5 py-2.5 text-xs text-white outline-none transition-colors"
+                      className="w-full bg-light-bg dark:bg-dark-bg border border-light-border dark:border-dark-border hover:border-brand-green focus:border-brand-green rounded-xl px-3.5 py-2.5 text-xs text-light-text dark:text-dark-text placeholder:text-light-text dark:placeholder:text-dark-muted outline-none transition-colors"
                     >
                       {HIGHEST_DEGREES.map((d) => (
                         <option key={d} value={d}>{d}</option>
@@ -336,7 +337,7 @@ export default function ProfilePage() {
                     value={specialization}
                     onChange={(e) => setSpecialization(e.target.value)}
                     placeholder="e.g. Information Technology, Machine Learning, Pedagogy"
-                    className="w-full bg-light-bg dark:bg-dark-bg border border-light-border dark:border-dark-border hover:border-brand-green focus:border-brand-green rounded-xl px-3.5 py-2.5 text-xs text-white outline-none transition-colors"
+                    className="w-full bg-light-bg dark:bg-dark-bg border border-light-border dark:border-dark-border hover:border-brand-green focus:border-brand-green rounded-xl px-3.5 py-2.5 text-xs text-light-text dark:text-dark-text placeholder:text-light-text dark:placeholder:text-dark-muted outline-none transition-colors"
                   />
                 </div>
               </div>
@@ -361,9 +362,9 @@ export default function ProfilePage() {
 
       {/* ── TAB 2: Change Password ── */}
       {activeTab === 'password' && (
-        <div className="bg-white dark:bg-dark-card/60 dark:bg-white dark:bg-dark-card/80 border border-light-border dark:border-dark-border rounded-3xl p-6 sm:p-8 shadow-xl backdrop-blur-md space-y-6">
+        <div className="bg-white dark:bg-dark-card border border-light-border dark:border-dark-border rounded-3xl p-6 sm:p-8 shadow-xl backdrop-blur-md space-y-6">
           <div>
-            <h2 className="text-base font-bold text-white">Change Account Password</h2>
+            <h2 className="text-base font-bold text-light-text dark:text-white">Change Account Password</h2>
             <p className="text-xs text-light-text dark:text-dark-muted mt-0.5">
               Ensure your account is using a strong password of at least 6 characters.
             </p>
@@ -425,10 +426,10 @@ export default function ProfilePage() {
                 value={confirmPassword}
                 onChange={(e) => setConfirmPassword(e.target.value)}
                 placeholder="Re-type new password"
-                className="w-full bg-light-bg dark:bg-dark-bg border border-light-border dark:border-dark-border hover:border-brand-green focus:border-brand-green rounded-xl px-3.5 py-2.5 text-xs text-white outline-none transition-colors"
+                className="w-full bg-light-bg dark:bg-dark-bg border border-light-border dark:border-dark-border hover:border-brand-green focus:border-brand-green rounded-xl px-3.5 py-2.5 text-xs text-light-text dark:text-dark-text placeholder:text-light-text dark:placeholder:text-dark-muted outline-none transition-colors"
               />
               {confirmPassword && newPassword !== confirmPassword && (
-                <p className="text-[11px] text-rose-600 dark:text-rose-600 dark:text-rose-400 flex items-center gap-1 pt-1">
+                <p className="text-[11px] text-rose-600 dark:text-rose-400 flex items-center gap-1 pt-1">
                   <AlertCircle className="w-3 h-3" /> Passwords do not match
                 </p>
               )}

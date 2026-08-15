@@ -118,7 +118,7 @@ export default function LoginPage() {
               <button
                 type="button"
                 onClick={() => setShowDemoAccounts(!showDemoAccounts)}
-                className="inline-flex items-center gap-1.5 text-xs text-light-text dark:text-dark-muted hover:text-brand-green font-medium transition-colors"
+                className="inline-flex items-center gap-1.5 text-xs text-light-text dark:text-dark-muted hover:text-brand-green-dark font-medium transition-colors"
               >
                 {showDemoAccounts ? (
                   <>

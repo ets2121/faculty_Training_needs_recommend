@@ -246,7 +246,7 @@ export function ViewEditUserModal({
               {/* Faculty-specific details */}
               {isFaculty && (
                 <div className="space-y-4 pt-2 border-t border-light-border dark:border-dark-border">
-                  <h4 className="text-xs font-bold text-brand-green uppercase tracking-wider flex items-center gap-1.5">
+                  <h4 className="text-xs font-bold text-light-text dark:text-white uppercase tracking-wider flex items-center gap-1.5">
                     <GraduationCap className="w-3.5 h-3.5" /> Faculty Academic Info
                   </h4>
 
@@ -411,7 +411,7 @@ export function DeleteUserModal({
         <div>
           <h3 className="text-base font-bold text-white">Delete User Account</h3>
           <p className="text-xs text-light-text dark:text-dark-muted mt-1 leading-relaxed">
-            Are you sure you want to delete <strong className="text-light-text dark:text-dark-text">{user.full_name || user.username}</strong> (<span className="font-mono text-brand-green">@{user.username}</span>)?
+            Are you sure you want to delete <strong className="text-light-text dark:text-dark-text">{user.full_name || user.username}</strong> (<span className="font-mono text-light-text dark:text-white">@{user.username}</span>)?
           </p>
           <p className="text-[11px] text-rose-600 dark:text-rose-600 dark:text-rose-400/90 mt-2 bg-rose-500/10 p-2.5 rounded-xl border border-rose-500/20">
             ⚠️ This will permanently remove their survey submissions, questionnaire data, and recommendation records.

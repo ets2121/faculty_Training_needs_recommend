@@ -46,7 +46,7 @@ export default function Home() {
             <span>QSU Faculty Training Needs Recommender System</span>
           </div>
 
-          <h1 className="text-4xl sm:text-5xl font-extrabold text-brand-green tracking-tight leading-tight">
+          <h1 className="text-4xl sm:text-5xl font-extrabold text-light-text dark:text-white tracking-tight leading-tight">
             AI-Driven Faculty Development & <br className="hidden sm:inline" />
             <span className="text-brand-gold-dark">
               Training Program Recommendations

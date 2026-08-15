@@ -10,23 +10,41 @@ body {
 
 @layer base {
   :root {
-    --bg-main: #FFFFFF;
-    --card-bg: #FFFFFF;
-    --text-main: #159447;
-    --text-muted: #5c6e63;
-    --border-main: rgba(21, 148, 71, 0.2);
-    --brand-green: #159447;
-    --brand-gold: #D9A62E;
+    --color-primary: #159447;
+    --color-primary-hover: #08752F;
+    --color-primary-light: #E5F4EA;
+
+    --color-accent: #D9A62E;
+    --color-accent-light: #F8EBC4;
+
+    --color-background: #FFFFFF;
+    --color-surface: #FFFFFF;
+    --color-surface-muted: #F3F9F5;
+
+    --color-border: #B9DFC7;
+
+    --color-text: #17321F;
+    --color-text-secondary: #557061;
+    --color-text-muted: #718579;
   }
 
   .dark {
-    --bg-main: #071A10;
-    --card-bg: #0D2819;
-    --text-main: #FFFFFF;
-    --text-muted: #a3b8ab;
-    --border-main: rgba(21, 148, 71, 0.25);
-    --brand-green: #159447;
-    --brand-gold: #D9A62E;
+    --color-primary: #159447;
+    --color-primary-hover: #1FA95A;
+    --color-primary-light: #1B5737;
+
+    --color-accent: #D9A62E;
+    --color-accent-light: #F2C94C;
+
+    --color-background: #081A10;
+    --color-surface: #0F281A;
+    --color-surface-elevated: #12351F;
+
+    --color-border: #1B5737;
+
+    --color-text: #FFFFFF;
+    --color-text-secondary: #A9BCAF;
+    --color-text-muted: #7F9989;
   }
 
   html {
@@ -38,8 +56,8 @@ body {
   }
 
   body {
-    background-color: var(--bg-main);
-    color: var(--text-main);
+    background-color: var(--color-background);
+    color: var(--color-text);
     font-family: 'Montserrat', system-ui, -apple-system, sans-serif;
     font-weight: 400;
     min-height: 100vh;
@@ -49,7 +67,7 @@ body {
   /* ── Light Mode Color Theme System ── */
   html:not(.dark) body {
     background-color: #FFFFFF;
-    color: #159447;
+    color: #17321F;
   }
 
   html:not(.dark) .bg-slate-900\/40,
@@ -71,16 +89,16 @@ body {
   html:not(.dark) .border-slate-800,
   html:not(.dark) .border-slate-800\/80,
   html:not(.dark) .border-slate-800\/40 {
-    border-color: rgba(21, 148, 71, 0.2) !important;
+    border-color: #B9DFC7 !important;
   }
 
   html:not(.dark) .border-slate-700,
   html:not(.dark) .border-slate-700\/80 {
-    border-color: rgba(21, 148, 71, 0.25) !important;
+    border-color: rgba(21, 148, 71, 0.35) !important;
   }
 
   html:not(.dark) .text-slate-400 {
-    color: #5c6e63 !important;
+    color: #557061 !important;
   }
 
   html:not(.dark) .text-slate-300 {
@@ -99,20 +117,20 @@ body {
   html:not(.dark) h2.text-white,
   html:not(.dark) h3.text-white,
   html:not(.dark) h4.text-white {
-    color: #159447 !important;
+    color: #17321F !important;
   }
 
   html:not(.dark) input.bg-slate-950,
   html:not(.dark) select.bg-slate-950,
   html:not(.dark) textarea.bg-slate-950 {
     background-color: #FFFFFF !important;
-    color: #0a3d1f !important;
-    border-color: rgba(21, 148, 71, 0.25) !important;
+    color: #17321F !important;
+    border-color: #B9DFC7 !important;
   }
 
   html:not(.dark) input::placeholder,
   html:not(.dark) textarea::placeholder {
-    color: #6a7f70 !important;
+    color: #718579 !important;
   }
 
   html:not(.dark) button.bg-emerald-600,
@@ -133,7 +151,7 @@ body {
 
   /* ── Dark Mode Overrides ── */
   .dark body {
-    background-color: #071A10;
+    background-color: #081A10;
     color: #FFFFFF;
   }
 
@@ -142,38 +160,38 @@ body {
   .dark .bg-slate-900\/80,
   .dark .bg-slate-950\/60,
   .dark .bg-slate-950\/80 {
-    background-color: #0D2819 !important;
+    background-color: #0F281A !important;
   }
 
   .dark .bg-slate-900 {
-    background-color: #0D2819 !important;
+    background-color: #0F281A !important;
   }
 
   .dark .bg-slate-950 {
-    background-color: #071A10 !important;
+    background-color: #081A10 !important;
   }
 
   .dark .border-slate-800,
   .dark .border-slate-800\/80,
   .dark .border-slate-800\/40 {
-    border-color: rgba(21, 148, 71, 0.25) !important;
+    border-color: #1B5737 !important;
   }
 
   .dark .border-slate-700,
   .dark .border-slate-700\/80 {
-    border-color: rgba(21, 148, 71, 0.35) !important;
+    border-color: rgba(21, 148, 71, 0.45) !important;
   }
 
   .dark .text-slate-400 {
-    color: #a3b8ab !important;
+    color: #7F9989 !important;
   }
 
   .dark .text-slate-300 {
-    color: #cfe2d5 !important;
+    color: #A9BCAF !important;
   }
 
   .dark .text-slate-200 {
-    color: #e2f0e7 !important;
+    color: #cfe2d5 !important;
   }
 
   .dark .text-slate-100 {

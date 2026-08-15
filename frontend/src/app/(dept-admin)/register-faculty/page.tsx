@@ -70,9 +70,9 @@ export default function RegisterFacultyPage() {
             className="w-10 h-10 object-contain"
           />
           <div>
-            <h1 className="text-2xl font-extrabold text-brand-green">Create New Faculty Account</h1>
+            <h1 className="text-2xl font-extrabold text-light-text dark:text-white">Create New Faculty Account</h1>
             <p className="text-xs text-light-text dark:text-dark-muted mt-1">
-              Department: <strong className="text-brand-green font-mono">{deptCode}</strong>. Accounts created here inherit your department scope.
+              Department: <strong className="text-light-text dark:text-white font-mono">{deptCode}</strong>. Accounts created here inherit your department scope.
             </p>
           </div>
         </div>

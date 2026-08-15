@@ -83,13 +83,13 @@ export default function QuestionnairePartForm({
   };
 
   return (
-    <form onSubmit={handleSubmit} className="bg-white dark:bg-dark-card/60 dark:bg-white dark:bg-dark-card/80 border border-light-border dark:border-dark-border rounded-2xl p-6 shadow-xl backdrop-blur-md space-y-6">
+    <form onSubmit={handleSubmit} className="bg-white dark:bg-dark-card border border-light-border dark:border-dark-border rounded-2xl p-6 shadow-xl backdrop-blur-md space-y-6">
       <div className="flex items-center justify-between gap-3 border-b border-light-border dark:border-dark-border pb-4">
         <div>
           <span className="text-xs font-mono font-bold text-brand-gold bg-brand-gold/10 px-2.5 py-0.5 rounded border border-brand-gold/20">
             Part {partNumber} of 8
           </span>
-          <h2 className="text-lg font-bold text-white mt-1">{label}</h2>
+          <h2 className="text-lg font-bold text-light-text dark:text-white mt-1">{label}</h2>
         </div>
 
         {partNumber in { 1: 1, 2: 1, 3: 1, 5: 1, 6: 1 } && (
@@ -289,7 +289,7 @@ export default function QuestionnairePartForm({
                 <h4 className="text-sm font-semibold text-light-text dark:text-dark-text">{item.label}</h4>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div>
-                    <span className="text-xs text-light-text dark:text-dark-muted block mb-1">Proficiency: <strong className="text-brand-green">{compData.proficiency} / 5</strong></span>
+                    <span className="text-xs text-light-text dark:text-dark-muted block mb-1">Proficiency: <strong className="text-light-text dark:text-white">{compData.proficiency} / 5</strong></span>
                     <input
                       type="range"
                       min={1}
@@ -368,7 +368,7 @@ export default function QuestionnairePartForm({
                     }}
                     className="w-28 sm:w-40 accent-brand-green"
                   />
-                  <span className="text-xs font-mono font-bold text-brand-green w-6 text-right">{needVal}</span>
+                  <span className="text-xs font-mono font-bold text-light-text dark:text-white w-6 text-right">{needVal}</span>
                 </div>
               </div>
             );

@@ -112,7 +112,7 @@ export default function QuestionnairePage() {
       {/* Completion Shortcut Header when Eligible */}
       {progress.eligible_for_recommendation && (
         <div className="p-4 rounded-xl border border-brand-green/30 bg-brand-green/10 flex flex-col sm:flex-row items-center justify-between gap-3">
-          <span className="text-xs text-brand-green font-semibold">
+          <span className="text-xs text-light-text dark:text-white font-semibold">
             All required parts complete! You can request your recommendation now or complete remaining optional parts.
           </span>
           <button

@@ -118,7 +118,7 @@ export function RecommendationSkeleton({ message = 'Running ML Prediction Engine
               <span className="h-3.5 bg-white dark:bg-dark-bg rounded-full w-16" />
             </div>
             <div className="h-5 bg-light-border dark:bg-dark-border rounded-lg w-3/4 max-w-md" />
-            <p className="text-xs text-brand-green font-mono flex items-center gap-1.5 pt-0.5">
+            <p className="text-xs text-light-text dark:text-white font-mono flex items-center gap-1.5 pt-0.5">
               <Sparkles className="w-3.5 h-3.5" />
               <span>{message}</span>
             </p>

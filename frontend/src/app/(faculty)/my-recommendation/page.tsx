@@ -87,7 +87,7 @@ export default function MyRecommendationPage() {
           />
           <Link
             href="/faculty-dashboard"
-            className="inline-flex items-center gap-1.5 text-xs text-light-text dark:text-dark-muted hover:text-brand-green transition-colors"
+            className="inline-flex items-center gap-1.5 text-xs text-light-text dark:text-dark-muted hover:text-brand-green-dark transition-colors"
           >
             <ArrowLeft className="w-4 h-4" />
             <span>Back to Dashboard</span>

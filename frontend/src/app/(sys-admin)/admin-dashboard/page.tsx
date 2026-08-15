@@ -174,14 +174,14 @@ function MultiSelect({
       <div className="flex items-center justify-between">
         <label htmlFor={id} className="flex items-center gap-1.5 text-xs font-semibold text-light-text dark:text-dark-text">
           {label}
-          {required && <span className="text-brand-green font-bold">*</span>}
+          {required && <span className="text-light-text dark:text-white font-bold">*</span>}
           <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded-md bg-blue-500/15 text-blue-400 border border-blue-500/25 text-[9px] font-bold tracking-wide">
             <ListChecks className="w-2.5 h-2.5" />
             MULTI-SELECT
           </span>
         </label>
         {selected.length > 0 && (
-          <span className="text-[10px] font-mono text-brand-green bg-brand-green/10 px-2 py-0.5 rounded-full border border-brand-green/20">
+          <span className="text-[10px] font-mono text-light-text dark:text-white bg-brand-green/10 px-2 py-0.5 rounded-full border border-brand-green/20">
             {selected.length} selected
           </span>
         )}
@@ -214,7 +214,7 @@ function MultiSelect({
                 selected.map((v) => (
                   <span
                     key={v}
-                    className="inline-flex items-center gap-1 bg-brand-green/15 text-brand-green border border-brand-green/30 pl-2 pr-1 py-0.5 rounded-md text-[11px] font-medium leading-5"
+                    className="inline-flex items-center gap-1 bg-brand-green/15 text-light-text dark:text-white border border-brand-green/30 pl-2 pr-1 py-0.5 rounded-md text-[11px] font-medium leading-5"
                   >
                     {v}
                     <button
@@ -256,7 +256,7 @@ function MultiSelect({
                 <button
                   type="button"
                   onClick={(e) => { e.stopPropagation(); onChange([]); }}
-                  className="text-[10px] text-brand-green hover:text-rose-300 font-semibold transition-colors"
+                  className="text-[10px] text-light-text dark:text-white hover:text-rose-300 font-semibold transition-colors"
                 >
                   Clear all
                 </button>
@@ -283,7 +283,7 @@ function MultiSelect({
                     >
                       {isSelected && <Check className="w-2.5 h-2.5 text-light-text dark:text-dark-text" />}
                     </span>
-                    <span className={isSelected ? 'text-brand-green font-medium' : 'text-light-text dark:text-dark-text'}>
+                    <span className={isSelected ? 'text-light-text dark:text-white font-medium' : 'text-light-text dark:text-dark-text'}>
                       {opt}
                     </span>
                   </button>
@@ -296,7 +296,7 @@ function MultiSelect({
 
       {/* Error message */}
       {hasError && (
-        <p className="flex items-center gap-1 text-[11px] text-brand-green">
+        <p className="flex items-center gap-1 text-[11px] text-light-text dark:text-white">
           <AlertCircle className="w-3 h-3" /> {error}
         </p>
       )}
@@ -352,11 +352,11 @@ function CatalogFormModal({
               <BookOpen className="w-5 h-5 text-brand-gold" />
             </div>
             <div>
-              <h3 className="text-base font-extrabold text-brand-green tracking-tight">
+              <h3 className="text-base font-extrabold text-light-text dark:text-white tracking-tight">
                 {mode === 'create' ? 'Add Training Program to Catalog' : `Edit Training Program`}
               </h3>
               {mode === 'edit' && (
-                <p className="text-[11px] font-mono text-brand-green mt-0.5">{form.training_id}</p>
+                <p className="text-[11px] font-mono text-light-text dark:text-white mt-0.5">{form.training_id}</p>
               )}
               <p className="text-xs text-light-text dark:text-dark-muted mt-0.5 leading-relaxed">
                 {mode === 'create'
@@ -404,7 +404,7 @@ function CatalogFormModal({
 
                 <div className="space-y-1">
                   <label className="block text-xs font-semibold text-light-text dark:text-dark-text">
-                    Status <span className="text-brand-green font-bold">*</span>
+                    Status <span className="text-light-text dark:text-white font-bold">*</span>
                   </label>
                   <p className="text-[11px] text-light-text dark:text-dark-muted">Inactive programs are hidden from faculty recommendations.</p>
                   <select
@@ -429,7 +429,7 @@ function CatalogFormModal({
               {/* Title */}
               <div className="space-y-1">
                 <label className="block text-xs font-semibold text-light-text dark:text-dark-text">
-                  Program Title <span className="text-brand-green font-bold">*</span>
+                  Program Title <span className="text-light-text dark:text-white font-bold">*</span>
                 </label>
                 <input
                   type="text"
@@ -444,7 +444,7 @@ function CatalogFormModal({
                   }`}
                 />
                 {titleError && (
-                  <p className="flex items-center gap-1 text-[11px] text-brand-green">
+                  <p className="flex items-center gap-1 text-[11px] text-light-text dark:text-white">
                     <AlertCircle className="w-3 h-3" /> {titleError}
                   </p>
                 )}
@@ -543,7 +543,7 @@ function CatalogFormModal({
         {/* ── Modal Footer ── */}
         <div className="p-5 sm:p-6 border-t border-light-border dark:border-dark-border bg-light-bg dark:bg-dark-bg/40 rounded-b-3xl flex items-center justify-between gap-4">
           <div className="text-[11px] text-light-text dark:text-dark-muted flex items-center gap-1">
-            <span className="text-brand-green font-bold">*</span>
+            <span className="text-light-text dark:text-white font-bold">*</span>
             <span>Title and at least one Category are required.</span>
           </div>
 
@@ -920,7 +920,7 @@ export default function SystemAdminDashboardPage() {
             <span>System Administrator Portal</span>
           </div>
 
-          <h1 className="text-2xl font-extrabold text-brand-green tracking-tight">
+          <h1 className="text-2xl font-extrabold text-light-text dark:text-white tracking-tight">
             QSU Recommender Management Console
           </h1>
           <p className="text-xs text-light-text dark:text-dark-muted">
@@ -1043,7 +1043,7 @@ export default function SystemAdminDashboardPage() {
                             </td>
                             <td className="p-3.5">
                               <span className={`text-[10px] font-mono font-bold px-2 py-0.5 rounded border ${
-                                u.role === 'system_admin' ? 'bg-rose-500/10 text-brand-green border-rose-500/20' :
+                                u.role === 'system_admin' ? 'bg-rose-500/10 text-light-text dark:text-white border-rose-500/20' :
                                 u.role === 'department_admin' ? 'bg-brand-gold/10 text-brand-gold border-brand-gold/20' :
                                 'bg-brand-green/10 text-brand-green border-brand-green/20'
                               }`}>
@@ -1052,7 +1052,7 @@ export default function SystemAdminDashboardPage() {
                             </td>
                             <td className="p-3.5 font-mono text-light-text dark:text-dark-text">{u.department_code || 'System-wide'}</td>
                             <td className="p-3.5">
-                              <span className="text-[11px] text-brand-green font-semibold">{u.status}</span>
+                              <span className="text-[11px] text-light-text dark:text-white font-semibold">{u.status}</span>
                             </td>
                             <td className="p-3.5 text-right">
                               <div className="flex items-center justify-end gap-1.5">

@@ -45,7 +45,7 @@ export default function AboutPage() {
             <span>AI-Driven Institutional Decision Support System</span>
           </div>
 
-          <h1 className="text-3xl sm:text-4xl font-extrabold text-brand-green tracking-tight leading-tight">
+          <h1 className="text-3xl sm:text-4xl font-extrabold text-light-text dark:text-white tracking-tight leading-tight">
             How the QSU Training Recommender System Works
           </h1>
 
@@ -113,7 +113,7 @@ export default function AboutPage() {
                 <p className="text-xs text-light-text dark:text-dark-muted leading-relaxed">
                   Faculty complete a comprehensive assessment capturing demographics, academic rank, self-rated competency proficiencies, and emerging technological interests.
                 </p>
-                <span className="inline-block text-[10px] font-mono text-brand-green bg-brand-green/10 px-2 py-0.5 rounded border border-brand-green/20">
+                <span className="inline-block text-[10px] font-mono text-light-text dark:text-white bg-brand-green/10 px-2 py-0.5 rounded border border-brand-green/20">
                   Parts 1, 2, 3, 5, 6 Required
                 </span>
               </div>
@@ -180,7 +180,7 @@ export default function AboutPage() {
                 </div>
 
                 <p className="text-xs text-light-text dark:text-dark-text leading-relaxed">
-                  The core engine uses an ensemble of Decision Trees wrapped in a <code className="text-brand-green font-mono text-[11px] bg-brand-green/10 px-1 py-0.5 rounded">MultiOutputClassifier</code>. Unlike single-class classifiers, this enables predicting multiple concurrent training needs per faculty member, reflecting real-world academic multi-disciplinary requirements.
+                  The core engine uses an ensemble of Decision Trees wrapped in a <code className="text-light-text dark:text-white font-mono text-[11px] bg-brand-green/10 px-1 py-0.5 rounded">MultiOutputClassifier</code>. Unlike single-class classifiers, this enables predicting multiple concurrent training needs per faculty member, reflecting real-world academic multi-disciplinary requirements.
                 </p>
 
                 <div className="p-3.5 rounded-2xl bg-light-bg dark:bg-dark-bg/80 border border-light-border dark:border-dark-border space-y-2">
@@ -217,7 +217,7 @@ export default function AboutPage() {
                   </div>
                   <div className="p-2.5 rounded-xl bg-light-bg dark:bg-dark-bg/60 border border-light-border dark:border-dark-border flex items-center justify-between text-xs">
                     <span className="text-light-text dark:text-dark-text font-medium">Proficiency & Importance Ratings</span>
-                    <span className="text-[10px] font-mono text-brand-green">1–5 Likert Normalized</span>
+                    <span className="text-[10px] font-mono text-light-text dark:text-white">1–5 Likert Normalized</span>
                   </div>
                   <div className="p-2.5 rounded-xl bg-light-bg dark:bg-dark-bg/60 border border-light-border dark:border-dark-border flex items-center justify-between text-xs">
                     <span className="text-light-text dark:text-dark-text font-medium">Emerging Technology Needs</span>
@@ -249,7 +249,7 @@ export default function AboutPage() {
                   Rather than recommending random programs, every catalog item is evaluated with a weighted multi-factor scoring function:
                 </p>
 
-                <div className="p-4 rounded-2xl bg-light-bg dark:bg-dark-bg border border-light-border dark:border-dark-border font-mono text-xs text-brand-green leading-relaxed space-y-1">
+                <div className="p-4 rounded-2xl bg-light-bg dark:bg-dark-bg border border-light-border dark:border-dark-border font-mono text-xs text-light-text dark:text-white leading-relaxed space-y-1">
                   <div>Score = 0.55 × P(Category)</div>
                   <div className="text-light-text dark:text-dark-muted pl-4">+ 0.20 × ModalityFit</div>
                   <div className="text-light-text dark:text-dark-muted pl-4">+ 0.15 × ScheduleFit</div>

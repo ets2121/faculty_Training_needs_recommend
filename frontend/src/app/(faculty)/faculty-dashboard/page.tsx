@@ -101,14 +101,14 @@ export default function FacultyDashboardPage() {
               alt="QSU Recommender"
               className="w-10 h-10 object-contain"
             />
-            <h1 className="text-2xl font-extrabold text-brand-green tracking-tight">
+            <h1 className="text-2xl font-extrabold text-light-text dark:text-white tracking-tight">
               Welcome, {data.user.full_name || data.user.username}
             </h1>
             <StatusBadge status={qProgress.questionnaire_status} />
           </div>
 
           <p className="text-xs text-light-text dark:text-dark-muted">
-            {faculty.department?.name || 'Faculty Member'} • Rank: <span className="text-brand-green font-semibold">{faculty.academic_rank || 'N/A'}</span> • Degree: <span className="text-brand-green font-semibold">{faculty.highest_degree || 'N/A'}</span>
+            {faculty.department?.name || 'Faculty Member'} • Rank: <span className="text-light-text dark:text-white font-semibold">{faculty.academic_rank || 'N/A'}</span> • Degree: <span className="text-light-text dark:text-white font-semibold">{faculty.highest_degree || 'N/A'}</span>
           </p>
         </div>
 

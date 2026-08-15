@@ -36,7 +36,7 @@ export default function Navbar() {
               className="h-9 w-auto object-contain"
             />
             <div>
-              <h1 className="text-sm font-bold text-brand-green tracking-tight flex items-center gap-2">
+              <h1 className="text-sm font-bold text-light-text dark:text-white tracking-tight flex items-center gap-2">
                 <span>QSU Recommender</span>
                 <span className="text-[10px] font-mono font-semibold px-1.5 py-0.5 rounded bg-brand-gold/10 text-brand-gold-dark border border-brand-gold/20">
                   v2.0

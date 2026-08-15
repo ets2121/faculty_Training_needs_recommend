@@ -14,24 +14,24 @@ export default function ProgressBar({ parts, currentPart, onSelectPart }: Progre
   const percent = Math.round((completedCount / totalCount) * 100);
 
   return (
-    <div className="w-full bg-white dark:bg-dark-card dark:bg-white dark:bg-dark-card/80 border border-light-border dark:border-dark-border rounded-2xl p-5 shadow-lg backdrop-blur-md">
+    <div className="w-full bg-white dark:bg-dark-card border border-light-border dark:border-dark-border rounded-2xl p-5 shadow-lg backdrop-blur-md">
       {/* Header Info */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
         <div>
-          <h3 className="text-sm font-semibold text-light-text dark:text-dark-text dark:text-light-text dark:text-dark-text flex items-center gap-2">
+          <h3 className="text-sm font-semibold text-light-text dark:text-white flex items-center gap-2">
             <span>Questionnaire Progress</span>
-            <span className="text-xs px-2.5 py-0.5 rounded-md bg-brand-green/10 text-brand-green border border-brand-green/20 font-mono">
+            <span className="text-xs px-2.5 py-0.5 rounded-md bg-brand-green/10 text-light-text dark:text-white border border-brand-green/20 font-mono">
               {completedCount} of {totalCount} Parts Done ({percent}%)
             </span>
           </h3>
-          <p className="text-xs text-light-text dark:text-dark-muted dark:text-light-text dark:text-dark-muted mt-1">
+          <p className="text-xs text-light-text dark:text-dark-muted mt-1">
             Complete Parts 1, 2, 3, 5, and 6 to unlock your personalized training recommendations.
           </p>
         </div>
       </div>
 
       {/* Progress Bar Line */}
-      <div className="relative w-full h-2.5 bg-white dark:bg-dark-bg rounded-full overflow-hidden mb-6">
+      <div className="relative w-full h-2.5 bg-light-bg dark:bg-dark-bg rounded-full overflow-hidden mb-6">
         <div
           className="h-full bg-gradient-to-r from-brand-green to-brand-gold transition-all duration-500 ease-out rounded-full"
           style={{ width: `${percent}%` }}
@@ -57,7 +57,7 @@ export default function ProgressBar({ parts, currentPart, onSelectPart }: Progre
               onClick={() => onSelectPart && !isLocked && onSelectPart(p.part_number)}
               className={`flex flex-col items-center justify-center p-3 rounded-xl border text-center transition-all text-xs relative ${
                 isCurrent
-                  ? 'bg-brand-green/20 border-brand-green text-brand-green ring-2 ring-brand-green/30'
+                  ? 'bg-brand-green/20 border-brand-green text-light-text dark:text-white ring-2 ring-brand-green/30'
                   : isComplete
                   ? 'bg-white dark:bg-dark-bg/80 border-brand-green/30 text-light-text dark:text-dark-text hover:border-brand-green/60'
                   : isLocked

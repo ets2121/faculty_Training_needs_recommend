@@ -59,7 +59,7 @@ export default function RegisterAdminPage() {
             className="w-10 h-10 object-contain"
           />
           <div>
-            <h1 className="text-2xl font-extrabold text-brand-green">Register Department Admin Account</h1>
+            <h1 className="text-2xl font-extrabold text-light-text dark:text-white">Register Department Admin Account</h1>
             <p className="text-xs text-light-text dark:text-dark-muted mt-1">
               Create an administrative account for a department chair or head.
             </p>

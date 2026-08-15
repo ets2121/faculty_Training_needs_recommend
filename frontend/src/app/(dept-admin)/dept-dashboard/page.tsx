@@ -179,7 +179,7 @@ export default function DeptDashboardPage() {
             <span>Department Admin Overview</span>
           </div>
 
-          <h1 className="text-2xl font-extrabold text-brand-green tracking-tight">
+          <h1 className="text-2xl font-extrabold text-light-text dark:text-white tracking-tight">
             {deptCode} Department Recommendations & Monitoring
           </h1>
           <p className="text-xs text-light-text dark:text-dark-muted">
@@ -233,7 +233,7 @@ export default function DeptDashboardPage() {
                 </div>
                 <div>
                   <div className="flex items-center gap-2 mb-0.5 flex-wrap">
-                    <span className="text-xs font-mono font-bold text-brand-green">Department Recommendation Output</span>
+                    <span className="text-xs font-mono font-bold text-light-text dark:text-white">Department Recommendation Output</span>
                     <span className="text-[10px] font-mono text-light-text dark:text-dark-muted">v{deptResult.model?.version}</span>
                   </div>
                   <h2 className="text-base sm:text-lg font-extrabold text-white tracking-tight">
@@ -246,7 +246,7 @@ export default function DeptDashboardPage() {
               {formattedDeptTime && (
                 <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-brand-green/10 border border-brand-green/20 text-brand-green text-xs font-mono shrink-0">
                   <Clock className="w-3.5 h-3.5 text-brand-green" />
-                  <span>Result as of: <strong className="text-brand-green font-semibold">{formattedDeptTime}</strong></span>
+                  <span>Result as of: <strong className="text-light-text dark:text-white font-semibold">{formattedDeptTime}</strong></span>
                 </div>
               )}
             </div>
@@ -330,7 +330,7 @@ export default function DeptDashboardPage() {
                     <div className="pl-3 flex flex-col md:flex-row md:items-start justify-between gap-4">
                       <div className="flex-1 space-y-2.5">
                         <div className="flex flex-wrap items-center gap-2">
-                          <span className="text-xs font-mono font-bold text-brand-green bg-brand-green/10 px-2.5 py-0.5 rounded border border-brand-green/20">
+                          <span className="text-xs font-mono font-bold text-light-text dark:text-white bg-brand-green/10 px-2.5 py-0.5 rounded border border-brand-green/20">
                             {item.training_id}
                           </span>
                           <span className="text-xs font-semibold text-brand-gold-dark bg-brand-gold/10 px-2.5 py-0.5 rounded border border-brand-gold/20">
@@ -430,12 +430,12 @@ export default function DeptDashboardPage() {
       )}
 
       {/* 3. Department Faculty Users Table */}
-      <div className="bg-white dark:bg-dark-card/60 dark:bg-white dark:bg-dark-card/80 border border-light-border dark:border-dark-border rounded-3xl p-6 sm:p-8 shadow-xl backdrop-blur-md space-y-4">
+      <div className="bg-white dark:bg-dark-card border border-light-border dark:border-dark-border rounded-3xl p-6 sm:p-8 shadow-xl backdrop-blur-md space-y-4">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div>
             <div className="flex items-center gap-2">
               <Users className="w-5 h-5 text-brand-green" />
-              <h2 className="text-lg font-bold text-white">Department Faculty Roster</h2>
+              <h2 className="text-lg font-bold text-light-text dark:text-white">Department Faculty Roster</h2>
             </div>
             <p className="text-xs text-light-text dark:text-dark-muted mt-0.5">
               {users.length} Faculty Members registered in {deptCode}
@@ -465,7 +465,7 @@ export default function DeptDashboardPage() {
         ) : (
           <div className="overflow-x-auto">
             <table className="w-full text-left text-xs text-light-text dark:text-dark-text">
-              <thead className="bg-light-bg dark:bg-dark-bg/80 text-light-text dark:text-dark-muted font-semibold border-b border-light-border dark:border-dark-border uppercase tracking-wider text-[10px]">
+              <thead className="bg-light-bg dark:bg-dark-bg text-light-text dark:text-dark-muted font-semibold border-b border-light-border dark:border-dark-border uppercase tracking-wider text-[10px]">
                 <tr>
                   <th className="p-3.5 rounded-l-xl">Faculty Name & ID</th>
                   <th className="p-3.5">Academic Rank & Field</th>
@@ -474,9 +474,9 @@ export default function DeptDashboardPage() {
                   <th className="p-3.5 text-right rounded-r-xl">Actions</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-800/60">
+              <tbody className="divide-y divide-light-border dark:divide-dark-border">
                 {filteredUsers.map((u) => (
-                  <tr key={u.id} className="hover:bg-white dark:bg-dark-bg/40 transition-colors group">
+                  <tr key={u.id} className="hover:bg-light-bg dark:hover:bg-dark-bg/60 transition-colors group">
                     <td className="p-3.5">
                       <div className="font-bold text-light-text dark:text-dark-text">{u.full_name || u.username}</div>
                       <div className="text-[11px] text-light-text dark:text-dark-muted font-mono">
@@ -495,7 +495,7 @@ export default function DeptDashboardPage() {
                       <div className="flex items-center justify-end gap-1.5">
                         <button
                           onClick={() => setSelectedUserForEdit(u)}
-                          className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-white dark:bg-dark-bg hover:bg-emerald-600/30 text-light-text dark:text-dark-text hover:text-brand-green border border-light-border dark:border-dark-border text-[11px] font-medium transition-all"
+                          className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-white dark:bg-dark-bg hover:bg-brand-green/10 text-brand-green dark:text-dark-text hover:text-brand-green border border-light-border dark:border-dark-border text-[11px] font-medium transition-all"
                           title="View / Edit Profile Details"
                         >
                           <Pencil className="w-3 h-3" />
@@ -504,7 +504,7 @@ export default function DeptDashboardPage() {
 
                         <button
                           onClick={() => setSelectedUserForEdit(u)}
-                          className="p-1.5 rounded-lg bg-white dark:bg-dark-bg hover:bg-amber-600/30 text-light-text dark:text-dark-text hover:text-brand-gold border border-light-border dark:border-dark-border transition-all"
+                          className="p-1.5 rounded-lg bg-white dark:bg-dark-bg hover:bg-brand-gold/10 text-brand-gold border border-light-border dark:border-dark-border transition-all"
                           title="Emergency Password Reset"
                         >
                           <Key className="w-3.5 h-3.5" />
@@ -512,7 +512,7 @@ export default function DeptDashboardPage() {
 
                         <button
                           onClick={() => setSelectedUserForDelete(u)}
-                          className="p-1.5 rounded-lg bg-white dark:bg-dark-bg hover:bg-rose-600/30 text-light-text dark:text-dark-text hover:text-rose-600 dark:text-rose-600 dark:text-rose-400 border border-light-border dark:border-dark-border transition-all"
+                          className="p-1.5 rounded-lg bg-white dark:bg-dark-bg hover:bg-rose-600/30 text-rose-600 dark:text-rose-400 border border-light-border dark:border-dark-border transition-all"
                           title="Delete Faculty Account"
                         >
                           <Trash2 className="w-3.5 h-3.5" />
