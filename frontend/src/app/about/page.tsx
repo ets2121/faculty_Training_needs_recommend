@@ -31,7 +31,7 @@ export default function AboutPage() {
     <div className="max-w-6xl mx-auto space-y-12 pb-12">
       {/* ── 1. Hero Section ── */}
       <div className="relative overflow-hidden rounded-3xl bg-white dark:bg-dark-card border border-light-border dark:border-dark-border p-8 sm:p-12 shadow-xl">
-        <div className="absolute top-0 right-0 p-8 opacity-[0.08] pointer-events-none dark:opacity-[0.10]">
+        <div className="absolute top-0 right-0 p-8 opacity-10 pointer-events-none dark:opacity-[0.10]">
           <img
             src="/images/hero-2.png"
             alt="QSU Recommender"

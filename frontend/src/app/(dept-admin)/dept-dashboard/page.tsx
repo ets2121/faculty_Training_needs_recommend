@@ -223,7 +223,7 @@ export default function DeptDashboardPage() {
         <div className="space-y-8">
           {/* Header Banner */}
           <div className="relative overflow-hidden rounded-2xl bg-white dark:bg-dark-card border border-light-border dark:border-dark-border p-5 sm:p-6 shadow-xl">
-            <div className="absolute top-0 right-0 p-6 opacity-5 pointer-events-none">
+            <div className="absolute top-0 right-0 p-6 opacity-10 pointer-events-none">
               <Sparkles className="w-40 h-40 text-brand-green" />
             </div>
             <div className="relative z-10 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
