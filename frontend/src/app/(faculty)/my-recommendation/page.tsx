@@ -78,12 +78,12 @@ export default function MyRecommendationPage() {
   return (
     <div className="space-y-6 max-w-6xl mx-auto">
       {/* Header controls */}
-      <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4">
+      <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-3 sm:gap-4">
         <div className="flex items-center gap-3">
           <img
             src="/images/logo.png"
             alt="QSU Recommender"
-            className="w-9 h-9 object-contain"
+            className="w-9 h-9 object-contain shrink-0"
           />
           <Link
             href="/faculty-dashboard"
@@ -98,17 +98,16 @@ export default function MyRecommendationPage() {
           <button
             onClick={handleRequest}
             disabled={requesting}
-            className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-brand-green hover:bg-brand-green-dark text-white font-bold text-xs shadow-lg transition-all disabled:opacity-50"
+            className="flex items-center gap-2 px-4 sm:px-5 py-2 sm:py-2.5 rounded-xl bg-brand-green hover:bg-brand-green-dark text-white font-bold text-xs shadow-lg transition-all disabled:opacity-50"
           >
             {requesting ? (
               <>
-                <RefreshCw className="w-4 h-4 animate-spin text-white" />
-                <span>Running ML Model...</span>
+                <RefreshCw className="w-3.5 h-3.5 sm:w-4 sm:h-4 animate-spin text-white" />
+                <span className="hidden sm:inline">Running ML Model...</span>
+                <span className="sm:hidden">Running...</span>
               </>
             ) : (
-              <>
-                <span>{recommendation ? 'Re-Run Recommendation' : 'Generate Recommendation'}</span>
-              </>
+              <span>{recommendation ? 'Re-Run Recommendation' : 'Generate Recommendation'}</span>
             )}
           </button>
         )}

@@ -93,30 +93,34 @@ export default function FacultyDashboardPage() {
   return (
     <div className="space-y-8 max-w-6xl mx-auto">
       {/* 1. Header Banner */}
-      <div className="bg-white dark:bg-dark-card border border-light-border dark:border-dark-border rounded-3xl p-6 sm:p-8 shadow-xl backdrop-blur-md flex flex-col md:flex-row md:items-center md:justify-between gap-6">
+      <div className="bg-white dark:bg-dark-card border border-light-border dark:border-dark-border rounded-3xl p-4 sm:p-6 md:p-8 shadow-xl backdrop-blur-md flex flex-col md:flex-row md:items-center md:justify-between gap-4 sm:gap-6">
         <div className="space-y-2">
           <div className="flex items-center gap-3">
             <img
               src="/images/logo.png"
               alt="QSU Recommender"
-              className="w-10 h-10 object-contain"
+              className="w-10 h-10 object-contain shrink-0"
             />
-            <h1 className="text-2xl font-extrabold text-light-text dark:text-white tracking-tight">
-              Welcome, {data.user.full_name || data.user.username}
-            </h1>
-            <StatusBadge status={qProgress.questionnaire_status} />
+            <div className="min-w-0">
+              <h1 className="text-xl sm:text-2xl font-extrabold text-light-text dark:text-white tracking-tight leading-tight">
+                Welcome, {data.user.full_name || data.user.username}
+              </h1>
+              <div className="mt-1">
+                <StatusBadge status={qProgress.questionnaire_status} />
+              </div>
+            </div>
           </div>
 
-          <p className="text-xs text-light-text dark:text-dark-muted">
+          <p className="text-xs text-light-text dark:text-dark-muted leading-relaxed">
             {faculty.department?.name || 'Faculty Member'} • Rank: <span className="text-light-text dark:text-white font-semibold">{faculty.academic_rank || 'N/A'}</span> • Degree: <span className="text-light-text dark:text-white font-semibold">{faculty.highest_degree || 'N/A'}</span>
           </p>
         </div>
 
         {/* Action Controls */}
-        <div className="flex flex-wrap items-center gap-3">
+        <div className="flex flex-wrap items-center gap-2 sm:gap-3">
           <Link
             href="/questionnaire"
-            className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-white dark:bg-dark-bg border border-light-border dark:border-dark-border text-brand-green hover:border-brand-green text-xs font-semibold transition-all"
+            className="flex items-center gap-2 px-3 sm:px-4 py-2 sm:py-2.5 rounded-xl bg-white dark:bg-dark-bg border border-light-border dark:border-dark-border text-brand-green hover:border-brand-green text-xs font-semibold transition-all"
           >
             <span>Fill Assessment</span>
           </Link>
@@ -125,17 +129,16 @@ export default function FacultyDashboardPage() {
             <button
               onClick={handleRequestRecommendation}
               disabled={requesting}
-              className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-brand-green hover:bg-brand-green-dark text-white font-bold text-xs shadow-lg transition-all disabled:opacity-50"
+              className="flex items-center gap-2 px-4 sm:px-5 py-2 sm:py-2.5 rounded-xl bg-brand-green hover:bg-brand-green-dark text-white font-bold text-xs shadow-lg transition-all disabled:opacity-50"
             >
               {requesting ? (
                 <>
-                  <RefreshCw className="w-4 h-4 animate-spin text-white" />
-                  <span>Processing ML Engine...</span>
+                  <RefreshCw className="w-3.5 h-3.5 sm:w-4 sm:h-4 animate-spin text-white" />
+                  <span className="hidden sm:inline">Processing ML Engine...</span>
+                  <span className="sm:hidden">Processing...</span>
                 </>
               ) : (
-                <>
-                  <span>{qProgress.has_existing_recommendation ? 'Re-Run Recommendation' : 'Request Recommendation'}</span>
-                </>
+                <span>{qProgress.has_existing_recommendation ? 'Re-Run Recommendation' : 'Request Recommendation'}</span>
               )}
             </button>
           )}

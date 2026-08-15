@@ -614,7 +614,7 @@ function CatalogCard({
         </div>
 
         {/* Action buttons */}
-        <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity shrink-0">
+        <div className="flex items-center gap-1 opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity shrink-0">
           <button
             onClick={() => onEdit(item)}
             title="Edit"
@@ -914,24 +914,24 @@ export default function SystemAdminDashboardPage() {
   return (
     <div className="space-y-8 max-w-7xl mx-auto">
       {/* 1. Header Banner */}
-      <div className="bg-white dark:bg-dark-card border border-light-border dark:border-dark-border rounded-3xl p-6 sm:p-8 shadow-xl backdrop-blur-md flex flex-col md:flex-row md:items-center md:justify-between gap-6">
+      <div className="bg-white dark:bg-dark-card border border-light-border dark:border-dark-border rounded-3xl p-4 sm:p-6 md:p-8 shadow-xl backdrop-blur-md flex flex-col md:flex-row md:items-center md:justify-between gap-4 sm:gap-6">
         <div className="space-y-2">
           <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-semibold bg-brand-green/10 text-brand-green border border-brand-green/20">
             <span>System Administrator Portal</span>
           </div>
 
-          <h1 className="text-2xl font-extrabold text-light-text dark:text-white tracking-tight">
+          <h1 className="text-xl sm:text-2xl font-extrabold text-light-text dark:text-white tracking-tight leading-tight">
             QSU Recommender Management Console
           </h1>
-          <p className="text-xs text-light-text dark:text-dark-muted">
+          <p className="text-xs text-light-text dark:text-dark-muted leading-relaxed">
             System-wide user access control, audit logs, training catalog maintenance, and ML model retraining.
           </p>
         </div>
 
-        <div className="flex flex-wrap items-center gap-3">
+        <div className="flex flex-wrap items-center gap-2 sm:gap-3">
           <Link
             href="/register-admin"
-            className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-white dark:bg-dark-bg border border-light-border dark:border-dark-border text-brand-green hover:border-brand-green text-xs font-semibold transition-all"
+            className="flex items-center gap-2 px-3 sm:px-4 py-2 sm:py-2.5 rounded-xl bg-white dark:bg-dark-bg border border-light-border dark:border-dark-border text-brand-green hover:border-brand-green text-xs font-semibold transition-all"
           >
             <UserPlus className="w-4 h-4 text-brand-green" />
             <span>Add Dept Admin</span>
@@ -940,12 +940,13 @@ export default function SystemAdminDashboardPage() {
           <button
             onClick={handleTrainModel}
             disabled={training}
-            className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-brand-green hover:bg-brand-green-dark text-light-text dark:text-dark-text font-bold text-xs shadow-lg transition-all disabled:opacity-50"
+            className="flex items-center gap-2 px-3 sm:px-4 py-2 sm:py-2.5 rounded-xl bg-brand-green hover:bg-brand-green-dark text-white font-bold text-xs shadow-lg transition-all disabled:opacity-50"
           >
             {training ? (
               <>
-                <RefreshCw className="w-4 h-4 animate-spin text-light-text dark:text-dark-text" />
-                <span>Training ML Pipeline...</span>
+                <RefreshCw className="w-3.5 h-3.5 sm:w-4 sm:h-4 animate-spin text-white" />
+                <span className="hidden sm:inline">Training ML Pipeline...</span>
+                <span className="sm:hidden">Training...</span>
               </>
             ) : (
               <>
@@ -958,18 +959,18 @@ export default function SystemAdminDashboardPage() {
       </div>
 
       {/* 2. Navigation Tabs */}
-      <div className="flex items-center gap-2 border-b border-light-border dark:border-dark-border pb-2">
+      <div className="flex items-center gap-2 overflow-x-auto border-b border-light-border dark:border-dark-border pb-2">
         {(
           [
-            { key: 'users', icon: <Users className="w-4 h-4" />, label: `Users & RBAC (${users.length})` },
-            { key: 'audit', icon: <History className="w-4 h-4" />, label: `Audit Logs (${auditLogs.length})` },
-            { key: 'catalog', icon: <BookOpen className="w-4 h-4" />, label: `Training Catalog (${catalogItems.length})` },
+            { key: 'users', icon: <Users className="w-4 h-4 shrink-0" />, label: `Users & RBAC (${users.length})` },
+            { key: 'audit', icon: <History className="w-4 h-4 shrink-0" />, label: `Audit Logs (${auditLogs.length})` },
+            { key: 'catalog', icon: <BookOpen className="w-4 h-4 shrink-0" />, label: `Training Catalog (${catalogItems.length})` },
           ] as const
         ).map((tab) => (
           <button
             key={tab.key}
             onClick={() => setActiveTab(tab.key)}
-            className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-bold transition-all ${
+            className={`flex items-center gap-2 px-3 sm:px-4 py-2 rounded-xl text-xs font-bold whitespace-nowrap transition-all ${
               activeTab === tab.key
                 ? 'bg-brand-green/15 text-brand-green border border-brand-green/30'
                 : 'text-light-text dark:text-dark-muted hover:text-light-text dark:text-dark-text'
@@ -1022,11 +1023,11 @@ export default function SystemAdminDashboardPage() {
                         <th className="p-3.5 text-right rounded-r-xl">Actions</th>
                       </tr>
                     </thead>
-                    <tbody className="divide-y divide-slate-800/60">
+                    <tbody className="divide-y divide-light-border dark:divide-dark-border">
                       {filteredUsers.map((u) => {
                         const isSelf = currentAuthUser?.id === u.id;
                         return (
-                          <tr key={u.id} className="hover:bg-white dark:bg-dark-bg/40 transition-colors group">
+                          <tr key={u.id} className="hover:bg-light-bg dark:hover:bg-dark-bg/60 transition-colors group">
                             <td className="p-3.5 font-mono text-light-text dark:text-dark-muted">#{u.id}</td>
                             <td className="p-3.5">
                               <div className="font-bold text-light-text dark:text-dark-text flex items-center gap-1.5">
@@ -1055,10 +1056,10 @@ export default function SystemAdminDashboardPage() {
                               <span className="text-[11px] text-light-text dark:text-white font-semibold">{u.status}</span>
                             </td>
                             <td className="p-3.5 text-right">
-                              <div className="flex items-center justify-end gap-1.5">
+                              <div className="flex items-center justify-end gap-1 sm:gap-1.5">
                                 <button
                                   onClick={() => setSelectedUserForEdit(u)}
-                                  className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-white dark:bg-dark-bg hover:bg-emerald-600/30 text-light-text dark:text-dark-text hover:text-brand-green border border-light-border dark:border-dark-border text-[11px] font-medium transition-all"
+                                  className="flex items-center gap-1 px-2 py-1.5 rounded-lg bg-white dark:bg-dark-bg hover:bg-brand-green/10 text-brand-green dark:text-dark-text hover:text-brand-green border border-light-border dark:border-dark-border text-[11px] font-medium transition-all"
                                   title="View / Edit Profile Details"
                                 >
                                   <Pencil className="w-3 h-3" />
@@ -1067,7 +1068,7 @@ export default function SystemAdminDashboardPage() {
 
                                 <button
                                   onClick={() => setSelectedUserForEdit(u)}
-                                  className="p-1.5 rounded-lg bg-white dark:bg-dark-bg hover:bg-amber-600/30 text-light-text dark:text-dark-text hover:text-brand-gold border border-light-border dark:border-dark-border transition-all"
+                                  className="p-1.5 sm:p-2 rounded-lg bg-white dark:bg-dark-bg hover:bg-brand-gold/10 text-brand-gold border border-light-border dark:border-dark-border transition-all"
                                   title="Emergency Password Reset"
                                 >
                                   <Key className="w-3.5 h-3.5" />
@@ -1076,7 +1077,7 @@ export default function SystemAdminDashboardPage() {
                                 <button
                                   onClick={() => setSelectedUserForDelete(u)}
                                   disabled={isSelf}
-                                  className="p-1.5 rounded-lg bg-white dark:bg-dark-bg hover:bg-rose-600/30 text-light-text dark:text-dark-text hover:text-brand-green border border-light-border dark:border-dark-border disabled:opacity-30 disabled:cursor-not-allowed transition-all"
+                                  className="p-1.5 sm:p-2 rounded-lg bg-white dark:bg-dark-bg hover:bg-rose-600/30 text-rose-600 dark:text-rose-400 border border-light-border dark:border-dark-border disabled:opacity-30 disabled:cursor-not-allowed transition-all"
                                   title={isSelf ? 'Cannot delete your own account' : 'Delete User Account'}
                                 >
                                   <Trash2 className="w-3.5 h-3.5" />
@@ -1127,9 +1128,9 @@ export default function SystemAdminDashboardPage() {
                         <th className="p-3.5 rounded-r-xl">IP Address</th>
                       </tr>
                     </thead>
-                    <tbody className="divide-y divide-slate-800/60 font-mono">
+                    <tbody className="divide-y divide-light-border dark:divide-dark-border font-mono">
                       {filteredAuditLogs.map((log) => (
-                        <tr key={log.id} className="hover:bg-white dark:bg-dark-bg/40 transition-colors">
+                        <tr key={log.id} className="hover:bg-light-bg dark:hover:bg-dark-bg/60 transition-colors">
                           <td className="p-3.5 text-light-text dark:text-dark-muted">{new Date(log.created_at).toLocaleString()}</td>
                           <td className="p-3.5 text-light-text dark:text-dark-text">
                             <strong>{log.username || 'System'}</strong> ({log.role_name || '—'})

@@ -55,7 +55,7 @@ export default function ProgressBar({ parts, currentPart, onSelectPart }: Progre
               type="button"
               disabled={isLocked}
               onClick={() => onSelectPart && !isLocked && onSelectPart(p.part_number)}
-              className={`flex flex-col items-center justify-center p-3 rounded-xl border text-center transition-all text-xs relative ${
+              className={`flex flex-col items-center justify-center p-2 sm:p-3 rounded-xl border text-center transition-all text-xs relative ${
                 isCurrent
                   ? 'bg-brand-green/20 border-brand-green text-light-text dark:text-white ring-2 ring-brand-green/30'
                   : isComplete
