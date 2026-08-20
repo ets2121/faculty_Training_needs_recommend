@@ -80,6 +80,7 @@ export function ViewEditUserModal({
   const [newPassword, setNewPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [editErrors, setEditErrors] = useState<{ email?: string; general?: string }>({});
 
   const isFaculty = user.role === 'faculty';
   const isSysAdmin = currentUserRole === 'system_admin';
@@ -88,6 +89,7 @@ export function ViewEditUserModal({
   const handleSaveDetails = async (e: React.FormEvent) => {
     e.preventDefault();
     setSaving(true);
+    setEditErrors({});
     try {
       await api.patch(`/users/${user.id}`, {
         full_name: fullName.trim() || undefined,
@@ -103,7 +105,14 @@ export function ViewEditUserModal({
       onUpdated();
       onClose();
     } catch (err: any) {
-      showToast('error', 'Update Failed', err.response?.data?.detail || 'Failed to update user.');
+      const status = err.response?.status;
+      const msg = err.response?.data?.detail || 'Failed to update user.';
+      if (status === 409) {
+        setEditErrors({ email: msg });
+        showToast('error', 'Email Taken', msg);
+      } else {
+        showToast('error', 'Update Failed', msg);
+      }
     } finally {
       setSaving(false);
     }
@@ -221,10 +230,20 @@ export function ViewEditUserModal({
                   <input
                     type="email"
                     value={email}
-                    onChange={(e) => setEmail(e.target.value)}
+                    onChange={(e) => {
+                      setEmail(e.target.value);
+                      if (editErrors.email) setEditErrors((prev) => ({ ...prev, email: undefined }));
+                    }}
                     placeholder="e.g. santos@qsu.edu.ph"
-                    className="w-full bg-light-bg dark:bg-dark-bg border border-light-border dark:border-dark-border hover:border-slate-500 focus:border-emerald-500 rounded-xl px-3.5 py-2 text-xs text-white outline-none transition-colors"
+                    className={`w-full bg-light-bg dark:bg-dark-bg border ${
+                      editErrors.email ? 'border-rose-500 ring-1 ring-rose-500/30' : 'border-light-border dark:border-dark-border hover:border-slate-500 focus:border-emerald-500'
+                    } rounded-xl px-3.5 py-2 text-xs text-white outline-none transition-colors`}
                   />
+                  {editErrors.email && (
+                    <p className="text-[11px] text-rose-500 mt-1 font-medium flex items-center gap-1">
+                      <span>⚠️</span> {editErrors.email}
+                    </p>
+                  )}
                 </div>
               </div>
 

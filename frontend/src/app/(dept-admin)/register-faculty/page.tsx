@@ -23,29 +23,47 @@ export default function RegisterFacultyPage() {
   const [highestDegree, setHighestDegree] = useState("Master's Degree");
   const [specialization, setSpecialization] = useState('');
   const [submitting, setSubmitting] = useState(false);
+  const [formErrors, setFormErrors] = useState<{ username?: string; email?: string; general?: string }>({});
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setSubmitting(true);
+    setFormErrors({});
     try {
       await api.post('/auth/register', {
-        username,
-        password,
-        email,
-        full_name: fullName,
+        username: username.trim(),
+        password: password.trim(),
+        email: email.trim() || undefined,
+        full_name: fullName.trim(),
         role: 'faculty',
         department_code: deptCode,
-        faculty_code: facultyCode || undefined,
+        faculty_code: facultyCode.trim() || undefined,
         academic_rank: academicRank,
         highest_degree: highestDegree,
-        specialization,
+        specialization: specialization.trim() || undefined,
       });
 
       showToast('success', 'Faculty Created', `Account for '${username}' was created under department ${deptCode}.`);
       router.push('/dept-dashboard');
     } catch (err: any) {
+      const status = err.response?.status;
       const msg = err.response?.data?.detail || 'Failed to create faculty account.';
-      showToast('error', 'Registration Error', msg);
+      
+      if (status === 409) {
+        const lowerMsg = String(msg).toLowerCase();
+        if (lowerMsg.includes('username')) {
+          setFormErrors((prev) => ({ ...prev, username: msg }));
+          showToast('error', 'Username Taken', msg);
+        } else if (lowerMsg.includes('email')) {
+          setFormErrors((prev) => ({ ...prev, email: msg }));
+          showToast('error', 'Email Already Exists', msg);
+        } else {
+          setFormErrors((prev) => ({ ...prev, general: msg }));
+          showToast('error', 'Conflict Error', msg);
+        }
+      } else {
+        showToast('error', 'Registration Error', msg);
+      }
     } finally {
       setSubmitting(false);
     }
@@ -85,10 +103,20 @@ export default function RegisterFacultyPage() {
                 type="text"
                 required
                 value={username}
-                onChange={(e) => setUsername(e.target.value)}
+                onChange={(e) => {
+                  setUsername(e.target.value);
+                  if (formErrors.username) setFormErrors((prev) => ({ ...prev, username: undefined }));
+                }}
                 placeholder="e.g. prof_martinez"
-                className="w-full bg-white dark:bg-dark-bg border border-light-border dark:border-dark-border rounded-xl px-3.5 py-2.5 text-sm text-light-text dark:text-dark-text placeholder:text-light-text dark:placeholder:text-dark-muted focus:border-brand-green focus:outline-none"
+                className={`w-full bg-white dark:bg-dark-bg border ${
+                  formErrors.username ? 'border-rose-500 ring-1 ring-rose-500/30' : 'border-light-border dark:border-dark-border'
+                } rounded-xl px-3.5 py-2.5 text-sm text-light-text dark:text-dark-text placeholder:text-light-text dark:placeholder:text-dark-muted focus:border-brand-green focus:outline-none transition-all`}
               />
+              {formErrors.username && (
+                <p className="text-[11px] text-rose-500 mt-1 font-medium flex items-center gap-1">
+                  <span>⚠️</span> {formErrors.username}
+                </p>
+              )}
             </div>
 
             <div>
@@ -99,7 +127,7 @@ export default function RegisterFacultyPage() {
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 placeholder="Temporary password"
-                className="w-full bg-white dark:bg-dark-bg border border-light-border dark:border-dark-border rounded-xl px-3.5 py-2.5 text-sm text-light-text dark:text-dark-text placeholder:text-light-text dark:placeholder:text-dark-muted focus:border-brand-green focus:outline-none"
+                className="w-full bg-white dark:bg-dark-bg border border-light-border dark:border-dark-border rounded-xl px-3.5 py-2.5 text-sm text-light-text dark:text-dark-text placeholder:text-light-text dark:placeholder:text-dark-muted focus:border-brand-green focus:outline-none transition-all"
               />
             </div>
 
@@ -111,7 +139,7 @@ export default function RegisterFacultyPage() {
                 value={fullName}
                 onChange={(e) => setFullName(e.target.value)}
                 placeholder="e.g. Dr. Jose Martinez"
-                className="w-full bg-white dark:bg-dark-bg border border-light-border dark:border-dark-border rounded-xl px-3.5 py-2.5 text-sm text-light-text dark:text-dark-text placeholder:text-light-text dark:placeholder:text-dark-muted focus:border-brand-green focus:outline-none"
+                className="w-full bg-white dark:bg-dark-bg border border-light-border dark:border-dark-border rounded-xl px-3.5 py-2.5 text-sm text-light-text dark:text-dark-text placeholder:text-light-text dark:placeholder:text-dark-muted focus:border-brand-green focus:outline-none transition-all"
               />
             </div>
 
@@ -120,10 +148,20 @@ export default function RegisterFacultyPage() {
               <input
                 type="email"
                 value={email}
-                onChange={(e) => setEmail(e.target.value)}
+                onChange={(e) => {
+                  setEmail(e.target.value);
+                  if (formErrors.email) setFormErrors((prev) => ({ ...prev, email: undefined }));
+                }}
                 placeholder="martinez@qsu.edu.ph"
-                className="w-full bg-white dark:bg-dark-bg border border-light-border dark:border-dark-border rounded-xl px-3.5 py-2.5 text-sm text-light-text dark:text-dark-text placeholder:text-light-text dark:placeholder:text-dark-muted focus:border-brand-green focus:outline-none"
+                className={`w-full bg-white dark:bg-dark-bg border ${
+                  formErrors.email ? 'border-rose-500 ring-1 ring-rose-500/30' : 'border-light-border dark:border-dark-border'
+                } rounded-xl px-3.5 py-2.5 text-sm text-light-text dark:text-dark-text placeholder:text-light-text dark:placeholder:text-dark-muted focus:border-brand-green focus:outline-none transition-all`}
               />
+              {formErrors.email && (
+                <p className="text-[11px] text-rose-500 mt-1 font-medium flex items-center gap-1">
+                  <span>⚠️</span> {formErrors.email}
+                </p>
+              )}
             </div>
 
             <div>

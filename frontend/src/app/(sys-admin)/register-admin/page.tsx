@@ -30,6 +30,7 @@ export default function RegisterAdminPage() {
   const [fullName, setFullName] = useState('');
   const [email, setEmail] = useState('');
   const [submitting, setSubmitting] = useState(false);
+  const [formErrors, setFormErrors] = useState<{ username?: string; email?: string; general?: string }>({});
 
   useEffect(() => {
     async function loadCampuses() {
@@ -77,6 +78,7 @@ export default function RegisterAdminPage() {
     }
 
     setSubmitting(true);
+    setFormErrors({});
     try {
       await api.post('/auth/register', {
         username: username.trim(),
@@ -100,8 +102,24 @@ export default function RegisterAdminPage() {
         router.push('/admin-dashboard');
       }
     } catch (err: any) {
+      const status = err.response?.status;
       const msg = err.response?.data?.detail || 'Failed to create administrator account.';
-      showToast('error', 'Registration Error', msg);
+      
+      if (status === 409) {
+        const lowerMsg = String(msg).toLowerCase();
+        if (lowerMsg.includes('username')) {
+          setFormErrors((prev) => ({ ...prev, username: msg }));
+          showToast('error', 'Username Taken', msg);
+        } else if (lowerMsg.includes('email')) {
+          setFormErrors((prev) => ({ ...prev, email: msg }));
+          showToast('error', 'Email Already Exists', msg);
+        } else {
+          setFormErrors((prev) => ({ ...prev, general: msg }));
+          showToast('error', 'Conflict Error', msg);
+        }
+      } else {
+        showToast('error', 'Registration Error', msg);
+      }
     } finally {
       setSubmitting(false);
     }
@@ -222,10 +240,20 @@ export default function RegisterAdminPage() {
                 type="text"
                 required
                 value={username}
-                onChange={(e) => setUsername(e.target.value)}
+                onChange={(e) => {
+                  setUsername(e.target.value);
+                  if (formErrors.username) setFormErrors((prev) => ({ ...prev, username: undefined }));
+                }}
                 placeholder="e.g. admin_diffun_it"
-                className="w-full bg-white dark:bg-dark-bg border border-light-border dark:border-dark-border rounded-xl px-3.5 py-2.5 text-xs text-light-text dark:text-dark-text focus:border-brand-green focus:outline-none"
+                className={`w-full bg-white dark:bg-dark-bg border ${
+                  formErrors.username ? 'border-rose-500 ring-1 ring-rose-500/30' : 'border-light-border dark:border-dark-border'
+                } rounded-xl px-3.5 py-2.5 text-xs text-light-text dark:text-dark-text focus:border-brand-green focus:outline-none transition-all`}
               />
+              {formErrors.username && (
+                <p className="text-[11px] text-rose-500 mt-1 font-medium flex items-center gap-1">
+                  <span>⚠️</span> {formErrors.username}
+                </p>
+              )}
             </div>
 
             <div>
@@ -236,7 +264,7 @@ export default function RegisterAdminPage() {
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 placeholder="Temporary password"
-                className="w-full bg-white dark:bg-dark-bg border border-light-border dark:border-dark-border rounded-xl px-3.5 py-2.5 text-xs text-light-text dark:text-dark-text focus:border-brand-green focus:outline-none"
+                className="w-full bg-white dark:bg-dark-bg border border-light-border dark:border-dark-border rounded-xl px-3.5 py-2.5 text-xs text-light-text dark:text-dark-text focus:border-brand-green focus:outline-none transition-all"
               />
             </div>
 
@@ -248,7 +276,7 @@ export default function RegisterAdminPage() {
                 value={fullName}
                 onChange={(e) => setFullName(e.target.value)}
                 placeholder="e.g. Dr. Maria Clara"
-                className="w-full bg-white dark:bg-dark-bg border border-light-border dark:border-dark-border rounded-xl px-3.5 py-2.5 text-xs text-light-text dark:text-dark-text focus:border-brand-green focus:outline-none"
+                className="w-full bg-white dark:bg-dark-bg border border-light-border dark:border-dark-border rounded-xl px-3.5 py-2.5 text-xs text-light-text dark:text-dark-text focus:border-brand-green focus:outline-none transition-all"
               />
             </div>
 
@@ -257,10 +285,20 @@ export default function RegisterAdminPage() {
               <input
                 type="email"
                 value={email}
-                onChange={(e) => setEmail(e.target.value)}
+                onChange={(e) => {
+                  setEmail(e.target.value);
+                  if (formErrors.email) setFormErrors((prev) => ({ ...prev, email: undefined }));
+                }}
                 placeholder="clara@qsu.edu.ph"
-                className="w-full bg-white dark:bg-dark-bg border border-light-border dark:border-dark-border rounded-xl px-3.5 py-2.5 text-xs text-light-text dark:text-dark-text focus:border-brand-green focus:outline-none"
+                className={`w-full bg-white dark:bg-dark-bg border ${
+                  formErrors.email ? 'border-rose-500 ring-1 ring-rose-500/30' : 'border-light-border dark:border-dark-border'
+                } rounded-xl px-3.5 py-2.5 text-xs text-light-text dark:text-dark-text focus:border-brand-green focus:outline-none transition-all`}
               />
+              {formErrors.email && (
+                <p className="text-[11px] text-rose-500 mt-1 font-medium flex items-center gap-1">
+                  <span>⚠️</span> {formErrors.email}
+                </p>
+              )}
             </div>
           </div>
 
