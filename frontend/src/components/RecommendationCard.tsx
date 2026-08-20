@@ -133,7 +133,7 @@ export default function RecommendationCard({
             <div>
               <div className="flex items-center gap-2 mb-0.5 flex-wrap">
                 <span className="text-xs font-mono font-bold text-light-text dark:text-white">
-                  {scopeLabel || 'AI Recommendation Engine'}
+                  {scopeLabel || 'Model Recommendation Engine'}
                 </span>
                 <span className="text-[10px] font-mono text-light-text dark:text-dark-muted">
                   v{result.model?.version || '2.0.0'}

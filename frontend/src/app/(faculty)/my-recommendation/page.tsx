@@ -48,7 +48,7 @@ export default function MyRecommendationPage() {
     setRecommendation(null);
     setTimestamp(null);
     setRequesting(true);
-    showToast('info', 'AI Recommender Running', 'Analyzing your needs assessment and matching catalog programs...');
+    showToast('info', 'Recommendation Model Running', 'Analyzing your needs assessment and matching catalog programs...');
 
     try {
       const res = await api.post('/profile/request-recommendation');
@@ -129,7 +129,7 @@ export default function MyRecommendationPage() {
               </div>
               <h2 className="text-lg font-bold text-white">Needs Assessment Incomplete</h2>
               <p className="text-xs text-light-text dark:text-dark-text leading-relaxed">
-                You must complete Parts 1, 2, 3, 5, and 6 of the Needs Assessment Questionnaire before requesting an AI recommendation.
+                You must complete Parts 1, 2, 3, 5, and 6 of the Needs Assessment Questionnaire before requesting a model recommendation.
               </p>
               <div className="pt-2">
                 <Link

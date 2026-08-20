@@ -1,4 +1,4 @@
-﻿'use client';
+'use client';
 
 import React, { useState } from 'react';
 import Link from 'next/link';
@@ -29,7 +29,7 @@ export default function Navbar() {
   return (
     <>
       <header className="sticky top-0 z-40 w-full border-b border-light-border dark:border-dark-border bg-white/80 dark:bg-dark-bg/80 backdrop-blur-xl transition-colors">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between gap-4">
+        <div className="max-w-7xl mx-auto pl-14 pr-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between gap-4">
           {/* Brand Logo */}
           <Link href="/dashboard" className="flex items-center gap-3 group">
             <img
@@ -50,23 +50,15 @@ export default function Navbar() {
             </div>
           </Link>
 
-          {/* Right Section */}
-          <div className="flex items-center gap-3">
-            {/* About link */}
-            <Link
-              href="/about"
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold text-light-text dark:text-dark-muted hover:text-brand-green transition-all"
-            >
-              <span>About</span>
-            </Link>
-
+          {/* Right Section - Desktop Only */}
+          <div className="hidden md:flex items-center gap-3">
             <ThemeToggle />
 
             {user && (
               <div className="flex items-center gap-3 pl-3 border-l border-light-border dark:border-dark-border">
                 <Link
                   href="/profile"
-                  className="hidden md:flex flex-col items-end text-right p-1.5 rounded-xl hover:bg-light-bg dark:hover:bg-dark-card transition-colors group"
+                  className="flex flex-col items-end text-right p-1.5 rounded-xl hover:bg-light-bg dark:hover:bg-dark-card transition-colors group"
                   title="View your profile"
                 >
                   <span className="text-xs font-semibold text-light-text dark:text-dark-text group-hover:text-brand-green leading-tight transition-colors">
@@ -95,7 +87,7 @@ export default function Navbar() {
                   className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-light-border dark:border-dark-border bg-white dark:bg-dark-card hover:bg-rose-50 dark:hover:bg-rose-950/40 hover:border-brand-green text-light-text dark:text-dark-text hover:text-rose-600 text-xs font-medium transition-all"
                   title="Sign out"
                 >
-                  <span className="hidden sm:inline">Logout</span>
+                  <span>Logout</span>
                 </button>
               </div>
             )}

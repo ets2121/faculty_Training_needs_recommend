@@ -313,7 +313,7 @@ export default function SystemAdminDashboardPage() {
                 Training Catalog Module
               </h3>
               <p className="text-xs text-light-text dark:text-dark-muted mt-1 leading-relaxed">
-                Complete CRUD management for institutional training program offerings matched by the AI recommender engine.
+                Complete CRUD management for institutional training program offerings matched by the model recommendation engine.
               </p>
             </div>
             <div className="pt-2 text-xs font-mono font-semibold text-brand-gold-dark flex items-center gap-1">

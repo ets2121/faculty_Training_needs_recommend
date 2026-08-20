@@ -102,7 +102,7 @@ export default function CampusFacultyPage() {
     });
     return [
       { label: 'Recommendation Ready', count: counts.has_recommendation, color: '#10b981' },
-      { label: 'Eligible for AI', count: counts.eligible, color: '#f59e0b' },
+      { label: 'Eligible for Model', count: counts.eligible, color: '#f59e0b' },
       { label: 'In Assessment', count: counts.in_progress, color: '#0284c7' },
       { label: 'Not Started', count: counts.not_started, color: '#64748b' },
     ];

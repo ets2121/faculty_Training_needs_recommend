@@ -139,8 +139,8 @@ export default function DeptDashboardPage() {
       icon: Lightbulb,
       color: 'from-emerald-500 to-teal-600',
       glow: 'shadow-emerald-500/20',
-      title: 'AI Recommendations',
-      description: 'Generate and view AI-powered training recommendations based on your department faculty assessments.',
+      title: 'Model Recommendations',
+      description: 'Generate and view model-powered training recommendations based on your department faculty assessments.',
       stat: loading ? '...' : `${assessedPct}%`,
       statLabel: 'Faculty with Recs',
     },
@@ -239,7 +239,7 @@ export default function DeptDashboardPage() {
           {/* Chart 3: Top Priority Training Domains */}
           <div className="lg:col-span-2">
             <ResponsiveHorizontalBarChart
-              title="Department AI Identified Competency Gaps"
+              title="Department Model Identified Competency Gaps"
               subtitle="Ranked priority training domains calculated from faculty needs assessments"
               data={priorityDomainsData}
               valueLabel="Score %"

@@ -52,7 +52,6 @@ export default function FacultyDashboardPage() {
     setRecommendation(null);
     setTimestamp(null);
     setRequesting(true);
-    showToast('info', 'AI Recommender Running', 'Analyzing your needs assessment and generating recommendations...');
 
     try {
       const res = await api.post('/profile/request-recommendation');
@@ -135,11 +134,10 @@ export default function FacultyDashboardPage() {
               {requesting ? (
                 <>
                   <RefreshCw className="w-3.5 h-3.5 sm:w-4 sm:h-4 animate-spin text-white" />
-                  <span className="hidden sm:inline">Processing ML Engine...</span>
-                  <span className="sm:hidden">Processing...</span>
+                  <span>Running Model...</span>
                 </>
               ) : (
-                <span>{qProgress.has_existing_recommendation ? 'Re-Run Recommendation' : 'Request Recommendation'}</span>
+                <span>{qProgress.has_existing_recommendation ? 'Re-Run Model' : 'Run Recommendation Model'}</span>
               )}
             </button>
           )}
@@ -171,17 +169,20 @@ export default function FacultyDashboardPage() {
         </div>
       )}
 
-      {/* 4. Active Recommendation Preview (or Skeleton when generating) */}
-      {requesting ? (
-        <RecommendationSkeleton message="Analyzing Survey Responses & Generating Recommendations..." />
-      ) : (
-        recommendation && (
-          <RecommendationCard
-            result={recommendation}
-            facultyName={data.user.full_name || data.user.username}
-            timestamp={timestamp}
-          />
-        )
+      {/* 4. Progress Modal while model runs */}
+      <GeneratingProgressModal
+        isOpen={requesting}
+        title="Generating Training Recommendations"
+        scope="Individual Faculty Synthesis"
+      />
+
+      {/* 5. Active Recommendation Preview */}
+      {!requesting && recommendation && (
+        <RecommendationCard
+          result={recommendation}
+          facultyName={data.user.full_name || data.user.username}
+          timestamp={timestamp}
+        />
       )}
     </div>
   );

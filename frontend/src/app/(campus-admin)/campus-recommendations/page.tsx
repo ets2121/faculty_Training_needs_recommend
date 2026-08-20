@@ -59,7 +59,7 @@ export default function CampusRecommendationsPage() {
     // Clear previous result so skeleton shows cleanly
     setCampusResult(null);
     setRunningCampusRec(true);
-    showToast('info', 'AI Synthesis Running', `Synthesizing campus-wide faculty training assessments for ${campusName}...`);
+    showToast('info', 'Model Synthesis Running', `Synthesizing campus-wide faculty training assessments for ${campusName}...`);
 
     try {
       const res = await api.post('/recommendations/campus');
@@ -71,7 +71,7 @@ export default function CampusRecommendationsPage() {
       showToast(
         'success',
         'Campus Synthesis Complete',
-        `AI aggregated needs across ${freshResult.total_departments || campusStats?.departments?.length || 0} academic departments in ${campusName}.`
+        `Model aggregated needs across ${freshResult.total_departments || campusStats?.departments?.length || 0} academic departments in ${campusName}.`
       );
     } catch (err: any) {
       showToast(
@@ -92,7 +92,7 @@ export default function CampusRecommendationsPage() {
         <GeneratingProgressModal
           isOpen={runningCampusRec}
           title="Synthesizing Campus-Wide Recommendations"
-          scope={`${campusCode} AI Synthesis`}
+          scope={`${campusCode} Model Synthesis`}
         />
         <RecommendationSkeleton message="Loading Campus Training Recommendations..." />
       </div>
@@ -209,7 +209,7 @@ export default function CampusRecommendationsPage() {
               title={`Campus Training Recommendations — ${campusName}`}
               subtitle="Multi-Department Training Needs Analysis & Priority Synthesis"
               timestamp={campusResult.generated_at || campusResult.last_recommendation_at}
-              scopeLabel="Campus AI Synthesis"
+              scopeLabel="Campus Model Synthesis"
               statsRow={statsRow}
             />
           )}

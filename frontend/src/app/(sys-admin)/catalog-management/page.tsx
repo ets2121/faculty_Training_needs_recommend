@@ -462,7 +462,7 @@ export default function CatalogManagementPage() {
                 Training Catalog Management
               </h1>
               <p className="text-xs text-light-text dark:text-dark-muted mt-0.5 max-w-2xl leading-relaxed">
-                Create, edit, and configure institutional programs with categories, competencies, modalities, durations, and schedules matched to faculty by the AI recommendation engine.
+                Create, edit, and configure institutional programs with categories, competencies, modalities, durations, and schedules matched to faculty by the model recommendation engine.
               </p>
             </div>
           </div>
@@ -494,7 +494,7 @@ export default function CatalogManagementPage() {
             <Tag className="w-4 h-4 text-emerald-500" />
           </div>
           <div className="text-2xl font-bold text-emerald-600 dark:text-emerald-400">{activeCount}</div>
-          <p className="text-[11px] text-light-text dark:text-dark-muted mt-1">Matched in active AI recommendations</p>
+          <p className="text-[11px] text-light-text dark:text-dark-muted mt-1">Matched in active model recommendations</p>
         </div>
 
         <div className="p-4 sm:p-5 rounded-2xl bg-white dark:bg-dark-card border border-light-border dark:border-dark-border shadow-md">

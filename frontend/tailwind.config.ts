@@ -50,6 +50,8 @@ const config: Config = {
         'pulse-slow': 'pulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite',
         'fade-in': 'fadeIn 0.3s ease-in-out forwards',
         'slide-up': 'slideUp 0.4s ease-out forwards',
+        'slideInLeft': 'slideInLeft 0.28s cubic-bezier(0.32, 0.72, 0, 1) forwards',
+        'fadeIn': 'fadeIn 0.2s ease-in-out forwards',
       },
       keyframes: {
         fadeIn: {
@@ -59,6 +61,10 @@ const config: Config = {
         slideUp: {
           '0%': { opacity: '0', transform: 'translateY(12px)' },
           '100%': { opacity: '1', transform: 'translateY(0)' },
+        },
+        slideInLeft: {
+          '0%': { opacity: '0', transform: 'translateX(-100%)' },
+          '100%': { opacity: '1', transform: 'translateX(0)' },
         },
       },
     },

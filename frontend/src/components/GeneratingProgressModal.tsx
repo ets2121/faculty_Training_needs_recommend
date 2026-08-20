@@ -12,14 +12,14 @@ interface GeneratingProgressModalProps {
 
 const STEPS = [
   { id: 1, label: 'Validating Faculty Assessment Data', detail: 'Verifying completed questionnaire parts & profiles', icon: Users },
-  { id: 2, label: 'Running AI Recommendation Engine', detail: 'Processing feature vectors with multi-target Random Forest model', icon: Cpu },
+  { id: 2, label: 'Running Recommendation Model Engine', detail: 'Processing feature vectors with multi-target Random Forest model', icon: Cpu },
   { id: 3, label: 'Aligning Training Catalog & Match Scores', detail: 'Computing priority ranking, coverage, and program match scores', icon: BookOpen },
   { id: 4, label: 'Finalizing Recommendations', detail: 'Persisting synthesis history & assembling actionable training outputs', icon: Sparkles },
 ];
 
 export default function GeneratingProgressModal({
   isOpen,
-  title = 'Generating AI Recommendations',
+  title = 'Generating Training Recommendations',
   scope = 'Department Synthesis',
 }: GeneratingProgressModalProps) {
   const [currentStep, setCurrentStep] = useState(1);

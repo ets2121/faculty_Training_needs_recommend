@@ -177,8 +177,8 @@ export default function CampusDashboardPage() {
         icon: Lightbulb,
         color: 'from-emerald-500 to-teal-600',
         glow: 'shadow-emerald-500/20',
-        title: 'AI Training Synthesis',
-        description: 'Generate AI-powered training recommendations tailored to campus faculty needs and assessments.',
+        title: 'Model Training Synthesis',
+        description: 'Generate model-powered training recommendations tailored to campus faculty needs and assessments.',
         stat: loading ? '...' : `${assessedPct}%`,
         statLabel: 'Faculty with Recs',
       },
@@ -270,7 +270,7 @@ export default function CampusDashboardPage() {
           {/* Chart 3: Campus Top Priority Training Needs */}
           <div className="lg:col-span-2">
             <ResponsiveHorizontalBarChart
-              title="Campus-Wide AI Priority Training Domains"
+              title="Campus-Wide Model Priority Training Domains"
               subtitle="Aggregated multi-department competency needs and demand scores"
               data={priorityDomainsData}
               valueLabel="Match %"

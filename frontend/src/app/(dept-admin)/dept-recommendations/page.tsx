@@ -55,7 +55,7 @@ export default function DeptRecommendationsPage() {
     // Clear previous result so skeleton shows cleanly
     setDeptResult(null);
     setRunningRec(true);
-    showToast('info', 'AI Synthesis Running', `Synthesizing faculty training assessments for ${deptName}...`);
+    showToast('info', 'Model Synthesis Running', `Synthesizing faculty training assessments for ${deptName}...`);
 
     try {
       const res = await api.post('/recommendations/department');
@@ -67,7 +67,7 @@ export default function DeptRecommendationsPage() {
       showToast(
         'success',
         'Recommendation Synthesis Complete',
-        `AI aggregated needs across ${freshResult.eligible_faculty_count || freshResult.faculty_count || 0} eligible faculty.`
+        `Model aggregated needs across ${freshResult.eligible_faculty_count || freshResult.faculty_count || 0} eligible faculty.`
       );
     } catch (err: any) {
       showToast(
@@ -193,7 +193,7 @@ export default function DeptRecommendationsPage() {
               </div>
               <h2 className="text-lg font-bold text-white">No Recommendations Generated Yet</h2>
               <p className="text-xs text-light-text dark:text-dark-text leading-relaxed">
-                Run the AI engine to synthesize the training needs of faculty members in {deptName} who have completed their assessments.
+                Run the Recommendation Model to synthesize the training needs of faculty members in {deptName} who have completed their assessments.
               </p>
               <div className="pt-2">
                 <button
@@ -215,7 +215,7 @@ export default function DeptRecommendationsPage() {
               title={`Department Training Recommendations — ${deptName} (${deptCode})`}
               subtitle={`${campusName} • Multi-Faculty Assessment Synthesis`}
               timestamp={deptResult.generated_at || deptResult.last_recommendation_at}
-              scopeLabel="Department AI Synthesis"
+              scopeLabel="Department Model Synthesis"
               statsRow={statsRow}
               noticeBanner={noticeBanner}
             />
