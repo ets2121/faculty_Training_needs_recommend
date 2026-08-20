@@ -13,6 +13,7 @@ Result is stored back on the faculty record on every successful generation.
 """
 import json
 from datetime import datetime, timezone
+import zoneinfo
 
 from fastapi import APIRouter, Depends, HTTPException, Request, status
 from sqlalchemy.orm import Session
@@ -109,7 +110,6 @@ def individual_recommendation(
     model = _get_model_or_503(request)
     record = build_faculty_record(faculty_id, target_faculty, db)
     from datetime import datetime
-    import zoneinfo
     generated_at = datetime.now(zoneinfo.ZoneInfo("Asia/Manila")).isoformat()
     result = individual(model, record, db=db, generated_at=generated_at)
     _store_individual_result(target_faculty, result, current_user.id, db)
@@ -220,7 +220,7 @@ def department_recommendation(
     result["skipped_faculty"] = skipped
     result["individual_results_stored"] = individual_results_stored
     from datetime import datetime, timezone
-    result["generated_at"] = datetime.now(timezone.utc).isoformat()
+    result["generated_at"] = datetime.now(zoneinfo.ZoneInfo("Asia/Manila")).isoformat()
 
     # Persist department recommendation to history
     db.add(RecommendationHistory(
@@ -318,7 +318,7 @@ def get_department_last_recommendation(
         if isinstance(data, dict):
             data["has_recommendation"] = True
             if "generated_at" not in data and last_hist.created_at:
-                data["generated_at"] = last_hist.created_at.isoformat()
+                data["generated_at"] = last_hist.created_at.isoformat() + "+08:00"
             # Ensure department_name is always present
             if "department_name" not in data:
                 data["department_name"] = dept.name
@@ -372,7 +372,7 @@ def get_faculty_last_recommendation(
         "department": dept.code if dept else None,
         "questionnaire_status": target.questionnaire_status,
         "last_recommendation_at": (
-            target.last_recommendation_at.isoformat()
+            target.last_recommendation_at.isoformat() + "+08:00"
             if target.last_recommendation_at else None
         ),
         "recommendation": (

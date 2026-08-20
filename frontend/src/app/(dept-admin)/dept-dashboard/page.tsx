@@ -26,7 +26,7 @@ import {
   ArrowRight,
   Brain,
 } from 'lucide-react';
-import { formatPercent } from '@/lib/utils';
+import { formatPercent, formatManila } from '@/lib/utils';
 
 // ─── Mini SVG Donut Chart ────────────────────────────────────────────────────
 function DonutChart({ probability, color = '#10b981' }: { probability: number; color?: string }) {

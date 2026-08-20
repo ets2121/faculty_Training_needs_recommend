@@ -43,3 +43,24 @@ export function getStatusBadgeConfig(status: QuestionnaireStatus | string) {
       };
   }
 }
+
+// ─── Asia/Manila timestamp formatter ────────────────────────────────────────
+// Always displays timestamps in Philippine Standard Time (UTC+8) regardless
+// of the browser's local timezone setting.
+export function formatManila(ts: string | null | undefined): string | null {
+  if (!ts) return null;
+  try {
+    return new Date(ts).toLocaleString('en-PH', {
+      timeZone: 'Asia/Manila',
+      year: 'numeric',
+      month: 'short',
+      day: '2-digit',
+      hour: '2-digit',
+      minute: '2-digit',
+      hour12: true,
+    });
+  } catch {
+    return ts;
+  }
+}
+

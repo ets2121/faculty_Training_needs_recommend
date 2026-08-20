@@ -1131,7 +1131,7 @@ export default function SystemAdminDashboardPage() {
                     <tbody className="divide-y divide-light-border dark:divide-dark-border font-mono">
                       {filteredAuditLogs.map((log) => (
                         <tr key={log.id} className="hover:bg-light-bg dark:hover:bg-dark-bg/60 transition-colors">
-                          <td className="p-3.5 text-light-text dark:text-dark-muted">{new Date(log.created_at).toLocaleString()}</td>
+                          <td className="p-3.5 text-light-text dark:text-dark-muted">{new Date(log.created_at).toLocaleString('en-PH', { timeZone: 'Asia/Manila', year: 'numeric', month: 'short', day: '2-digit', hour: '2-digit', minute: '2-digit', hour12: true })}</td>
                           <td className="p-3.5 text-light-text dark:text-dark-text">
                             <strong>{log.username || 'System'}</strong> ({log.role_name || '—'})
                           </td>

@@ -72,7 +72,7 @@ def get_my_profile(
             "eligible_for_recommendation": faculty.questionnaire_status in ("eligible", "has_recommendation"),
             "has_existing_recommendation": faculty.questionnaire_status == "has_recommendation",
             "last_recommendation_at": (
-                faculty.last_recommendation_at.isoformat()
+                faculty.last_recommendation_at.isoformat() + '+08:00'
                 if faculty.last_recommendation_at else None
             ),
             "required_parts_completed": f"{completed_required}/{len(REQUIRED_PARTS)}",
@@ -256,7 +256,7 @@ def get_last_recommendation(
         "faculty_id": faculty.id,
         "questionnaire_status": faculty.questionnaire_status,
         "last_recommendation_at": (
-            faculty.last_recommendation_at.isoformat()
+            faculty.last_recommendation_at.isoformat() + '+08:00'
             if faculty.last_recommendation_at else None
         ),
         "recommendation": json.loads(faculty.last_recommendation_json),

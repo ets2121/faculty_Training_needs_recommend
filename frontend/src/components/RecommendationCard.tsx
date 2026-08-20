@@ -3,7 +3,7 @@
 import React from 'react';
 import { RecommendationResult, CatalogRecommendationItem } from '@/types';
 import { BookOpen, Check, Sparkles, Target, Info, Clock, Calendar } from 'lucide-react';
-import { formatPercent } from '@/lib/utils';
+import { formatPercent, formatManila } from '@/lib/utils';
 
 interface RecommendationCardProps {
   result: RecommendationResult;
