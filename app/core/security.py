@@ -1,4 +1,4 @@
-"""
+﻿"""
 Security module: Password hashing, JWT tokens, and FastAPI auth dependencies.
 """
 import json
@@ -12,9 +12,9 @@ from sqlalchemy.orm import Session
 
 from app.core.config import get_settings
 from app.db.session import get_db
-from app.db.models import AuditLog, User, Role, Faculty, DepartmentAdmin
+from app.db.models import AuditLog, User, Role, Faculty, CampusAdmin, DepartmentAdmin, Department
 
-# ─── Password Hashing ────────────────────────────────────────────────────────
+# ─── Password Hashing ─────────────────────────────────────────────────────────
 
 def hash_password(password: str) -> str:
     pwd_bytes = password.encode("utf-8")
@@ -50,7 +50,7 @@ def decode_access_token(token: str) -> dict:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid token.")
 
 
-# ─── FastAPI Dependencies ─────────────────────────────────────────────────────
+# ─── FastAPI Dependencies ────────────────────────────────────────────────────
 
 def get_current_user(
     request: Request,
@@ -97,6 +97,23 @@ def get_user_role_name(user: User, db: Session) -> str:
     return role.name if role else "unknown"
 
 
+def get_user_campus_id(user: User, db: Session) -> int | None:
+    """Get the campus_id associated with a user (campus admin, dept admin, or faculty)."""
+    campus_admin = db.query(CampusAdmin).filter(CampusAdmin.user_id == user.id).first()
+    if campus_admin:
+        return campus_admin.campus_id
+
+    dept_admin = db.query(DepartmentAdmin).filter(DepartmentAdmin.user_id == user.id).first()
+    if dept_admin and dept_admin.department:
+        return dept_admin.department.campus_id
+
+    faculty = db.query(Faculty).filter(Faculty.user_id == user.id).first()
+    if faculty and faculty.department:
+        return faculty.department.campus_id
+
+    return None
+
+
 def get_user_department_id(user: User, db: Session) -> int | None:
     """Get the department_id associated with a user (faculty or dept admin)."""
     faculty = db.query(Faculty).filter(Faculty.user_id == user.id).first()
@@ -108,43 +125,80 @@ def get_user_department_id(user: User, db: Session) -> int | None:
     return None
 
 
-# ─── Data Isolation Helpers ───────────────────────────────────────────────────
+# ─── Data Isolation Helpers ──────────────────────────────────────────────────
 
-def enforce_faculty_scope(current_user: User, target_faculty_id: int, db: Session) -> None:
-    """Ensure a Faculty user can only access their own records."""
+def enforce_campus_scope(current_user: User, target_campus_id: int, db: Session) -> None:
+    """Ensure a Campus Admin or Dept Admin can only access their own campus."""
     role_name = get_user_role_name(current_user, db)
     if role_name == "system_admin":
-        return  # System admin can access all
+        return
+    user_campus_id = get_user_campus_id(current_user, db)
+    if user_campus_id == target_campus_id:
+        return
+    raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Access denied. You cannot access resources outside your assigned campus.")
+
+
+def enforce_faculty_scope(current_user: User, target_faculty_id: int, db: Session) -> None:
+    """Ensure a user can only access appropriate faculty records based on role and campus/department scope."""
+    role_name = get_user_role_name(current_user, db)
+    if role_name == "system_admin":
+        return
+
+    target_faculty = db.query(Faculty).filter(Faculty.id == target_faculty_id).first()
+    if not target_faculty:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Faculty member not found.")
+
+    if role_name == "campus_admin":
+        my_campus_id = get_user_campus_id(current_user, db)
+        target_campus_id = target_faculty.department.campus_id if target_faculty.department else None
+        if target_campus_id == my_campus_id:
+            return
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Access denied. This faculty member belongs to another campus.")
+
     if role_name == "department_admin":
-        # Dept admin can access faculty in their department
-        target_faculty = db.query(Faculty).filter(Faculty.id == target_faculty_id).first()
         admin_dept_id = get_user_department_id(current_user, db)
-        if target_faculty and target_faculty.department_id == admin_dept_id:
+        if target_faculty.department_id == admin_dept_id:
             return
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Access denied to this faculty record.")
+
     if role_name == "faculty":
         faculty = db.query(Faculty).filter(Faculty.user_id == current_user.id).first()
         if faculty and faculty.id == target_faculty_id:
             return
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Access denied. You can only view your own records.")
+
     raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Access denied.")
 
 
 def enforce_department_scope(current_user: User, target_department_id: int, db: Session) -> None:
-    """Ensure a Department Admin can only access their own department."""
+    """Ensure an admin can only access authorized departments."""
     role_name = get_user_role_name(current_user, db)
     if role_name == "system_admin":
         return
-    user_dept_id = get_user_department_id(current_user, db)
-    if user_dept_id == target_department_id:
-        return
-    raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Access denied to this department.")
+
+    dept = db.query(Department).filter(Department.id == target_department_id).first()
+    if not dept:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Department not found.")
+
+    if role_name == "campus_admin":
+        my_campus_id = get_user_campus_id(current_user, db)
+        if dept.campus_id == my_campus_id:
+            return
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Access denied. This department belongs to another campus.")
+
+    if role_name == "department_admin":
+        user_dept_id = get_user_department_id(current_user, db)
+        if user_dept_id == target_department_id:
+            return
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Access denied to this department.")
+
+    raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Access denied.")
 
 
 # ─── Legacy Admin API Key (backwards compatible) ─────────────────────────────
 
 def require_admin(x_admin_api_key: str | None = Header(default=None)):
-    """Legacy admin key check — kept for backwards compatibility with training endpoint."""
+    """Legacy admin key check - kept for backwards compatibility with training endpoint."""
     settings = get_settings()
     if not x_admin_api_key or x_admin_api_key != settings.admin_api_key:
         raise HTTPException(

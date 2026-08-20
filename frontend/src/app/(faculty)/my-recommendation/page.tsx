@@ -5,6 +5,7 @@ import Link from 'next/link';
 import api from '@/lib/api';
 import { RecommendationResult, QuestionnaireProgress } from '@/types';
 import RecommendationCard from '@/components/RecommendationCard';
+import GeneratingProgressModal from '@/components/GeneratingProgressModal';
 import { RecommendationSkeleton } from '@/components/Skeletons';
 import { useToast } from '@/context/ToastContext';
 import { Sparkles, RefreshCw, AlertCircle, ArrowLeft, ClipboardList, Clock } from 'lucide-react';
@@ -70,6 +71,7 @@ export default function MyRecommendationPage() {
   if (loading) {
     return (
       <div className="space-y-6 max-w-6xl mx-auto">
+      <GeneratingProgressModal isOpen={requesting} title="Generating Personalized Recommendations" scope="Faculty ML Inference" />
         <RecommendationSkeleton message="Loading Your Training Recommendations..." />
       </div>
     );
@@ -77,6 +79,7 @@ export default function MyRecommendationPage() {
 
   return (
     <div className="space-y-6 max-w-6xl mx-auto">
+      <GeneratingProgressModal isOpen={requesting} title="Generating Personalized Recommendations" scope="Faculty ML Inference" />
       {/* Header controls */}
       <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-3 sm:gap-4">
         <div className="flex items-center gap-3">

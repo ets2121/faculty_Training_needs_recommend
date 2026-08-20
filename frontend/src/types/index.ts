@@ -1,13 +1,24 @@
-// QSU Faculty Training Recommender — Frontend TypeScript Definitions
+// QSU Faculty Training Recommender - Frontend TypeScript Definitions
 
-export type RoleName = 'faculty' | 'department_admin' | 'system_admin';
+export type RoleName = 'faculty' | 'department_admin' | 'campus_admin' | 'system_admin';
 
 export type QuestionnaireStatus = 'not_started' | 'in_progress' | 'eligible' | 'has_recommendation';
+
+export interface CampusInfo {
+  id: number;
+  code: string;
+  name: string;
+  description?: string | null;
+}
 
 export interface DepartmentInfo {
   id: number;
   code: string;
   name: string;
+  campus_id?: number;
+  campus_code?: string;
+  campus_name?: string;
+  faculty_count?: number;
 }
 
 export interface AuthUser {
@@ -16,7 +27,8 @@ export interface AuthUser {
   email: string | null;
   full_name: string | null;
   role: RoleName;
-  department: DepartmentInfo | null;
+  campus?: CampusInfo | null;
+  department?: DepartmentInfo | null;
   status: string;
 }
 
@@ -26,7 +38,13 @@ export interface FacultyProfile {
   academic_rank: string | null;
   highest_degree: string | null;
   specialization: string | null;
+  campus?: {
+    id: number | null;
+    code: string | null;
+    name: string | null;
+  };
   department: {
+    id?: number | null;
     code: string | null;
     name: string | null;
   };
@@ -112,6 +130,11 @@ export interface DepartmentRecommendationResult {
   status: string;
   department: string;
   department_name?: string;
+  campus_id?: number;
+  campus_code?: string;
+  campus_name?: string;
+  total_departments?: number;
+  total_faculty_in_campus?: number;
   total_faculty_in_dept?: number;
   eligible_faculty_count?: number;
   skipped_faculty?: Array<{ faculty_id: number; questionnaire_status: string }>;
@@ -128,6 +151,26 @@ export interface DepartmentRecommendationResult {
   generated_at?: string;
   last_recommendation_at?: string;
   _test_mode?: boolean;
+}
+
+export interface CampusOverviewItem {
+  id: number;
+  code: string;
+  name: string;
+  description: string | null;
+  status: string;
+  is_my_campus?: boolean;
+  department_count: number;
+  faculty_count: number;
+  departments: Array<{
+    id: number;
+    code: string;
+    name: string;
+    description: string | null;
+    faculty_count: number;
+    dept_admin_name: string | null;
+    dept_admin_username: string | null;
+  }>;
 }
 
 export interface AuditLogItem {
@@ -150,14 +193,21 @@ export interface UserListItem {
   email: string | null;
   full_name: string | null;
   role: RoleName;
-  department_code: string | null;
-  department_name: string | null;
-  status: string;
-  account_status?: string | null;
+  campus_id?: number | null;
+  campus_code?: string | null;
+  campus_name?: string | null;
+  department_id?: number | null;
+  department_code?: string | null;
+  department_name?: string | null;
+  faculty_id?: number | null;
+  faculty_code?: string | null;
   academic_rank?: string | null;
   highest_degree?: string | null;
   specialization?: string | null;
-  faculty_code?: string | null;
+  status: string;
+  questionnaire_status?: QuestionnaireStatus | string | null;
+  user_status?: string | null;
+  account_status?: string | null;
   created_at?: string | null;
   last_login_at?: string | null;
 }

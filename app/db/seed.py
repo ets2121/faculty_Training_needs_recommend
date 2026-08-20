@@ -1,22 +1,27 @@
-"""
-Database Seed logic for initializing system roles, permissions, departments, default admin, and catalog.
+﻿"""
+Database Seed logic for initializing system roles, permissions, campuses, departments, default admins, and catalog.
 """
 import json
 from pathlib import Path
 from sqlalchemy.orm import Session
 
 from app.core.security import hash_password
-from app.db.models import Department, Permission, Role, RolePermission, TrainingCatalog, User
+from app.db.models import (
+    Campus, CampusAdmin, Department, DepartmentAdmin, Faculty,
+    Permission, QuestionnairePart, Role, RolePermission,
+    TrainingCatalog, TrainingRecommendationRequest, User,
+)
 
 
 def seed_database(db: Session) -> None:
-    """Populate default system reference data, default admin, and training catalog."""
+    """Populate default system reference data, campuses, departments, default admins, and training catalog."""
     
     # 1. Seed Roles
     roles_data = [
-        ("faculty", "Normal faculty user"),
-        ("department_admin", "Department administrator"),
-        ("system_admin", "System-wide administrator"),
+        ("faculty", "Faculty Member"),
+        ("department_admin", "Department Administrator"),
+        ("campus_admin", "Campus Administrator"),
+        ("system_admin", "System-wide Administrator"),
     ]
     roles_map = {}
     for name, desc in roles_data:
@@ -31,10 +36,13 @@ def seed_database(db: Session) -> None:
     permissions_data = [
         ("predict:individual", "Generate individual training recommendations"),
         ("predict:department", "Generate department-level training recommendations"),
+        ("predict:campus", "Generate campus-level aggregated recommendations"),
         ("catalog:read", "View training catalog items"),
         ("catalog:write", "Add or update training catalog items"),
         ("model:train", "Train and deploy machine learning models"),
         ("users:manage", "Manage system users and access rights"),
+        ("campus:manage", "Manage campus departments and department admins"),
+        ("faculty:transfer", "Transfer faculty between departments or campuses"),
         ("audit:read", "View system audit logs"),
     ]
     perm_map = {}
@@ -50,6 +58,7 @@ def seed_database(db: Session) -> None:
     role_perms = {
         "faculty": ["predict:individual", "catalog:read"],
         "department_admin": ["predict:individual", "predict:department", "catalog:read", "users:manage"],
+        "campus_admin": ["predict:individual", "predict:department", "predict:campus", "catalog:read", "users:manage", "campus:manage", "faculty:transfer"],
         "system_admin": [code for code, _ in permissions_data],
     }
 
@@ -64,25 +73,64 @@ def seed_database(db: Session) -> None:
             if not rp:
                 db.add(RolePermission(role_id=role.id, permission_id=perm.id))
 
-    # 4. Seed Departments
-    departments_data = [
-        ("BSIT", "Bachelor of Science in Information Technology"),
-        ("BSED", "Bachelor of Secondary Education"),
-        ("BSCE", "Bachelor of Science in Civil Engineering"),
-        ("BEED", "Bachelor of Elementary Education"),
-        ("BSBA", "Bachelor of Science in Business Administration"),
-        ("BSCS", "Bachelor of Science in Computer Science"),
-        ("BAELS", "Bachelor of Arts in English Language Studies"),
-        ("BSMATH", "Bachelor of Science in Mathematics"),
-        ("BSHM", "Bachelor of Science in Hospitality Management"),
-        ("BSMidwifery", "Bachelor of Science in Midwifery"),
+    # 4. Seed Campuses (Diffun, Maddela, Cabarroguis)
+    campuses_data = [
+        ("DIFFUN", "Diffun Campus (Main)", "Main University Campus located in Diffun, Quirino"),
+        ("MADDELA", "Maddela Campus", "Satellite Campus located in Maddela, Quirino"),
+        ("CABARROGUIS", "Cabarroguis Campus", "Satellite Campus located in Cabarroguis, Quirino"),
     ]
-    for code, name in departments_data:
-        dept = db.query(Department).filter(Department.code == code).first()
-        if not dept:
-            db.add(Department(code=code, name=name, status="active"))
+    campuses_map = {}
+    for code, name, desc in campuses_data:
+        campus = db.query(Campus).filter(Campus.code == code).first()
+        if not campus:
+            campus = Campus(code=code, name=name, description=desc, status="active")
+            db.add(campus)
+            db.flush()
+        campuses_map[code] = campus
 
-    # 5. Seed Default System Admin User
+    # 5. Seed Departments per Campus
+    # Notice: Each campus can have its own BSIT, BSED, etc. with campus isolation
+    departments_data = [
+        # Diffun Campus Departments
+        ("DIFFUN", "BSIT", "Bachelor of Science in Information Technology"),
+        ("DIFFUN", "BSED", "Bachelor of Secondary Education"),
+        ("DIFFUN", "BSCE", "Bachelor of Science in Civil Engineering"),
+        ("DIFFUN", "BEED", "Bachelor of Elementary Education"),
+        ("DIFFUN", "BSBA", "Bachelor of Science in Business Administration"),
+        ("DIFFUN", "BSHM", "Bachelor of Science in Hospitality Management"),
+        
+        # Maddela Campus Departments
+        ("MADDELA", "BSIT", "Bachelor of Science in Information Technology"),
+        ("MADDELA", "BSBA", "Bachelor of Science in Business Administration"),
+        ("MADDELA", "BSED", "Bachelor of Secondary Education"),
+        ("MADDELA", "BEED", "Bachelor of Elementary Education"),
+
+        # Cabarroguis Campus Departments
+        ("CABARROGUIS", "BSIT", "Bachelor of Science in Information Technology"),
+        ("CABARROGUIS", "BSHM", "Bachelor of Science in Hospitality Management"),
+        ("CABARROGUIS", "BSED", "Bachelor of Secondary Education"),
+        ("CABARROGUIS", "BSMidwifery", "Bachelor of Science in Midwifery"),
+    ]
+    
+    depts_lookup = {}  # (campus_code, dept_code) -> Department
+    for c_code, d_code, name in departments_data:
+        campus = campuses_map[c_code]
+        dept = db.query(Department).filter(
+            Department.campus_id == campus.id,
+            Department.code == d_code,
+        ).first()
+        if not dept:
+            dept = Department(
+                campus_id=campus.id,
+                code=d_code,
+                name=name,
+                status="active"
+            )
+            db.add(dept)
+            db.flush()
+        depts_lookup[(c_code, d_code)] = dept
+
+    # 6. Seed Default System Admin User
     admin_user = db.query(User).filter(User.username == "admin").first()
     if not admin_user:
         admin_role = roles_map["system_admin"]
@@ -97,25 +145,50 @@ def seed_database(db: Session) -> None:
         db.add(admin_user)
         db.flush()
 
-    # 6. Seed Department Admin Accounts
-    from app.db.models import DepartmentAdmin, Faculty, QuestionnairePart, TrainingRecommendationRequest
-
-    depts_map = {d.code: d for d in db.query(Department).all()}
-    dept_admin_role = roles_map["department_admin"]
-    faculty_role = roles_map["faculty"]
-
-    dept_admins_data = [
-        ("dept_bsit", "dept_bsit@qsu.edu.ph", "BSIT Department Chair", "BSIT"),
-        ("dept_bsed", "dept_bsed@qsu.edu.ph", "BSED Department Chair", "BSED"),
+    # 7. Seed Campus Admin Accounts
+    campus_admin_role = roles_map["campus_admin"]
+    campus_admins_data = [
+        ("admin_diffun", "diffun.admin@qsu.edu.ph", "Diffun Campus Admin", "DIFFUN", "diffun123"),
+        ("admin_maddela", "maddela.admin@qsu.edu.ph", "Maddela Campus Admin", "MADDELA", "maddela123"),
+        ("admin_cabarroguis", "cabarroguis.admin@qsu.edu.ph", "Cabarroguis Campus Admin", "CABARROGUIS", "cabarroguis123"),
     ]
 
-    for username, email, full_name, dept_code in dept_admins_data:
+    for username, email, full_name, c_code, pwd in campus_admins_data:
         existing = db.query(User).filter(User.username == username).first()
-        if not existing and dept_code in depts_map:
+        if not existing and c_code in campuses_map:
             u = User(
                 username=username,
                 email=email,
-                hashed_password=hash_password("dept123"),
+                hashed_password=hash_password(pwd),
+                full_name=full_name,
+                role_id=campus_admin_role.id,
+                status="active",
+            )
+            db.add(u)
+            db.flush()
+            db.add(CampusAdmin(
+                user_id=u.id,
+                campus_id=campuses_map[c_code].id,
+                status="active",
+            ))
+
+    # 8. Seed Department Admin Accounts
+    dept_admin_role = roles_map["department_admin"]
+    dept_admins_data = [
+        ("dept_bsit", "dept_bsit@qsu.edu.ph", "BSIT Dept Chair (Diffun)", "DIFFUN", "BSIT", "dept123"),
+        ("dept_bsed", "dept_bsed@qsu.edu.ph", "BSED Dept Chair (Diffun)", "DIFFUN", "BSED", "dept123"),
+        ("dept_bsit_maddela", "dept_bsit_maddela@qsu.edu.ph", "BSIT Dept Chair (Maddela)", "MADDELA", "BSIT", "dept123"),
+        ("dept_bsit_cabarroguis", "dept_bsit_cab@qsu.edu.ph", "BSIT Dept Chair (Cabarroguis)", "CABARROGUIS", "BSIT", "dept123"),
+    ]
+
+    for username, email, full_name, c_code, d_code, pwd in dept_admins_data:
+        existing = db.query(User).filter(User.username == username).first()
+        dept_obj = depts_lookup.get((c_code, d_code))
+        if not existing and dept_obj:
+            u = User(
+                username=username,
+                email=email,
+                hashed_password=hash_password(pwd),
                 full_name=full_name,
                 role_id=dept_admin_role.id,
                 status="active",
@@ -124,18 +197,23 @@ def seed_database(db: Session) -> None:
             db.flush()
             db.add(DepartmentAdmin(
                 user_id=u.id,
-                department_id=depts_map[dept_code].id,
+                department_id=dept_obj.id,
                 status="active",
             ))
 
-    # 7. Seed Faculty Accounts with realistic Questionnaire Data & Statuses
+    # 9. Seed Faculty Accounts with realistic Questionnaire Data & Statuses
+    faculty_role = roles_map["faculty"]
     faculty_seed_data = [
-        # (username, email, full_name, dept_code, faculty_code, status_level)
-        ("prof_santos", "santos@qsu.edu.ph", "Maria Santos", "BSIT", "BSIT-001", "has_recommendation"),
-        ("prof_reyes", "reyes@qsu.edu.ph", "Juan Reyes", "BSIT", "BSIT-002", "eligible"),
-        ("prof_cruz", "cruz@qsu.edu.ph", "Ana Cruz", "BSIT", "BSIT-003", "in_progress"),
-        ("prof_garcia", "garcia@qsu.edu.ph", "Mark Garcia", "BSIT", "BSIT-004", "not_started"),
-        ("prof_torres", "torres@qsu.edu.ph", "Elena Torres", "BSED", "BSED-001", "eligible"),
+        # (username, email, full_name, campus_code, dept_code, fac_code, target_status)
+        ("prof_santos", "santos@qsu.edu.ph", "Maria Santos", "DIFFUN", "BSIT", "DIF-IT-001", "has_recommendation"),
+        ("prof_reyes", "reyes@qsu.edu.ph", "Juan Reyes", "DIFFUN", "BSIT", "DIF-IT-002", "eligible"),
+        ("prof_cruz", "cruz@qsu.edu.ph", "Ana Cruz", "DIFFUN", "BSIT", "DIF-IT-003", "in_progress"),
+        ("prof_garcia", "garcia@qsu.edu.ph", "Mark Garcia", "DIFFUN", "BSIT", "DIF-IT-004", "not_started"),
+        ("prof_torres", "torres@qsu.edu.ph", "Elena Torres", "DIFFUN", "BSED", "DIF-ED-001", "eligible"),
+        ("prof_navarro", "navarro@qsu.edu.ph", "Carlos Navarro", "MADDELA", "BSIT", "MAD-IT-001", "eligible"),
+        ("prof_aquino", "aquino@qsu.edu.ph", "Liza Aquino", "MADDELA", "BSBA", "MAD-BA-001", "has_recommendation"),
+        ("prof_delacruz", "delacruz@qsu.edu.ph", "Ramon Dela Cruz", "CABARROGUIS", "BSIT", "CAB-IT-001", "eligible"),
+        ("prof_mendoza", "mendoza@qsu.edu.ph", "Grace Mendoza", "CABARROGUIS", "BSHM", "CAB-HM-001", "not_started"),
     ]
 
     # Pre-defined questionnaire part payloads for testing
@@ -226,9 +304,10 @@ def seed_database(db: Session) -> None:
         ]
     }
 
-    for username, email, full_name, dept_code, fac_code, target_status in faculty_seed_data:
+    for username, email, full_name, c_code, d_code, fac_code, target_status in faculty_seed_data:
         user = db.query(User).filter(User.username == username).first()
-        if not user and dept_code in depts_map:
+        dept_obj = depts_lookup.get((c_code, d_code))
+        if not user and dept_obj:
             user = User(
                 username=username,
                 email=email,
@@ -242,11 +321,11 @@ def seed_database(db: Session) -> None:
 
             fac = Faculty(
                 user_id=user.id,
-                department_id=depts_map[dept_code].id,
+                department_id=dept_obj.id,
                 faculty_code=fac_code,
                 academic_rank="Assistant Professor" if "santos" in username or "reyes" in username else "Instructor I",
                 highest_degree="Master's Degree",
-                specialization="Computer Science" if dept_code == "BSIT" else "Education",
+                specialization="Computer Science" if d_code == "BSIT" else "Education" if d_code == "BSED" else "Business",
                 questionnaire_status=target_status,
                 status="active",
             )
@@ -268,7 +347,7 @@ def seed_database(db: Session) -> None:
             for p_num in parts_to_add:
                 payload = dict(part_payloads[p_num])
                 if p_num == 1:
-                    payload["department"] = dept_code
+                    payload["department"] = d_code
                 db.add(QuestionnairePart(
                     faculty_id=fac.id,
                     part_number=p_num,
@@ -285,7 +364,7 @@ def seed_database(db: Session) -> None:
                     recommendation_json=json.dumps(demo_recommendation_result),
                 ))
 
-    # 8. Seed Training Catalog from training_catalog.json
+    # 10. Seed Training Catalog from training_catalog.json
     json_path = Path("./data/raw/training_catalog.json")
     if json_path.exists():
         try:

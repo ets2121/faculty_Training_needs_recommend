@@ -49,7 +49,7 @@ PART_LABELS = {
 
 class Part1Schema(BaseModel):
     """Personal Profile"""
-    department: str = Field(..., min_length=2, max_length=50)
+    department: str | None = Field(default=None, max_length=50)
     age: int = Field(..., ge=18, le=80)
     sex: str = Field(..., pattern="^(Male|Female|Prefer not to say)$")
     employment_status: str = Field(..., min_length=2)

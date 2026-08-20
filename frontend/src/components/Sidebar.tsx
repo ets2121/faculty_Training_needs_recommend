@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import React from 'react';
 import Link from 'next/link';
@@ -12,6 +12,11 @@ import {
   GraduationCap,
   User,
   Info,
+  Building,
+  Layers,
+  Cpu,
+  BookOpen,
+  Users,
 } from 'lucide-react';
 
 export default function Sidebar() {
@@ -30,17 +35,32 @@ export default function Sidebar() {
 
   const deptAdminNav = [
     { href: '/dept-dashboard', label: 'Dept Overview', icon: LayoutDashboard },
+    { href: '/dept-faculty', label: 'Faculty Roster', icon: Users },
+    { href: '/dept-recommendations', label: 'AI Recommendations', icon: Sparkles },
     { href: '/register-faculty', label: 'Add Faculty Account', icon: UserPlus },
+  ];
+
+  const campusAdminNav = [
+    { href: '/campus-dashboard', label: 'Campus Overview', icon: LayoutDashboard },
+    { href: '/campus-faculty', label: 'Campus Faculty Roster', icon: Users },
+    { href: '/campus-recommendations', label: 'Campus AI Synthesis', icon: Sparkles },
+    { href: '/campus-departments', label: 'Academic Departments', icon: Building },
+    { href: '/register-admin', label: 'Add Dept Admin', icon: UserPlus },
   ];
 
   const sysAdminNav = [
     { href: '/admin-dashboard', label: 'System Overview', icon: LayoutDashboard },
-    { href: '/register-admin', label: 'Add Dept Admin', icon: UserPlus },
+    { href: '/user-management', label: 'Users & RBAC', icon: Users },
+    { href: '/catalog-management', label: 'Training Catalog', icon: BookOpen },
+    { href: '/ml-pipeline', label: 'ML Pipeline & Retrain', icon: Cpu },
+    { href: '/register-admin', label: 'Add Administrator', icon: UserPlus },
   ];
 
   const currentNav =
     role === 'system_admin'
       ? sysAdminNav
+      : role === 'campus_admin'
+      ? campusAdminNav
       : role === 'department_admin'
       ? deptAdminNav
       : facultyNav;
@@ -53,18 +73,15 @@ export default function Sidebar() {
   const roleLabel =
     role === 'system_admin'
       ? 'System Administration'
+      : role === 'campus_admin'
+      ? `${user.campus?.code || 'Campus'} Administration`
       : role === 'department_admin'
       ? `${user.department?.code || 'Dept'} Admin Panel`
       : 'Faculty Portal';
 
   return (
     <>
-      {/*
-        Desktop sidebar:
-        - flex-shrink-0 so it never collapses
-        - overflow-y-auto so it can scroll its OWN content if nav items exceed height
-        - The parent layout constrains its height via overflow-hidden on the row container
-      */}
+      {/* Desktop sidebar */}
       <aside className="hidden md:flex flex-col w-56 shrink-0 overflow-y-auto bg-light-bg/80 dark:bg-dark-bg/80 border-r border-light-border dark:border-dark-border backdrop-blur-md">
 
         {/* Role section label */}
@@ -144,7 +161,7 @@ export default function Sidebar() {
             </div>
             <div>
               <p className="text-[10px] font-bold text-light-text dark:text-dark-text leading-none">QSU Recommender</p>
-              <p className="text-[9px] text-light-text dark:text-dark-muted mt-0.5">v2.0 · Production</p>
+              <p className="text-[9px] text-light-text dark:text-dark-muted mt-0.5">v2.0 • Multi-Campus</p>
             </div>
           </div>
         </div>

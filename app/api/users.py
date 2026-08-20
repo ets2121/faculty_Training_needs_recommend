@@ -1,191 +1,171 @@
+﻿"""
+User Management API — Admin-only endpoints for listing, viewing, updating, transferring, and deleting user accounts.
 """
-Users Management API:
-- system_admin: full access to all users (list, get, update, reset-password, delete)
-- department_admin: access only to faculty within their department (list, get, update, reset-password, delete)
-- faculty: FORBIDDEN (use /profile instead)
-"""
+import json
+from datetime import datetime
 from fastapi import APIRouter, Depends, HTTPException, Request, status
-from pydantic import BaseModel
+from pydantic import BaseModel, EmailStr
 from sqlalchemy.orm import Session
 
 from app.core.security import (
     get_current_user,
+    get_user_campus_id,
     get_user_department_id,
     get_user_role_name,
     hash_password,
     log_audit,
 )
-from app.db.models import AuditLog, Department, DepartmentAdmin, Faculty, QuestionnairePart, Role, User
+from app.db.models import AuditLog, Campus, CampusAdmin, Department, DepartmentAdmin, Faculty, QuestionnairePart, Role, User
 from app.db.session import get_db
 from app.api.questionnaire import (
-    PART_LABELS,
+    is_eligible_for_recommendation,
     REQUIRED_PARTS,
     TOTAL_PARTS,
-    is_eligible_for_recommendation,
+    PART_LABELS,
 )
 
-router = APIRouter(prefix="/users", tags=["Users Management"])
+router = APIRouter(prefix="/users", tags=["Users"])
 
 
-def _user_to_out(user: User, db: Session) -> dict:
-    role_name = get_user_role_name(user, db)
-    dept_id = get_user_department_id(user, db)
-    dept = db.query(Department).filter(Department.id == dept_id).first() if dept_id else None
-    
-    user_status = user.status
-    academic_rank = None
-    highest_degree = None
-    specialization = None
-    faculty_code = None
+def _user_to_out(u: User, db: Session) -> dict:
+    role_name = get_user_role_name(u, db)
+    faculty = u.faculty_profile
+    dept_admin = u.department_admin_profile
+    campus_admin = u.campus_admin_profile
 
-    if role_name == "faculty":
-        faculty = user.faculty_profile
-        if not faculty:
-            faculty = db.query(Faculty).filter(Faculty.user_id == user.id).first()
-        if faculty:
-            user_status = faculty.questionnaire_status
-            academic_rank = faculty.academic_rank
-            highest_degree = faculty.highest_degree
-            specialization = faculty.specialization
-            faculty_code = faculty.faculty_code
-            
+    dept = None
+    campus = None
+
+    if faculty and faculty.department:
+        dept = faculty.department
+        campus = dept.campus
+    elif dept_admin and dept_admin.department:
+        dept = dept_admin.department
+        campus = dept.campus
+    elif campus_admin and campus_admin.campus:
+        campus = campus_admin.campus
+
+    q_status = faculty.questionnaire_status if faculty else None
     return {
-        "id": user.id,
-        "username": user.username,
-        "email": user.email,
-        "full_name": user.full_name,
+        "id": u.id,
+        "username": u.username,
+        "email": u.email,
+        "full_name": u.full_name,
         "role": role_name,
+        "campus_id": campus.id if campus else None,
+        "campus_code": campus.code if campus else None,
+        "campus_name": campus.name if campus else None,
+        "department_id": dept.id if dept else None,
         "department_code": dept.code if dept else None,
         "department_name": dept.name if dept else None,
-        "status": user_status,
-        "account_status": user.status,
-        "academic_rank": academic_rank,
-        "highest_degree": highest_degree,
-        "specialization": specialization,
-        "faculty_code": faculty_code,
-        "created_at": user.created_at.isoformat() if user.created_at else None,
-        "last_login_at": user.last_login_at.isoformat() if user.last_login_at else None,
+        "faculty_id": faculty.id if faculty else None,
+        "faculty_code": faculty.faculty_code if faculty else None,
+        "academic_rank": faculty.academic_rank if faculty else None,
+        "highest_degree": faculty.highest_degree if faculty else None,
+        "specialization": faculty.specialization if faculty else None,
+        "questionnaire_status": q_status,
+        "status": q_status if q_status else u.status,
+        "user_status": u.status,
+        "account_status": u.status,
+        "last_login_at": u.last_login_at.isoformat() if u.last_login_at else None,
+        "created_at": u.created_at.isoformat() if u.created_at else None,
     }
 
 
 @router.get("")
 def list_users(
+    role: str | None = None,
+    campus_id: int | None = None,
+    department_code: str | None = None,
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
     """
-    List users scoped by role:
-    - system_admin: all users
-    - department_admin: only faculty users in their department
-    - faculty: FORBIDDEN — use /api/v1/profile instead
+    List user accounts with hierarchical access control:
+    - system_admin: can view all users, with optional campus_id and department_code filters
+    - campus_admin: can view all users in their assigned campus
+    - department_admin: can view faculty in their department
+    - faculty: FORBIDDEN
     """
-    role_name = get_user_role_name(current_user, db)
+    admin_role = get_user_role_name(current_user, db)
 
-    if role_name == "faculty":
+    if admin_role == "faculty":
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
-            detail="Faculty members cannot list users. Use /api/v1/profile for your own info.",
+            detail="Faculty members cannot list user accounts.",
         )
 
-    if role_name == "system_admin":
-        users = db.query(User).all()
-    else:
-        # department_admin: only faculty in their dept
-        dept_id = get_user_department_id(current_user, db)
-        faculty_user_ids = [
-            f.user_id for f in db.query(Faculty)
-            .filter(Faculty.department_id == dept_id).all()
-        ]
-        users = db.query(User).filter(User.id.in_(faculty_user_ids)).all() if faculty_user_ids else []
+    query = db.query(User)
 
-    return {"users": [_user_to_out(u, db) for u in users]}
+    if role:
+        target_role = db.query(Role).filter(Role.name == role).first()
+        if target_role:
+            query = query.filter(User.role_id == target_role.id)
+
+    # Department Admin Isolation: only faculty in their own department
+    if admin_role == "department_admin":
+        my_dept_id = get_user_department_id(current_user, db)
+        faculty_role = db.query(Role).filter(Role.name == "faculty").first()
+        query = (
+            query.join(Faculty, Faculty.user_id == User.id)
+            .filter(Faculty.department_id == my_dept_id)
+        )
+        if faculty_role:
+            query = query.filter(User.role_id == faculty_role.id)
+
+    # Campus Admin Isolation: all users within their assigned campus
+    elif admin_role == "campus_admin":
+        my_campus_id = get_user_campus_id(current_user, db)
+        all_users = query.all()
+        filtered = []
+        for u in all_users:
+            u_campus_id = get_user_campus_id(u, db)
+            if u_campus_id == my_campus_id:
+                filtered.append(u)
+        return {"total": len(filtered), "users": [_user_to_out(u, db) for u in filtered]}
+
+    # System Admin Filtering
+    elif admin_role == "system_admin":
+        if campus_id:
+            all_users = query.all()
+            filtered = [u for u in all_users if get_user_campus_id(u, db) == campus_id]
+            return {"total": len(filtered), "users": [_user_to_out(u, db) for u in filtered]}
+        elif department_code:
+            depts = db.query(Department).filter(Department.code == department_code.strip().upper()).all()
+            dept_ids = [d.id for d in depts]
+            all_users = query.all()
+            filtered = [u for u in all_users if get_user_department_id(u, db) in dept_ids]
+            return {"total": len(filtered), "users": [_user_to_out(u, db) for u in filtered]}
+
+    users = query.all()
+    return {"total": len(users), "users": [_user_to_out(u, db) for u in users]}
 
 
 @router.get("/{user_id}")
-def get_user(
+def get_user_detail(
     user_id: int,
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
-    """
-    Get a user by ID.
-    - system_admin: any user
-    - department_admin: only faculty in their department
-    - faculty: FORBIDDEN
-    """
-    role_name = get_user_role_name(current_user, db)
-
-    if role_name == "faculty":
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="Use /api/v1/profile for your own profile.",
-        )
-
+    """Get full details of a specific user."""
+    admin_role = get_user_role_name(current_user, db)
     target = db.query(User).filter(User.id == user_id).first()
     if not target:
         raise HTTPException(status_code=404, detail="User not found.")
 
-    if role_name == "department_admin":
+    if admin_role == "campus_admin":
+        my_campus_id = get_user_campus_id(current_user, db)
+        target_campus_id = get_user_campus_id(target, db)
+        if my_campus_id != target_campus_id:
+            raise HTTPException(status_code=403, detail="Access denied. User belongs to another campus.")
+
+    elif admin_role == "department_admin":
         my_dept_id = get_user_department_id(current_user, db)
         target_dept_id = get_user_department_id(target, db)
-        target_role = get_user_role_name(target, db)
-        if my_dept_id != target_dept_id or target_role != "faculty":
-            raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Access denied.")
+        if my_dept_id != target_dept_id:
+            raise HTTPException(status_code=403, detail="Access denied to this user.")
 
     return _user_to_out(target, db)
-
-
-@router.get("/{user_id}/questionnaire-status")
-def get_user_questionnaire_status(
-    user_id: int,
-    current_user: User = Depends(get_current_user),
-    db: Session = Depends(get_db),
-):
-    """
-    Get a faculty user's questionnaire completion status.
-    Only accessible by department_admin (own dept) and system_admin.
-    """
-    role_name = get_user_role_name(current_user, db)
-    if role_name == "faculty":
-        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Use /api/v1/questionnaire/progress instead.")
-
-    target_user = db.query(User).filter(User.id == user_id).first()
-    if not target_user:
-        raise HTTPException(status_code=404, detail="User not found.")
-
-    faculty = db.query(Faculty).filter(Faculty.user_id == user_id).first()
-    if not faculty:
-        raise HTTPException(status_code=400, detail="User is not a faculty member.")
-
-    if role_name == "department_admin":
-        my_dept_id = get_user_department_id(current_user, db)
-        if faculty.department_id != my_dept_id:
-            raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Access denied.")
-
-    parts = db.query(QuestionnairePart).filter(QuestionnairePart.faculty_id == faculty.id).all()
-    part_map = {p.part_number: p for p in parts}
-    completed_required = sum(1 for p in REQUIRED_PARTS if part_map.get(p) and part_map[p].is_complete)
-    completed_total = sum(1 for p in range(1, TOTAL_PARTS + 1) if part_map.get(p) and part_map[p].is_complete)
-
-    return {
-        "user_id": user_id,
-        "faculty_id": faculty.id,
-        "username": target_user.username,
-        "full_name": target_user.full_name,
-        "eligible_for_recommendation": is_eligible_for_recommendation(faculty.id, db),
-        "required_parts_completed": f"{completed_required}/{len(REQUIRED_PARTS)}",
-        "total_parts_completed": f"{completed_total}/{TOTAL_PARTS}",
-        "parts": [
-            {
-                "part_number": i,
-                "label": PART_LABELS[i],
-                "required": i in REQUIRED_PARTS,
-                "status": "complete" if (part_map.get(i) and part_map[i].is_complete) else
-                          "in_progress" if part_map.get(i) else "not_started",
-            }
-            for i in range(1, TOTAL_PARTS + 1)
-        ],
-    }
 
 
 class UpdateUserRequest(BaseModel):
@@ -208,13 +188,13 @@ def update_user(
 ):
     """
     Update user details (admins only).
-    - system_admin: can update any user and status
-    - department_admin: can update faculty in their department (cannot change account status)
-    - faculty: FORBIDDEN — use /api/v1/profile instead
+    - system_admin: can update any user
+    - campus_admin: can update users in their campus
+    - department_admin: can update faculty in their department
     """
-    role_name = get_user_role_name(current_user, db)
+    admin_role = get_user_role_name(current_user, db)
 
-    if role_name == "faculty":
+    if admin_role == "faculty":
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Use /api/v1/profile to update your own info.")
 
     target = db.query(User).filter(User.id == user_id).first()
@@ -224,7 +204,13 @@ def update_user(
     target_role = get_user_role_name(target, db)
     faculty = target.faculty_profile if target_role == "faculty" else None
 
-    if role_name == "department_admin":
+    if admin_role == "campus_admin":
+        my_campus_id = get_user_campus_id(current_user, db)
+        target_campus_id = get_user_campus_id(target, db)
+        if my_campus_id != target_campus_id:
+            raise HTTPException(status_code=403, detail="Access denied. User belongs to another campus.")
+
+    elif admin_role == "department_admin":
         my_dept_id = get_user_department_id(current_user, db)
         target_dept_id = get_user_department_id(target, db)
         if my_dept_id != target_dept_id or target_role != "faculty":
@@ -237,28 +223,28 @@ def update_user(
     }
 
     if body.full_name is not None:
-        target.full_name = body.full_name
+        target.full_name = body.full_name.strip()
     if body.email is not None:
-        # Check email uniqueness if modified
-        if body.email != target.email:
-            existing = db.query(User).filter(User.email == body.email, User.id != user_id).first()
+        clean_email = body.email.strip()
+        if clean_email != target.email:
+            existing = db.query(User).filter(User.email == clean_email, User.id != user_id).first()
             if existing:
                 raise HTTPException(status_code=409, detail="Email already in use by another account.")
-        target.email = body.email
+        target.email = clean_email
     if body.status is not None:
-        if role_name != "system_admin":
-            raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Only system admins can change account status.")
+        if admin_role not in ("system_admin", "campus_admin"):
+            raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Only Campus or System Admins can change account status.")
         target.status = body.status
 
     if faculty:
         if body.academic_rank is not None:
-            faculty.academic_rank = body.academic_rank
+            faculty.academic_rank = body.academic_rank.strip()
         if body.highest_degree is not None:
-            faculty.highest_degree = body.highest_degree
+            faculty.highest_degree = body.highest_degree.strip()
         if body.specialization is not None:
-            faculty.specialization = body.specialization
+            faculty.specialization = body.specialization.strip()
         if body.faculty_code is not None:
-            faculty.faculty_code = body.faculty_code
+            faculty.faculty_code = body.faculty_code.strip()
 
     db.commit()
 
@@ -271,6 +257,109 @@ def update_user(
     )
 
     return {"status": "success", "message": f"User {user_id} updated successfully.", "user": _user_to_out(target, db)}
+
+
+class TransferFacultyRequest(BaseModel):
+    target_department_id: int
+    target_campus_id: int | None = None
+    reason: str | None = None
+
+
+@router.post("/{user_id}/transfer")
+def transfer_faculty(
+    user_id: int,
+    body: TransferFacultyRequest,
+    request: Request,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    """
+    Transfer/reassign a faculty member to another department or campus.
+    - system_admin: can transfer any faculty to any campus & department
+    - campus_admin: can transfer faculty from their campus or into their campus
+    - other roles: FORBIDDEN
+    """
+    admin_role = get_user_role_name(current_user, db)
+    if admin_role not in ("system_admin", "campus_admin"):
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Only Campus Administrators and System Administrators can transfer faculty members.",
+        )
+
+    target_user = db.query(User).filter(User.id == user_id).first()
+    if not target_user:
+        raise HTTPException(status_code=404, detail="User not found.")
+
+    target_role = get_user_role_name(target_user, db)
+    if target_role != "faculty" or not target_user.faculty_profile:
+        raise HTTPException(status_code=400, detail="Only faculty members can be transferred between departments/campuses.")
+
+    faculty = target_user.faculty_profile
+    old_dept = faculty.department
+    old_campus = old_dept.campus if old_dept else None
+
+    # Check origin campus permissions for campus admin
+    if admin_role == "campus_admin":
+        my_campus_id = get_user_campus_id(current_user, db)
+        if old_campus and old_campus.id != my_campus_id and body.target_campus_id != my_campus_id:
+            raise HTTPException(status_code=403, detail="Campus Admins can only transfer faculty originating from or transferring into their own campus.")
+
+    # Validate target department
+    target_dept = db.query(Department).filter(Department.id == body.target_department_id).first()
+    if not target_dept:
+        raise HTTPException(status_code=404, detail="Target department not found.")
+
+    if body.target_campus_id and target_dept.campus_id != body.target_campus_id:
+        raise HTTPException(status_code=400, detail="Target department does not belong to the specified target campus.")
+
+    new_campus = target_dept.campus
+
+    old_info = {
+        "campus_code": old_campus.code if old_campus else None,
+        "campus_name": old_campus.name if old_campus else None,
+        "department_code": old_dept.code if old_dept else None,
+        "department_name": old_dept.name if old_dept else None,
+    }
+
+    new_info = {
+        "campus_code": new_campus.code if new_campus else None,
+        "campus_name": new_campus.name if new_campus else None,
+        "department_code": target_dept.code,
+        "department_name": target_dept.name,
+        "reason": body.reason,
+    }
+
+    # Execute transfer
+    faculty.department_id = target_dept.id
+
+    # Update Questionnaire Part 1 department data if exists
+    p1 = db.query(QuestionnairePart).filter(
+        QuestionnairePart.faculty_id == faculty.id,
+        QuestionnairePart.part_number == 1,
+    ).first()
+    if p1 and p1.data_json:
+        try:
+            p1_data = json.loads(p1.data_json)
+            p1_data["department"] = target_dept.code
+            p1.data_json = json.dumps(p1_data)
+        except Exception:
+            pass
+
+    db.commit()
+
+    log_audit(
+        db, current_user, "transfer_faculty",
+        entity_type="faculty", entity_id=str(faculty.id),
+        old_values=old_info,
+        new_values=new_info,
+        ip_address=request.client.host if request.client else None,
+    )
+
+    return {
+        "status": "success",
+        "message": f"Faculty '{target_user.full_name or target_user.username}' successfully transferred to {new_campus.name} ({target_dept.name}).",
+        "user": _user_to_out(target_user, db),
+    }
 
 
 class ResetPasswordRequest(BaseModel):
@@ -288,11 +377,11 @@ def reset_user_password(
     """
     Emergency password reset for users by administrators.
     - system_admin: can reset password for any account
-    - department_admin: can reset password for faculty accounts in their department
-    - faculty: FORBIDDEN
+    - campus_admin: can reset password for users in their campus
+    - department_admin: can reset password for faculty in their department
     """
-    role_name = get_user_role_name(current_user, db)
-    if role_name == "faculty":
+    admin_role = get_user_role_name(current_user, db)
+    if admin_role == "faculty":
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Faculty cannot reset user passwords.")
 
     target = db.query(User).filter(User.id == user_id).first()
@@ -301,7 +390,13 @@ def reset_user_password(
 
     target_role = get_user_role_name(target, db)
 
-    if role_name == "department_admin":
+    if admin_role == "campus_admin":
+        my_campus_id = get_user_campus_id(current_user, db)
+        target_campus_id = get_user_campus_id(target, db)
+        if my_campus_id != target_campus_id:
+            raise HTTPException(status_code=403, detail="Campus Admins can only reset passwords for accounts in their campus.")
+
+    elif admin_role == "department_admin":
         my_dept_id = get_user_department_id(current_user, db)
         target_dept_id = get_user_department_id(target, db)
         if my_dept_id != target_dept_id or target_role != "faculty":
@@ -336,11 +431,11 @@ def delete_user(
     """
     Delete a user account.
     - system_admin: can delete any user except self
-    - department_admin: can delete faculty users in their department
-    - faculty: FORBIDDEN
+    - campus_admin: can delete users within their campus except self
+    - department_admin: can delete faculty in their department
     """
-    role_name = get_user_role_name(current_user, db)
-    if role_name == "faculty":
+    admin_role = get_user_role_name(current_user, db)
+    if admin_role == "faculty":
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Faculty cannot delete accounts.")
 
     if current_user.id == user_id:
@@ -352,7 +447,13 @@ def delete_user(
 
     target_role = get_user_role_name(target, db)
 
-    if role_name == "department_admin":
+    if admin_role == "campus_admin":
+        my_campus_id = get_user_campus_id(current_user, db)
+        target_campus_id = get_user_campus_id(target, db)
+        if my_campus_id != target_campus_id:
+            raise HTTPException(status_code=403, detail="Campus Admins can only delete users in their own campus.")
+
+    elif admin_role == "department_admin":
         my_dept_id = get_user_department_id(current_user, db)
         target_dept_id = get_user_department_id(target, db)
         if my_dept_id != target_dept_id or target_role != "faculty":
@@ -363,10 +464,10 @@ def delete_user(
 
     target_username = target.username
 
-    # Safely nullify audit log references so database history is preserved
+    # Nullify audit log references so database history is preserved
     db.query(AuditLog).filter(AuditLog.user_id == user_id).update({"user_id": None})
     
-    # Delete user (foreign key ondelete=CASCADE takes care of Faculty, parts, recommendations, dept_admin)
+    # Delete user (foreign key ondelete=CASCADE takes care of Faculty/CampusAdmin/DepartmentAdmin profiles)
     db.delete(target)
     db.commit()
 

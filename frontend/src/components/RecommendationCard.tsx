@@ -1,21 +1,26 @@
 'use client';
 
 import React from 'react';
-import { RecommendationResult, CatalogRecommendationItem } from '@/types';
+import { RecommendationResult, DepartmentRecommendationResult, CatalogRecommendationItem } from '@/types';
 import { BookOpen, Check, Sparkles, Target, Info, Clock, Calendar } from 'lucide-react';
 import { formatPercent, formatManila } from '@/lib/utils';
 
 interface RecommendationCardProps {
-  result: RecommendationResult;
+  result: RecommendationResult | DepartmentRecommendationResult;
+  title?: string;
+  subtitle?: string;
   facultyName?: string;
   timestamp?: string | null;
+  statsRow?: React.ReactNode;
+  noticeBanner?: React.ReactNode;
+  scopeLabel?: string;
 }
 
 // ─── Mini SVG Donut Chart ────────────────────────────────────────────────────
 function DonutChart({ probability, color = '#10b981' }: { probability: number; color?: string }) {
   const r = 20;
   const circ = 2 * Math.PI * r;
-  const filled = probability * circ;
+  const filled = Math.min(Math.max(probability, 0), 1) * circ;
   const gap = circ - filled;
 
   return (
@@ -59,8 +64,28 @@ function rankColor(rank: number): string {
 }
 
 // ─── Main Component ──────────────────────────────────────────────────────────
-export default function RecommendationCard({ result, facultyName, timestamp }: RecommendationCardProps) {
-  const predictions = result.prediction?.top_predictions || [];
+export default function RecommendationCard({
+  result,
+  title,
+  subtitle,
+  facultyName,
+  timestamp,
+  statsRow,
+  noticeBanner,
+  scopeLabel,
+}: RecommendationCardProps) {
+  const rawPredictions: any[] =
+    (result as any).prediction?.top_predictions ||
+    (result as any).prediction?.top_categories ||
+    [];
+
+  const predictions = rawPredictions.map((p: any) => ({
+    training_category: p.training_category,
+    probability: typeof p.department_score === 'number' ? p.department_score : p.probability || 0,
+    rank: p.rank || 1,
+    coverage: typeof p.faculty_coverage === 'number' ? p.faculty_coverage : null,
+  }));
+
   const items: CatalogRecommendationItem[] = result.recommendations || [];
 
   const rawTimestamp = timestamp || result.generated_at || result.last_recommendation_at;
@@ -71,8 +96,23 @@ export default function RecommendationCard({ result, facultyName, timestamp }: R
       })
     : null;
 
+  const cardTitle =
+    title ||
+    (facultyName
+      ? `Training Recommendations — ${facultyName}`
+      : (result as any).department_name || (result as any).department
+      ? `Department Training Recommendations — ${(result as any).department_name || (result as any).department}`
+      : (result as any).campus_name
+      ? `Campus Training Recommendations — ${(result as any).campus_name}`
+      : 'Personalized Training Needs Analysis');
+
   return (
     <div className="space-y-8">
+      {/* ── Optional Stats Row ────────────────────────────────────────────── */}
+      {statsRow && <div>{statsRow}</div>}
+
+      {/* ── Optional Notice Banner ───────────────────────────────────────── */}
+      {noticeBanner && <div>{noticeBanner}</div>}
 
       {/* ── Header Banner ─────────────────────────────────────────────────── */}
       <div className="relative overflow-hidden rounded-2xl bg-white dark:bg-dark-card border border-light-border dark:border-dark-border p-5 sm:p-6 shadow-xl">
@@ -92,12 +132,19 @@ export default function RecommendationCard({ result, facultyName, timestamp }: R
             />
             <div>
               <div className="flex items-center gap-2 mb-0.5 flex-wrap">
-                <span className="text-xs font-mono font-bold text-light-text dark:text-white">AI Recommendation Engine</span>
-                <span className="text-[10px] font-mono text-light-text dark:text-dark-muted">v{result.model?.version}</span>
+                <span className="text-xs font-mono font-bold text-light-text dark:text-white">
+                  {scopeLabel || 'AI Recommendation Engine'}
+                </span>
+                <span className="text-[10px] font-mono text-light-text dark:text-dark-muted">
+                  v{result.model?.version || '2.0.0'}
+                </span>
               </div>
               <h2 className="text-base sm:text-lg font-extrabold text-white tracking-tight">
-                {facultyName ? `Training Recommendations — ${facultyName}` : 'Personalized Training Needs Analysis'}
+                {cardTitle}
               </h2>
+              {subtitle && (
+                <p className="text-xs text-light-text dark:text-dark-muted mt-0.5">{subtitle}</p>
+              )}
             </div>
           </div>
 
@@ -145,7 +192,7 @@ export default function RecommendationCard({ result, facultyName, timestamp }: R
                   </div>
                   <p className="text-xs font-semibold text-light-text dark:text-dark-text leading-snug">{pred.training_category}</p>
                   <p className="text-[11px] font-mono text-light-text dark:text-dark-muted mt-0.5">
-                    {formatPercent(pred.probability)} · {(pred.probability).toFixed(3)} raw
+                    {formatPercent(pred.probability)} · {pred.coverage !== null ? `${Math.round(pred.coverage * 100)}% demand` : `${(pred.probability).toFixed(3)} raw`}
                   </p>
                 </div>
               </div>

@@ -1,10 +1,10 @@
-'use client';
+﻿'use client';
 
 import React, { useState } from 'react';
 import Link from 'next/link';
 import { useAuth } from '@/context/AuthContext';
 import ThemeToggle from './ThemeToggle';
-import { LogOut, Building, Info, AlertTriangle } from 'lucide-react';
+import { LogOut, Building, Info, AlertTriangle, MapPin } from 'lucide-react';
 
 export default function Navbar() {
   const { user, logout } = useAuth();
@@ -13,9 +13,11 @@ export default function Navbar() {
   const getRoleLabel = (role?: string) => {
     switch (role) {
       case 'system_admin':
-        return { text: 'System Admin', bg: 'bg-rose-500/10 text-rose-600 dark:text-rose-600 dark:text-rose-400 border-rose-500/20' };
+        return { text: 'System Admin', bg: 'bg-rose-500/10 text-rose-600 dark:text-rose-400 border-rose-500/20' };
+      case 'campus_admin':
+        return { text: 'Campus Admin', bg: 'bg-sky-500/10 text-sky-600 dark:text-sky-400 border-sky-500/20' };
       case 'department_admin':
-        return { text: 'Department Admin', bg: 'bg-brand-gold/10 text-brand-gold-dark border-brand-gold/20' };
+        return { text: 'Dept Admin', bg: 'bg-brand-gold/10 text-brand-gold-dark border-brand-gold/20' };
       case 'faculty':
       default:
         return { text: 'Faculty', bg: 'bg-brand-green/10 text-brand-green border-brand-green/20' };
@@ -26,7 +28,7 @@ export default function Navbar() {
 
   return (
     <>
-      <header className="sticky top-0 z-40 w-full border-b border-dark-border dark:border-dark-border bg-white/80 dark:bg-dark-bg/80 backdrop-blur-xl transition-colors">
+      <header className="sticky top-0 z-40 w-full border-b border-light-border dark:border-dark-border bg-white/80 dark:bg-dark-bg/80 backdrop-blur-xl transition-colors">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between gap-4">
           {/* Brand Logo */}
           <Link href="/dashboard" className="flex items-center gap-3 group">
@@ -43,7 +45,7 @@ export default function Navbar() {
                 </span>
               </h1>
               <p className="text-[11px] text-light-text dark:text-dark-text opacity-80 hidden sm:block">
-                Faculty Training Needs & Recommendation System
+                Multi-Campus Training Needs Recommender
               </p>
             </div>
           </Link>
@@ -71,15 +73,14 @@ export default function Navbar() {
                     {user.full_name || user.username}
                   </span>
                   <div className="flex items-center gap-1.5 mt-0.5">
-                    <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full border ${
-                      user.role === 'system_admin'
-                        ? 'bg-rose-500/10 text-rose-600 dark:text-rose-600 dark:text-rose-400 border-rose-500/20'
-                        : user.role === 'department_admin'
-                        ? 'bg-brand-gold/10 text-brand-gold-dark border-brand-gold/20'
-                        : 'bg-brand-green/10 text-brand-green border-brand-green/20'
-                    }`}>
-                      {user.role}
+                    <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full border ${roleStyle.bg}`}>
+                      {roleStyle.text}
                     </span>
+                    {user.campus && (
+                      <span className="text-[10px] font-mono font-bold text-sky-600 dark:text-sky-400 bg-sky-500/10 px-1.5 py-0.5 rounded border border-sky-500/20">
+                        {user.campus.code}
+                      </span>
+                    )}
                     {user.department && (
                       <span className="text-[10px] font-mono text-light-text dark:text-dark-muted">
                         {user.department.code}

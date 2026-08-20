@@ -1,4 +1,4 @@
-from datetime import datetime
+﻿from datetime import datetime
 from sqlalchemy import (
     Boolean, DateTime, ForeignKey, Integer, String, Text, func,
     UniqueConstraint, Index,
@@ -10,7 +10,7 @@ class Base(DeclarativeBase):
     pass
 
 
-# ─── Roles & Permissions ─────────────────────────────────────────────────────
+# ─── Roles & Permissions ──────────────────────────────────────────────────────
 
 class Role(Base):
     __tablename__ = "roles"
@@ -52,19 +52,42 @@ class RolePermission(Base):
     permission: Mapped["Permission"] = relationship("Permission", back_populates="roles")
 
 
-# ─── Department ───────────────────────────────────────────────────────────────
+# ─── Campus ──────────────────────────────────────────────────────────────────
 
-class Department(Base):
-    __tablename__ = "departments"
+class Campus(Base):
+    __tablename__ = "campuses"
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
-    code: Mapped[str] = mapped_column(String(20), unique=True, nullable=False)
+    code: Mapped[str] = mapped_column(String(30), unique=True, nullable=False, index=True)  # e.g., "DIFFUN", "MADDELA", "CABARROGUIS"
     name: Mapped[str] = mapped_column(String(200), nullable=False)
     description: Mapped[str | None] = mapped_column(String(500), nullable=True)
     status: Mapped[str] = mapped_column(String(20), nullable=False, default="active")
     created_at: Mapped[datetime] = mapped_column(DateTime, server_default=func.now())
     updated_at: Mapped[datetime] = mapped_column(DateTime, server_default=func.now(), onupdate=func.now())
 
+    departments: Mapped[list["Department"]] = relationship("Department", back_populates="campus", cascade="all, delete-orphan")
+    campus_admins: Mapped[list["CampusAdmin"]] = relationship("CampusAdmin", back_populates="campus", cascade="all, delete-orphan")
+
+
+# ─── Department ──────────────────────────────────────────────────────────────
+
+class Department(Base):
+    __tablename__ = "departments"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    campus_id: Mapped[int] = mapped_column(Integer, ForeignKey("campuses.id", ondelete="CASCADE"), nullable=False, index=True)
+    code: Mapped[str] = mapped_column(String(30), nullable=False, index=True)
+    name: Mapped[str] = mapped_column(String(200), nullable=False)
+    description: Mapped[str | None] = mapped_column(String(500), nullable=True)
+    status: Mapped[str] = mapped_column(String(20), nullable=False, default="active")
+    created_at: Mapped[datetime] = mapped_column(DateTime, server_default=func.now())
+    updated_at: Mapped[datetime] = mapped_column(DateTime, server_default=func.now(), onupdate=func.now())
+
+    __table_args__ = (
+        UniqueConstraint("campus_id", "code", name="uq_campus_dept_code"),
+    )
+
+    campus: Mapped["Campus"] = relationship("Campus", back_populates="departments")
     faculty_members: Mapped[list["Faculty"]] = relationship("Faculty", back_populates="department")
     department_admins: Mapped[list["DepartmentAdmin"]] = relationship("DepartmentAdmin", back_populates="department")
 
@@ -87,27 +110,61 @@ class User(Base):
 
     role: Mapped["Role"] = relationship("Role", back_populates="users")
     faculty_profile: Mapped["Faculty | None"] = relationship("Faculty", back_populates="user", uselist=False)
+    campus_admin_profile: Mapped["CampusAdmin | None"] = relationship("CampusAdmin", back_populates="user", uselist=False)
     department_admin_profile: Mapped["DepartmentAdmin | None"] = relationship("DepartmentAdmin", back_populates="user", uselist=False)
 
 
-# ─── Faculty ──────────────────────────────────────────────────────────────────
+# ─── Campus Admin ────────────────────────────────────────────────────────────
+
+class CampusAdmin(Base):
+    __tablename__ = "campus_admins"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    user_id: Mapped[int] = mapped_column(Integer, ForeignKey("users.id", ondelete="CASCADE"), unique=True, nullable=False, index=True)
+    campus_id: Mapped[int] = mapped_column(Integer, ForeignKey("campuses.id", ondelete="CASCADE"), nullable=False, index=True)
+    status: Mapped[str] = mapped_column(String(20), nullable=False, default="active")
+    created_at: Mapped[datetime] = mapped_column(DateTime, server_default=func.now())
+    updated_at: Mapped[datetime] = mapped_column(DateTime, server_default=func.now(), onupdate=func.now())
+
+    user: Mapped["User"] = relationship("User", back_populates="campus_admin_profile")
+    campus: Mapped["Campus"] = relationship("Campus", back_populates="campus_admins")
+
+
+# ─── Department Admin ─────────────────────────────────────────────────────────
+
+class DepartmentAdmin(Base):
+    __tablename__ = "department_admins"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    user_id: Mapped[int] = mapped_column(Integer, ForeignKey("users.id", ondelete="CASCADE"), unique=True, nullable=False, index=True)
+    department_id: Mapped[int] = mapped_column(Integer, ForeignKey("departments.id", ondelete="CASCADE"), nullable=False, index=True)
+    status: Mapped[str] = mapped_column(String(20), nullable=False, default="active")
+    created_at: Mapped[datetime] = mapped_column(DateTime, server_default=func.now())
+    updated_at: Mapped[datetime] = mapped_column(DateTime, server_default=func.now(), onupdate=func.now())
+
+    user: Mapped["User"] = relationship("User", back_populates="department_admin_profile")
+    department: Mapped["Department"] = relationship("Department", back_populates="department_admins")
+
+
+# ─── Faculty ─────────────────────────────────────────────────────────────────
 
 class Faculty(Base):
     __tablename__ = "faculty"
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
     user_id: Mapped[int] = mapped_column(Integer, ForeignKey("users.id", ondelete="CASCADE"), unique=True, nullable=False, index=True)
-    department_id: Mapped[int] = mapped_column(Integer, ForeignKey("departments.id"), nullable=False, index=True)
+    department_id: Mapped[int] = mapped_column(Integer, ForeignKey("departments.id", ondelete="CASCADE"), nullable=False, index=True)
     faculty_code: Mapped[str | None] = mapped_column(String(50), unique=True, nullable=True)
     academic_rank: Mapped[str | None] = mapped_column(String(100), nullable=True)
     highest_degree: Mapped[str | None] = mapped_column(String(100), nullable=True)
     specialization: Mapped[str | None] = mapped_column(String(200), nullable=True)
     status: Mapped[str] = mapped_column(String(20), nullable=False, default="active")
+    
     # Questionnaire lifecycle status:
-    #   not_started     — no parts submitted yet
-    #   in_progress     — at least one part saved but required parts incomplete
-    #   eligible        — all required parts (1,2,3,5,6) complete, no recommendation yet
-    #   has_recommendation — recommendation has been generated and stored
+    #   not_started     - no parts submitted yet
+    #   in_progress     - at least one part saved but required parts incomplete
+    #   eligible        - all required parts (1,2,3,5,6) complete, no recommendation yet
+    #   has_recommendation - recommendation has been generated and stored
     questionnaire_status: Mapped[str] = mapped_column(
         String(30), nullable=False, default="not_started", index=True
     )
@@ -121,22 +178,6 @@ class Faculty(Base):
     training_responses: Mapped[list["TrainingResponse"]] = relationship("TrainingResponse", back_populates="faculty")
     questionnaire_parts: Mapped[list["QuestionnairePart"]] = relationship("QuestionnairePart", back_populates="faculty", cascade="all, delete-orphan")
     recommendation_requests: Mapped[list["TrainingRecommendationRequest"]] = relationship("TrainingRecommendationRequest", back_populates="faculty", cascade="all, delete-orphan")
-
-
-# ─── Department Admin ─────────────────────────────────────────────────────────
-
-class DepartmentAdmin(Base):
-    __tablename__ = "department_admins"
-
-    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
-    user_id: Mapped[int] = mapped_column(Integer, ForeignKey("users.id", ondelete="CASCADE"), unique=True, nullable=False, index=True)
-    department_id: Mapped[int] = mapped_column(Integer, ForeignKey("departments.id"), nullable=False, index=True)
-    status: Mapped[str] = mapped_column(String(20), nullable=False, default="active")
-    created_at: Mapped[datetime] = mapped_column(DateTime, server_default=func.now())
-    updated_at: Mapped[datetime] = mapped_column(DateTime, server_default=func.now(), onupdate=func.now())
-
-    user: Mapped["User"] = relationship("User", back_populates="department_admin_profile")
-    department: Mapped["Department"] = relationship("Department", back_populates="department_admins")
 
 
 # ─── Training Catalog ─────────────────────────────────────────────────────────
@@ -158,7 +199,7 @@ class TrainingCatalog(Base):
     updated_at: Mapped[datetime] = mapped_column(DateTime, server_default=func.now(), onupdate=func.now())
 
 
-# ─── Training Response (Survey Submission) ────────────────────────────────────
+# ─── Training Response (Survey Submission) ───────────────────────────────────
 
 class TrainingResponse(Base):
     __tablename__ = "training_responses"
@@ -179,9 +220,10 @@ class RecommendationHistory(Base):
     __tablename__ = "recommendation_history"
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    campus_id: Mapped[int | None] = mapped_column(Integer, ForeignKey("campuses.id"), nullable=True, index=True)
     faculty_id: Mapped[int | None] = mapped_column(Integer, ForeignKey("faculty.id"), nullable=True, index=True)
     department_id: Mapped[int | None] = mapped_column(Integer, ForeignKey("departments.id"), nullable=True, index=True)
-    recommendation_type: Mapped[str] = mapped_column(String(30), nullable=False)  # "individual" or "department"
+    recommendation_type: Mapped[str] = mapped_column(String(30), nullable=False)  # "individual", "department", or "campus"
     model_version: Mapped[str | None] = mapped_column(String(100), nullable=True)
     request_payload_json: Mapped[str | None] = mapped_column(Text, nullable=True)
     response_json: Mapped[str | None] = mapped_column(Text, nullable=True)
@@ -219,12 +261,12 @@ class AuditLog(Base):
     created_at: Mapped[datetime] = mapped_column(DateTime, server_default=func.now(), index=True)
 
 
-# ─── Questionnaire Parts ──────────────────────────────────────────────────────
+# ─── Questionnaire Parts ─────────────────────────────────────────────────────
 
 class QuestionnairePart(Base):
     """
     Stores each faculty member's per-part questionnaire data and completion status.
-    Parts 1–8 correspond to the questionnaire sections.
+    Parts 1-8 correspond to the questionnaire sections.
     Required for recommendation: Parts 1, 2, 3, 5, 6.
     """
     __tablename__ = "questionnaire_parts"
@@ -244,7 +286,7 @@ class QuestionnairePart(Base):
     faculty: Mapped["Faculty"] = relationship("Faculty", back_populates="questionnaire_parts")
 
 
-# ─── Training Recommendation Requests ─────────────────────────────────────────
+# ─── Training Recommendation Requests ────────────────────────────────────────
 
 class TrainingRecommendationRequest(Base):
     """Records each recommendation request made by or for a faculty member."""
@@ -259,4 +301,3 @@ class TrainingRecommendationRequest(Base):
     created_at: Mapped[datetime] = mapped_column(DateTime, server_default=func.now(), index=True)
 
     faculty: Mapped["Faculty"] = relationship("Faculty", back_populates="recommendation_requests")
-

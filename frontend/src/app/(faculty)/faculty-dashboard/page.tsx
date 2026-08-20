@@ -7,6 +7,7 @@ import { FullProfileResponse, RecommendationResult } from '@/types';
 import StatusBadge from '@/components/StatusBadge';
 import ProgressBar from '@/components/ProgressBar';
 import RecommendationCard from '@/components/RecommendationCard';
+import GeneratingProgressModal from '@/components/GeneratingProgressModal';
 import { RecommendationSkeleton, ProfileSkeleton } from '@/components/Skeletons';
 import { useToast } from '@/context/ToastContext';
 import { Sparkles, ArrowRight, ClipboardList, BookOpen, RefreshCw, AlertCircle } from 'lucide-react';

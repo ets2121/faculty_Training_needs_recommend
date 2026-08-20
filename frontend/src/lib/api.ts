@@ -5,6 +5,7 @@ const api = axios.create({
   headers: {
     'Content-Type': 'application/json',
   },
+  timeout: 15000,
 });
 
 // Attach JWT token to requests if present in localStorage
@@ -18,15 +19,20 @@ api.interceptors.request.use((config) => {
   return config;
 });
 
-// Global response interceptor for 401 handling
+// Global response interceptor for error handling & 401 redirect
 api.interceptors.response.use(
   (response) => response,
   (error) => {
-    if (typeof window !== 'undefined' && error.response?.status === 401) {
-      // Don't auto-redirect if on login page already
-      if (!window.location.pathname.includes('/login')) {
-        localStorage.removeItem('access_token');
-        window.location.href = '/login?expired=true';
+    if (typeof window !== 'undefined') {
+      // 1. Unreachable backend or Network error
+      if (!error.response) {
+        error.message = 'Unable to reach backend API server. Please check your network or server status.';
+      } else if (error.response.status === 401) {
+        // 2. Unauthorized / expired token
+        if (!window.location.pathname.includes('/login')) {
+          localStorage.removeItem('access_token');
+          window.location.href = '/login?expired=true';
+        }
       }
     }
     return Promise.reject(error);
