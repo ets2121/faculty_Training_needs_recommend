@@ -242,7 +242,7 @@ export function ResponsiveHorizontalBarChart({
   const chartData = data.map((d, i) => ({
     name: d.label,
     value: d.value,
-    color: d.color || (i === 0 ? '#10b981' : i === 1 ? '#0284c7' : i === 2 ? '#f59e0b' : '#8b5cf6'),
+    color: d.color || (i === 0 ? '#159447' : i === 1 ? '#D9A62E' : i === 2 ? '#1FA95A' : '#08752F'),
     formattedScore: d.formattedScore || `${Math.round(d.value)}%`,
   }));
 

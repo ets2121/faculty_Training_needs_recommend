@@ -87,10 +87,10 @@ export default function SystemAdminDashboardPage() {
       if (r in counts) counts[r]++;
     });
     return [
-      { name: 'System Admin', value: counts.system_admin, color: '#e11d48' },
-      { name: 'Campus Admin', value: counts.campus_admin, color: '#0284c7' },
-      { name: 'Dept Chair', value: counts.department_admin, color: '#f59e0b' },
-      { name: 'Faculty Member', value: counts.faculty, color: '#10b981' },
+      { name: 'System Admin', value: counts.system_admin, color: '#159447' },
+      { name: 'Campus Admin', value: counts.campus_admin, color: '#D9A62E' },
+      { name: 'Dept Chair', value: counts.department_admin, color: '#b8891f' },
+      { name: 'Faculty Member', value: counts.faculty, color: '#1FA95A' },
     ];
   }, [users]);
 
@@ -153,10 +153,10 @@ export default function SystemAdminDashboardPage() {
     });
 
     return [
-      { name: 'Has Recommendation', value: counts.hasRec, color: '#10b981' },
-      { name: 'Eligible for Rec', value: counts.eligible, color: '#f59e0b' },
-      { name: 'In Progress', value: counts.inProgress, color: '#0284c7' },
-      { name: 'Not Started', value: counts.notStarted, color: '#64748b' },
+      { name: 'Has Recommendation', value: counts.hasRec, color: '#159447' },
+      { name: 'Eligible for Rec', value: counts.eligible, color: '#D9A62E' },
+      { name: 'In Progress', value: counts.inProgress, color: '#1FA95A' },
+      { name: 'Not Started', value: counts.notStarted, color: '#718579' },
     ];
   }, [users]);
 
@@ -243,8 +243,8 @@ export default function SystemAdminDashboardPage() {
             subtitle="Comparison of total registered accounts vs faculty members"
             data={campusBarData}
             bars={[
-              { key: 'TotalAccounts', name: 'Total Accounts', color: '#0284c7' },
-              { key: 'FacultyMembers', name: 'Faculty Members', color: '#10b981' },
+              { key: 'TotalAccounts', name: 'Total Accounts', color: '#D9A62E' },
+              { key: 'FacultyMembers', name: 'Faculty Members', color: '#159447' },
             ]}
           />
 
@@ -269,7 +269,7 @@ export default function SystemAdminDashboardPage() {
       {/* 4. Dedicated Page Modules Link Cards */}
       <div className="space-y-4">
         <h2 className="text-base font-bold text-light-text dark:text-white flex items-center gap-2">
-          <Layers className="w-4 h-4 text-rose-500" />
+          <Layers className="w-4 h-4 text-brand-gold" />
           <span>System Administration Page Modules</span>
         </h2>
 

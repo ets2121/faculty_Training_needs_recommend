@@ -29,8 +29,8 @@ export function getStatusBadgeConfig(status: QuestionnaireStatus | string) {
     case 'in_progress':
       return {
         label: 'In Progress',
-        bg: 'bg-sky-500/15 text-sky-600 dark:text-sky-400 border-sky-500/30',
-        dotBg: 'bg-sky-500',
+        bg: 'bg-brand-green/10 text-brand-green border-brand-green/25',
+        dotBg: 'bg-brand-green',
         description: 'Questionnaire started but missing required parts (1, 2, 3, 5, or 6).',
       };
     case 'not_started':

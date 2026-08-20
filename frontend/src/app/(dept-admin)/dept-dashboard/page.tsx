@@ -81,10 +81,10 @@ export default function DeptDashboardPage() {
 
   // 1. Assessment Status Donut Chart Data
   const assessmentStatusData = useMemo(() => [
-    { name: 'Has Recommendation', value: stats.hasRec, color: '#10b981' },
-    { name: 'Eligible for Rec', value: stats.eligible, color: '#f59e0b' },
-    { name: 'In Progress', value: stats.inProgress, color: '#0284c7' },
-    { name: 'Not Started', value: stats.notStarted, color: '#64748b' },
+    { name: 'Has Recommendation', value: stats.hasRec, color: '#159447' },
+    { name: 'Eligible for Rec', value: stats.eligible, color: '#D9A62E' },
+    { name: 'In Progress', value: stats.inProgress, color: '#1FA95A' },
+    { name: 'Not Started', value: stats.notStarted, color: '#718579' },
   ], [stats]);
 
   // 2. Academic Rank Distribution Data
@@ -197,10 +197,10 @@ export default function DeptDashboardPage() {
       {/* 2. Quick Stats Row */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
         {[
-          { label: 'Total Faculty', value: loading ? '...' : stats.total, icon: Users, color: 'text-sky-500' },
-          { label: 'Has Recommendation', value: loading ? '...' : stats.hasRec, icon: CheckCircle2, color: 'text-emerald-500' },
-          { label: 'Eligible for Rec', value: loading ? '...' : stats.eligible, icon: TrendingUp, color: 'text-amber-500' },
-          { label: 'Needs Completion', value: loading ? '...' : stats.inProgress + stats.notStarted, icon: AlertCircle, color: 'text-slate-400' },
+          { label: 'Total Faculty', value: loading ? '...' : stats.total, icon: Users, color: 'text-brand-green' },
+          { label: 'Has Recommendation', value: loading ? '...' : stats.hasRec, icon: CheckCircle2, color: 'text-brand-green' },
+          { label: 'Eligible for Rec', value: loading ? '...' : stats.eligible, icon: TrendingUp, color: 'text-brand-gold' },
+          { label: 'Needs Completion', value: loading ? '...' : stats.inProgress + stats.notStarted, icon: AlertCircle, color: 'text-light-text dark:text-dark-muted' },
         ].map((s) => (
           <div key={s.label} className="p-4 sm:p-5 rounded-2xl bg-white dark:bg-dark-card border border-light-border dark:border-dark-border shadow-sm">
             <s.icon className={`w-5 h-5 ${s.color} mb-2`} />
@@ -232,7 +232,7 @@ export default function DeptDashboardPage() {
             subtitle="Distribution of faculty members by professional rank"
             data={rankDistributionData}
             bars={[
-              { key: 'FacultyCount', name: 'Faculty Count', color: '#0284c7' },
+              { key: 'FacultyCount', name: 'Faculty Count', color: '#159447' },
             ]}
           />
 

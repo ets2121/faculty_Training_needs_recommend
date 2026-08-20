@@ -54,7 +54,7 @@ export default function LoginPage() {
                 alt="QSU Recommender"
                 className="w-10 h-10 object-contain"
               />
-              <h2 className="text-2xl font-extrabold text-white tracking-tight">Sign In to QSU Portal</h2>
+              <h2 className="text-2xl font-extrabold text-light-text dark:text-white tracking-tight">Sign In to QSU Portal</h2>
             </div>
             <p className="text-xs text-light-text dark:text-dark-muted mt-1">
               Enter your credentials to access your faculty dashboard or administrative panel.
@@ -77,7 +77,7 @@ export default function LoginPage() {
                     value={username}
                     onChange={(e) => setUsername(e.target.value)}
                     placeholder="Enter username"
-                    className="w-full bg-light-bg dark:bg-dark-bg border border-light-border dark:border-dark-border rounded-xl pl-10 pr-4 py-2.5 text-sm text-light-text dark:text-dark-text placeholder:text-light-text dark:placeholder:text-dark-muted focus:border-emerald-500 focus:outline-none transition-colors"
+                    className="w-full bg-light-bg dark:bg-dark-bg border border-light-border dark:border-dark-border rounded-xl pl-10 pr-4 py-2.5 text-sm text-light-text dark:text-dark-text placeholder:text-light-text dark:placeholder:text-dark-muted focus:border-brand-green focus:ring-1 focus:ring-brand-green/30 focus:outline-none transition-all"
                   />
                 </div>
               </div>
@@ -92,7 +92,7 @@ export default function LoginPage() {
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                     placeholder="Enter password"
-                    className="w-full bg-light-bg dark:bg-dark-bg border border-light-border dark:border-dark-border rounded-xl pl-10 pr-4 py-2.5 text-sm text-light-text dark:text-dark-text placeholder:text-light-text dark:placeholder:text-dark-muted focus:border-emerald-500 focus:outline-none transition-colors"
+                    className="w-full bg-light-bg dark:bg-dark-bg border border-light-border dark:border-dark-border rounded-xl pl-10 pr-4 py-2.5 text-sm text-light-text dark:text-dark-text placeholder:text-light-text dark:placeholder:text-dark-muted focus:border-brand-green focus:ring-1 focus:ring-brand-green/30 focus:outline-none transition-all"
                   />
                 </div>
               </div>

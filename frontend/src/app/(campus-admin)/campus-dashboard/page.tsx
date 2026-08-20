@@ -102,10 +102,10 @@ export default function CampusDashboardPage() {
     });
 
     return [
-      { name: 'Has Recommendation', value: counts.hasRec, color: '#10b981' },
-      { name: 'Eligible for Rec', value: counts.eligible, color: '#f59e0b' },
-      { name: 'In Progress', value: counts.inProgress, color: '#0284c7' },
-      { name: 'Not Started', value: counts.notStarted, color: '#64748b' },
+      { name: 'Has Recommendation', value: counts.hasRec, color: '#159447' },
+      { name: 'Eligible for Rec', value: counts.eligible, color: '#D9A62E' },
+      { name: 'In Progress', value: counts.inProgress, color: '#1FA95A' },
+      { name: 'Not Started', value: counts.notStarted, color: '#718579' },
     ];
   }, [campusFaculty]);
 
@@ -227,9 +227,9 @@ export default function CampusDashboardPage() {
       {/* 2. Quick Metrics Row */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
         {[
-          { label: 'Total Faculty', value: loading ? '...' : String(stats?.total_faculty ?? campusFaculty.length), icon: Users, color: 'text-sky-500' },
-          { label: 'Departments', value: loading ? '...' : String(stats?.total_departments ?? (stats?.departments?.length ?? 0)), icon: Building2, color: 'text-amber-500' },
-          { label: 'Eligible Faculty', value: loading ? '...' : String(stats?.eligible_faculty ?? campusFaculty.filter((f) => (f as any).questionnaire_status === 'eligible').length), icon: CheckCircle2, color: 'text-emerald-500' },
+          { label: 'Total Faculty', value: loading ? '...' : String(stats?.total_faculty ?? campusFaculty.length), icon: Users, color: 'text-brand-green' },
+          { label: 'Departments', value: loading ? '...' : String(stats?.total_departments ?? (stats?.departments?.length ?? 0)), icon: Building2, color: 'text-brand-gold' },
+          { label: 'Eligible Faculty', value: loading ? '...' : String(stats?.eligible_faculty ?? campusFaculty.filter((f) => (f as any).questionnaire_status === 'eligible').length), icon: CheckCircle2, color: 'text-brand-green' },
           { label: 'Has Recommendation', value: loading ? '...' : String(stats?.has_recommendation_faculty ?? campusFaculty.filter((f) => (f as any).questionnaire_status === 'has_recommendation').length), icon: TrendingUp, color: 'text-brand-gold' },
         ].map((s) => (
           <div key={s.label} className="p-4 sm:p-5 rounded-2xl bg-white dark:bg-dark-card border border-light-border dark:border-dark-border shadow-sm">
@@ -262,8 +262,8 @@ export default function CampusDashboardPage() {
             subtitle="Comparison of total faculty vs recommended per department"
             data={departmentDistributionData}
             bars={[
-              { key: 'TotalFaculty', name: 'Total Faculty', color: '#0284c7' },
-              { key: 'Assessed', name: 'Has Rec', color: '#10b981' },
+              { key: 'TotalFaculty', name: 'Total Faculty', color: '#D9A62E' },
+              { key: 'Assessed', name: 'Has Rec', color: '#159447' },
             ]}
           />
 

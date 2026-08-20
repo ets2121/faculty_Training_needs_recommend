@@ -134,28 +134,28 @@ export default function AboutPage() {
 
               {/* Step 3 */}
               <div className="p-6 rounded-3xl bg-white dark:bg-dark-card border border-light-border dark:border-dark-border space-y-3 relative overflow-hidden">
-                <div className="w-10 h-10 rounded-2xl bg-blue-500/10 border border-blue-500/20 flex items-center justify-center text-blue-400 font-extrabold text-sm">
+                <div className="w-10 h-10 rounded-2xl bg-brand-green/10 border border-brand-green/20 flex items-center justify-center text-brand-green font-extrabold text-sm">
                   3
                 </div>
                 <h3 className="text-sm font-bold text-light-text dark:text-dark-text">Catalog Program Matching</h3>
                 <p className="text-xs text-light-text dark:text-dark-muted leading-relaxed">
                   The recommender engine ranks catalog programs using a multi-criteria scoring algorithm factoring in predicted probabilities, delivery modality, duration, and schedule fit.
                 </p>
-                <span className="inline-block text-[10px] font-mono text-blue-400 bg-blue-500/10 px-2 py-0.5 rounded border border-blue-500/20">
+                <span className="inline-block text-[10px] font-mono text-brand-green bg-brand-green/10 px-2 py-0.5 rounded border border-brand-green/20">
                   Multi-Criteria Fit Score
                 </span>
               </div>
 
               {/* Step 4 */}
               <div className="p-6 rounded-3xl bg-white dark:bg-dark-card border border-light-border dark:border-dark-border space-y-3 relative overflow-hidden">
-                <div className="w-10 h-10 rounded-2xl bg-rose-500/10 border border-rose-500/20 flex items-center justify-center text-rose-600 dark:text-rose-600 dark:text-rose-400 font-extrabold text-sm">
+                <div className="w-10 h-10 rounded-2xl bg-brand-gold/10 border border-brand-gold/20 flex items-center justify-center text-brand-gold font-extrabold text-sm">
                   4
                 </div>
                 <h3 className="text-sm font-bold text-light-text dark:text-dark-text">Department Strategic Plan</h3>
                 <p className="text-xs text-light-text dark:text-dark-muted leading-relaxed">
                   Department Admins aggregate individual faculty needs across departments, identifying high-coverage priority areas to guide training procurement and resource allocation.
                 </p>
-                <span className="inline-block text-[10px] font-mono text-rose-600 dark:text-rose-600 dark:text-rose-400 bg-rose-500/10 px-2 py-0.5 rounded border border-rose-500/20">
+                <span className="inline-block text-[10px] font-mono text-brand-gold bg-brand-gold/10 px-2 py-0.5 rounded border border-brand-gold/20">
                   Department Aggregation
                 </span>
               </div>
@@ -295,8 +295,8 @@ export default function AboutPage() {
           <div className="space-y-6">
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               {/* Role 1 */}
-              <div className="p-6 rounded-3xl bg-white dark:bg-dark-card/60 border border-rose-500/20 space-y-3">
-                <span className="text-[10px] font-mono font-bold px-2 py-0.5 rounded bg-rose-500/10 text-rose-600 dark:text-rose-600 dark:text-rose-400 border border-rose-500/20">
+              <div className="p-6 rounded-3xl bg-white dark:bg-dark-card/60 border border-brand-green/20 space-y-3">
+                <span className="text-[10px] font-mono font-bold px-2 py-0.5 rounded bg-brand-green/10 text-brand-green border border-brand-green/20">
                   System Admin
                 </span>
                 <h3 className="text-sm font-bold text-light-text dark:text-dark-text">Institutional Oversight</h3>

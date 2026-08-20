@@ -38,17 +38,17 @@ export default function Home() {
             <img
               src="/images/logo.png"
               alt="QSU Recommender"
-              className="h-14 w-auto object-contain"
+              className="h-16 w-auto object-contain drop-shadow-md"
             />
           </div>
 
-          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-semibold bg-brand-green/10 text-brand-green border border-brand-green/20">
+          <div className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full text-xs font-semibold bg-brand-green/10 text-brand-green border border-brand-green/25 backdrop-blur-sm">
             <span>QSU Faculty Training Needs Recommender System</span>
           </div>
 
           <h1 className="text-4xl sm:text-5xl font-extrabold text-light-text dark:text-white tracking-tight leading-tight">
-            AI-Driven Faculty Development & <br className="hidden sm:inline" />
-            <span className="text-brand-gold-dark">
+            Model-Driven Faculty Development & <br className="hidden sm:inline" />
+            <span className="text-brand-gold">
               Training Program Recommendations
             </span>
           </h1>
@@ -60,9 +60,10 @@ export default function Home() {
           <div className="pt-2 flex items-center justify-center gap-4">
             <Link
               href="/login"
-              className="flex items-center gap-2 px-6 py-3 rounded-xl bg-brand-green hover:bg-brand-green-dark text-white font-bold text-sm shadow-xl transition-all hover:scale-105"
+              className="flex items-center gap-2 px-7 py-3.5 rounded-2xl bg-brand-green hover:bg-brand-green-dark text-white font-bold text-sm shadow-xl shadow-brand-green/20 transition-all hover:scale-[1.02] active:scale-[0.98]"
             >
               <span>Sign In to Access Portal</span>
+              <ArrowRight className="w-4 h-4" />
             </Link>
           </div>
         </div>
@@ -70,31 +71,31 @@ export default function Home() {
 
       {/* Feature Highlights Grid */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <div className="p-6 rounded-2xl border border-light-border dark:border-dark-border bg-white dark:bg-dark-card/60 backdrop-blur-md space-y-3">
-          <div className="w-10 h-10 rounded-xl bg-brand-green/10 border border-brand-green/20 flex items-center justify-center">
+        <div className="p-6 rounded-3xl border border-light-border dark:border-dark-border bg-white dark:bg-dark-card shadow-xl backdrop-blur-md space-y-3 hover:border-brand-green/50 transition-all group">
+          <div className="w-11 h-11 rounded-2xl bg-brand-green/10 border border-brand-green/20 flex items-center justify-center text-brand-green group-hover:scale-105 transition-transform">
             <Sparkles className="w-5 h-5 text-brand-green" />
           </div>
-          <h3 className="text-base font-bold text-white">Multi-Label ML Engine</h3>
+          <h3 className="text-base font-bold text-light-text dark:text-white">Multi-Label ML Engine</h3>
           <p className="text-xs text-light-text dark:text-dark-muted leading-relaxed">
             Predicts underlying competency training categories with score confidence and transparent reasoning.
           </p>
         </div>
 
-        <div className="p-6 rounded-2xl border border-light-border dark:border-dark-border bg-white dark:bg-dark-card/60 backdrop-blur-md space-y-3">
-          <div className="w-10 h-10 rounded-xl bg-brand-gold/10 border border-brand-gold/20 flex items-center justify-center">
+        <div className="p-6 rounded-3xl border border-light-border dark:border-dark-border bg-white dark:bg-dark-card shadow-xl backdrop-blur-md space-y-3 hover:border-brand-gold/50 transition-all group">
+          <div className="w-11 h-11 rounded-2xl bg-brand-gold/10 border border-brand-gold/20 flex items-center justify-center text-brand-gold group-hover:scale-105 transition-transform">
             <ShieldCheck className="w-5 h-5 text-brand-gold" />
           </div>
-          <h3 className="text-base font-bold text-white">Strict RBAC & Audit</h3>
+          <h3 className="text-base font-bold text-light-text dark:text-white">Strict RBAC & Audit</h3>
           <p className="text-xs text-light-text dark:text-dark-muted leading-relaxed">
             Isolated access control for Faculty, Department Chairs, and System Administrators with full audit logging.
           </p>
         </div>
 
-        <div className="p-6 rounded-2xl border border-light-border dark:border-dark-border bg-white dark:bg-dark-card/60 backdrop-blur-md space-y-3">
-          <div className="w-10 h-10 rounded-xl bg-sky-500/10 border border-sky-500/20 flex items-center justify-center">
-            <Database className="w-5 h-5 text-sky-400" />
+        <div className="p-6 rounded-3xl border border-light-border dark:border-dark-border bg-white dark:bg-dark-card shadow-xl backdrop-blur-md space-y-3 hover:border-brand-green/50 transition-all group">
+          <div className="w-11 h-11 rounded-2xl bg-brand-green/10 border border-brand-green/20 flex items-center justify-center text-brand-green group-hover:scale-105 transition-transform">
+            <Database className="w-5 h-5 text-brand-green" />
           </div>
-          <h3 className="text-base font-bold text-white">8-Part Form Persistence</h3>
+          <h3 className="text-base font-bold text-light-text dark:text-white">8-Part Form Persistence</h3>
           <p className="text-xs text-light-text dark:text-dark-muted leading-relaxed">
             Save questionnaire progress step-by-step with automatic status tracking from onboarding to final results.
           </p>

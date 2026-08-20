@@ -14,13 +14,13 @@ export default function ProgressBar({ parts, currentPart, onSelectPart }: Progre
   const percent = Math.round((completedCount / totalCount) * 100);
 
   return (
-    <div className="w-full bg-white dark:bg-dark-card border border-light-border dark:border-dark-border rounded-2xl p-5 shadow-lg backdrop-blur-md">
+    <div className="w-full bg-white dark:bg-dark-card border border-light-border dark:border-dark-border rounded-3xl p-6 sm:p-7 shadow-xl backdrop-blur-md">
       {/* Header Info */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
         <div>
-          <h3 className="text-sm font-semibold text-light-text dark:text-white flex items-center gap-2">
-            <span>Questionnaire Progress</span>
-            <span className="text-xs px-2.5 py-0.5 rounded-md bg-brand-green/10 text-light-text dark:text-white border border-brand-green/20 font-mono">
+          <h3 className="text-sm font-bold text-light-text dark:text-white flex items-center gap-2">
+            <span>Needs Assessment Progress</span>
+            <span className="text-xs px-2.5 py-0.5 rounded-full bg-brand-green/10 text-brand-green border border-brand-green/20 font-mono font-bold">
               {completedCount} of {totalCount} Parts Done ({percent}%)
             </span>
           </h3>
@@ -31,9 +31,9 @@ export default function ProgressBar({ parts, currentPart, onSelectPart }: Progre
       </div>
 
       {/* Progress Bar Line */}
-      <div className="relative w-full h-2.5 bg-light-bg dark:bg-dark-bg rounded-full overflow-hidden mb-6">
+      <div className="relative w-full h-2.5 bg-light-muted-surface dark:bg-dark-bg rounded-full overflow-hidden mb-6 border border-light-border/40 dark:border-dark-border/40">
         <div
-          className="h-full bg-gradient-to-r from-brand-green to-brand-gold transition-all duration-500 ease-out rounded-full"
+          className="h-full bg-gradient-to-r from-brand-green via-emerald-500 to-brand-gold transition-all duration-500 ease-out rounded-full"
           style={{ width: `${percent}%` }}
         />
       </div>
@@ -55,14 +55,14 @@ export default function ProgressBar({ parts, currentPart, onSelectPart }: Progre
               type="button"
               disabled={isLocked}
               onClick={() => onSelectPart && !isLocked && onSelectPart(p.part_number)}
-              className={`flex flex-col items-center justify-center p-2 sm:p-3 rounded-xl border text-center transition-all text-xs relative ${
+              className={`flex flex-col items-center justify-center p-2.5 sm:p-3 rounded-2xl border text-center transition-all text-xs relative ${
                 isCurrent
-                  ? 'bg-brand-green/20 border-brand-green text-light-text dark:text-white ring-2 ring-brand-green/30'
+                  ? 'bg-brand-green/15 border-brand-green text-brand-green ring-2 ring-brand-green/30 shadow-md font-bold'
                   : isComplete
-                  ? 'bg-white dark:bg-dark-bg/80 border-brand-green/30 text-light-text dark:text-dark-text hover:border-brand-green/60'
+                  ? 'bg-light-muted-surface dark:bg-dark-card-elevated border-brand-green/40 text-light-text dark:text-dark-text hover:border-brand-green'
                   : isLocked
-                  ? 'bg-white dark:bg-dark-card/30 border-light-border dark:border-dark-border/60 text-light-text dark:text-dark-muted cursor-not-allowed opacity-60'
-                  : 'bg-white dark:bg-dark-card border-light-border/60 dark:border-dark-border/60 text-light-text dark:text-dark-text hover:border-brand-green'
+                  ? 'bg-light-bg/60 dark:bg-dark-bg/60 border-light-border/40 dark:border-dark-border/40 text-light-text/40 dark:text-dark-muted/40 cursor-not-allowed'
+                  : 'bg-white dark:bg-dark-card border-light-border dark:border-dark-border text-light-text dark:text-dark-text hover:border-brand-green'
               }`}
             >
               {isRequired && (

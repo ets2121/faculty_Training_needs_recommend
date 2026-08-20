@@ -17,7 +17,7 @@ interface RecommendationCardProps {
 }
 
 // ─── Mini SVG Donut Chart ────────────────────────────────────────────────────
-function DonutChart({ probability, color = '#10b981' }: { probability: number; color?: string }) {
+function DonutChart({ probability, color = '#159447' }: { probability: number; color?: string }) {
   const r = 20;
   const circ = 2 * Math.PI * r;
   const filled = Math.min(Math.max(probability, 0), 1) * circ;
@@ -26,7 +26,7 @@ function DonutChart({ probability, color = '#10b981' }: { probability: number; c
   return (
     <svg width="52" height="52" viewBox="0 0 52 52" className="shrink-0">
       {/* Track */}
-      <circle cx="26" cy="26" r={r} fill="none" stroke="#1e293b" strokeWidth="7" />
+      <circle cx="26" cy="26" r={r} fill="none" stroke="currentColor" className="text-light-border dark:text-dark-border" strokeWidth="7" />
       {/* Fill */}
       <circle
         cx="26"
@@ -58,9 +58,9 @@ function DonutChart({ probability, color = '#10b981' }: { probability: number; c
 
 // ─── Color scale for rank ────────────────────────────────────────────────────
 function rankColor(rank: number): string {
-  if (rank === 1) return '#10b981'; // emerald
-  if (rank === 2) return '#f59e0b'; // gold
-  return '#64748b';                 // slate
+  if (rank === 1) return '#159447'; // primary green
+  if (rank === 2) return '#D9A62E'; // brand gold
+  return '#1FA95A';                 // lighter brand green tint
 }
 
 // ─── Main Component ──────────────────────────────────────────────────────────
