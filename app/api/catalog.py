@@ -25,12 +25,17 @@ def get_catalog_item(training_id: str):
     return item
 
 
-@router.post("", dependencies=[Depends(require_admin)])
-def add_catalog_item(item: CatalogItemSchema, request: Request, db: Session = Depends(get_db)):
+@router.post("")
+def add_catalog_item(
+    item: CatalogItemSchema,
+    request: Request,
+    db: Session = Depends(get_db),
+    admin_user: User | None = Depends(require_admin),
+):
     service = get_catalog_service()
     added = service.add_item(item.model_dump())
 
-    log_audit(db, None, "add_catalog_item", entity_type="catalog", entity_id=added.get("training_id"),
+    log_audit(db, admin_user, "add_catalog_item", entity_type="catalog", entity_id=added.get("training_id"),
               new_values=added, ip_address=request.client.host if request.client else None)
 
     return {
@@ -40,12 +45,13 @@ def add_catalog_item(item: CatalogItemSchema, request: Request, db: Session = De
     }
 
 
-@router.put("/{training_id}", dependencies=[Depends(require_admin)])
+@router.put("/{training_id}")
 def update_catalog_item(
     training_id: str,
     item: CatalogItemSchema,
     request: Request,
     db: Session = Depends(get_db),
+    admin_user: User | None = Depends(require_admin),
 ):
     """Update an existing catalog item fully (all fields updatable)."""
     service = get_catalog_service()
@@ -58,7 +64,7 @@ def update_catalog_item(
     data["training_id"] = training_id
     updated = service.add_item(data)
 
-    log_audit(db, None, "update_catalog_item", entity_type="catalog", entity_id=training_id,
+    log_audit(db, admin_user, "update_catalog_item", entity_type="catalog", entity_id=training_id,
               old_values=existing, new_values=updated,
               ip_address=request.client.host if request.client else None)
 
@@ -69,11 +75,12 @@ def update_catalog_item(
     }
 
 
-@router.patch("/{training_id}/status", dependencies=[Depends(require_admin)])
+@router.patch("/{training_id}/status")
 def toggle_catalog_item_status(
     training_id: str,
     request: Request,
     db: Session = Depends(get_db),
+    admin_user: User | None = Depends(require_admin),
 ):
     """Toggle active/inactive status of a catalog item."""
     existing = db.query(TrainingCatalog).filter(TrainingCatalog.training_id == training_id).first()
@@ -88,7 +95,7 @@ def toggle_catalog_item_status(
     service = get_catalog_service()
     service.reload()
 
-    log_audit(db, None, "toggle_catalog_status", entity_type="catalog", entity_id=training_id,
+    log_audit(db, admin_user, "toggle_catalog_status", entity_type="catalog", entity_id=training_id,
               old_values={"status": old_status}, new_values={"status": existing.status},
               ip_address=request.client.host if request.client else None)
 
@@ -99,11 +106,12 @@ def toggle_catalog_item_status(
     }
 
 
-@router.delete("/{training_id}", dependencies=[Depends(require_admin)])
+@router.delete("/{training_id}")
 def delete_catalog_item(
     training_id: str,
     request: Request,
     db: Session = Depends(get_db),
+    admin_user: User | None = Depends(require_admin),
 ):
     """Permanently delete a catalog item from the database."""
     existing = db.query(TrainingCatalog).filter(TrainingCatalog.training_id == training_id).first()
@@ -117,7 +125,7 @@ def delete_catalog_item(
     service = get_catalog_service()
     service.reload()
 
-    log_audit(db, None, "delete_catalog_item", entity_type="catalog", entity_id=training_id,
+    log_audit(db, admin_user, "delete_catalog_item", entity_type="catalog", entity_id=training_id,
               ip_address=request.client.host if request.client else None)
 
     return {

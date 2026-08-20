@@ -1,4 +1,4 @@
-﻿"""
+"""
 Security module: Password hashing, JWT tokens, and FastAPI auth dependencies.
 """
 import json
@@ -195,16 +195,37 @@ def enforce_department_scope(current_user: User, target_department_id: int, db: 
     raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Access denied.")
 
 
-# ─── Legacy Admin API Key (backwards compatible) ─────────────────────────────
+# ─── Unified Admin Auth (JWT system_admin or Admin API Key) ───────────────────
 
-def require_admin(x_admin_api_key: str | None = Header(default=None)):
-    """Legacy admin key check - kept for backwards compatibility with training endpoint."""
+def require_admin(
+    request: Request,
+    db: Session = Depends(get_db),
+    authorization: str | None = Header(default=None),
+    x_admin_api_key: str | None = Header(default=None),
+) -> User | None:
+    """
+    Admin authentication check supporting:
+    1. JWT Authorization header with role="system_admin"
+    2. Legacy X-Admin-API-Key header (for automated scripts/tests)
+    """
     settings = get_settings()
-    if not x_admin_api_key or x_admin_api_key != settings.admin_api_key:
+    if x_admin_api_key and x_admin_api_key == settings.admin_api_key:
+        return None
+
+    if authorization and authorization.startswith("Bearer "):
+        user = get_current_user(request=request, db=db, authorization=authorization)
+        role = db.query(Role).filter(Role.id == user.role_id).first()
+        if role and role.name == "system_admin":
+            return user
         raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Valid X-Admin-API-Key header required."
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Access denied. System admin role required.",
         )
+
+    raise HTTPException(
+        status_code=status.HTTP_401_UNAUTHORIZED,
+        detail="Missing or invalid authentication credentials (JWT Bearer token or Admin API Key required).",
+    )
 
 
 # ─── Audit Logger ─────────────────────────────────────────────────────────────

@@ -192,7 +192,8 @@ export default function RecommendationCard({
                   </div>
                   <p className="text-xs font-semibold text-light-text dark:text-dark-text leading-snug">{pred.training_category}</p>
                   <p className="text-[11px] font-mono text-light-text dark:text-dark-muted mt-0.5">
-                    {formatPercent(pred.probability)} · {pred.coverage !== null ? `${Math.round(pred.coverage * 100)}% demand` : `${(pred.probability).toFixed(3)} raw`}
+                    {formatPercent(pred.probability)} · {(pred.probability).toFixed(3)} raw
+                    {pred.coverage !== null && ` · ${Math.round(pred.coverage * 100)}% demand`}
                   </p>
                 </div>
               </div>
