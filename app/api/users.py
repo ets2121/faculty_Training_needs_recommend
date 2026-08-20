@@ -1,4 +1,4 @@
-﻿"""
+"""
 User Management API — Admin-only endpoints for listing, viewing, updating, transferring, and deleting user accounts.
 """
 import json
@@ -15,7 +15,20 @@ from app.core.security import (
     hash_password,
     log_audit,
 )
-from app.db.models import AuditLog, Campus, CampusAdmin, Department, DepartmentAdmin, Faculty, QuestionnairePart, Role, User
+from app.db.models import (
+    AuditLog,
+    Campus,
+    CampusAdmin,
+    Department,
+    DepartmentAdmin,
+    Faculty,
+    QuestionnairePart,
+    RecommendationHistory,
+    Role,
+    TrainingRecommendationRequest,
+    TrainingResponse,
+    User,
+)
 from app.db.session import get_db
 from app.api.questionnaire import (
     is_eligible_for_recommendation,
@@ -464,10 +477,31 @@ def delete_user(
 
     target_username = target.username
 
-    # Nullify audit log references so database history is preserved
+    # 1. Nullify user reference in AuditLog (preserve security history)
     db.query(AuditLog).filter(AuditLog.user_id == user_id).update({"user_id": None})
     
-    # Delete user (foreign key ondelete=CASCADE takes care of Faculty/CampusAdmin/DepartmentAdmin profiles)
+    # 2. Nullify user references in submissions and requests
+    db.query(TrainingResponse).filter(TrainingResponse.submitted_by_user_id == user_id).update({"submitted_by_user_id": None})
+    db.query(TrainingRecommendationRequest).filter(TrainingRecommendationRequest.requested_by_user_id == user_id).update({"requested_by_user_id": None})
+    
+    # 3. Explicitly clean up Faculty and related child records if target has a faculty profile
+    if target.faculty_profile:
+        fac_id = target.faculty_profile.id
+        db.query(QuestionnairePart).filter(QuestionnairePart.faculty_id == fac_id).delete(synchronize_session=False)
+        db.query(TrainingRecommendationRequest).filter(TrainingRecommendationRequest.faculty_id == fac_id).delete(synchronize_session=False)
+        db.query(TrainingResponse).filter(TrainingResponse.faculty_id == fac_id).update({"faculty_id": None})
+        db.query(RecommendationHistory).filter(RecommendationHistory.faculty_id == fac_id).update({"faculty_id": None})
+        db.delete(target.faculty_profile)
+    
+    # 4. Clean up other admin profiles if present
+    if target.campus_admin_profile:
+        db.delete(target.campus_admin_profile)
+    if target.department_admin_profile:
+        db.delete(target.department_admin_profile)
+        
+    db.flush()
+
+    # 5. Delete user record
     db.delete(target)
     db.commit()
 

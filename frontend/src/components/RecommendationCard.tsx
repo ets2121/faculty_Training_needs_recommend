@@ -1,8 +1,8 @@
 'use client';
 
-import React from 'react';
+import React, { useState } from 'react';
 import { RecommendationResult, DepartmentRecommendationResult, CatalogRecommendationItem } from '@/types';
-import { BookOpen, Check, Sparkles, Target, Info, Clock, Calendar } from 'lucide-react';
+import { BookOpen, Check, Sparkles, Target, Info, Clock, Calendar, ChevronDown, ChevronUp } from 'lucide-react';
 import { formatPercent, formatManila } from '@/lib/utils';
 
 interface RecommendationCardProps {
@@ -74,6 +74,8 @@ export default function RecommendationCard({
   noticeBanner,
   scopeLabel,
 }: RecommendationCardProps) {
+  const [isCollapsed, setIsCollapsed] = useState(true);
+
   const rawPredictions: any[] =
     (result as any).prediction?.top_predictions ||
     (result as any).prediction?.top_categories ||
@@ -162,44 +164,56 @@ export default function RecommendationCard({
       <div className="space-y-3">
         {/* Section header with description */}
         <div className="flex items-start gap-3 px-1">
-          <Target className="w-4 h-4 text-light-text dark:text-dark-muted mt-0.5 shrink-0" />
-          <div>
-            <h3 className="text-sm font-bold text-light-text dark:text-dark-text">ML Model Competency Gap Predictions</h3>
+          <Target className="w-4 h-4 text-light-text dark:text-dark-muted mt-1 shrink-0" />
+          <div className="flex-1">
+            <button
+              onClick={() => setIsCollapsed(!isCollapsed)}
+              className="flex items-center gap-2 text-sm font-bold text-light-text dark:text-white hover:text-brand-green transition-colors focus:outline-none"
+            >
+              <span>ML Model Competency Gap Predictions</span>
+              {isCollapsed ? (
+                <ChevronDown className="w-4 h-4 text-brand-green animate-pulse" />
+              ) : (
+                <ChevronUp className="w-4 h-4 text-brand-green" />
+              )}
+            </button>
             <p className="text-xs text-light-text dark:text-dark-muted leading-relaxed mt-0.5">
-              These are the <strong className="text-light-text dark:text-dark-text">underlying competency areas</strong> where the machine learning model has identified potential training gaps based on your assessment scores. The probability score reflects confidence — not a ranking of importance. Use these as <em>diagnostic signals</em> rather than direct action items.
+              These are the <strong className="text-light-text dark:text-dark-text">underlying competency areas</strong> where the machine learning model has identified potential training gaps. {isCollapsed ? 'Click to expand details.' : 'Click to collapse details.'}
             </p>
           </div>
         </div>
 
         {/* Compact prediction cards */}
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-          {predictions.map((pred) => {
-            const color = rankColor(pred.rank);
-            return (
-              <div
-                key={pred.training_category}
-                className="flex items-center gap-3 p-3.5 rounded-xl border border-light-border dark:border-dark-border bg-white dark:bg-dark-card hover:border-brand-green transition-all"
-              >
-                <DonutChart probability={pred.probability} color={color} />
-                <div className="min-w-0 flex-1">
-                  <div className="flex items-center gap-1.5 mb-0.5">
-                    <span
-                      className="text-[10px] font-mono font-bold px-1.5 py-0.5 rounded"
-                      style={{ color, backgroundColor: `${color}18`, border: `1px solid ${color}30` }}
-                    >
-                      #{pred.rank}
-                    </span>
+        {!isCollapsed && (
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 animate-fade-in">
+            {predictions.map((pred) => {
+              const color = rankColor(pred.rank);
+              return (
+                <div
+                  key={pred.training_category}
+                  className="flex items-center gap-3 p-3.5 rounded-xl border border-light-border dark:border-dark-border bg-white dark:bg-dark-card hover:border-brand-green transition-all"
+                >
+                  <DonutChart probability={pred.probability} color={color} />
+                  <div className="min-w-0 flex-1">
+                    <div className="flex items-center gap-1.5 mb-0.5">
+                      <span
+                        className="text-[10px] font-mono font-bold px-1.5 py-0.5 rounded"
+                        style={{ color, backgroundColor: `${color}18`, border: `1px solid ${color}30` }}
+                      >
+                        #{pred.rank}
+                      </span>
+                    </div>
+                    <p className="text-xs font-semibold text-light-text dark:text-dark-text leading-snug">{pred.training_category}</p>
+                    <p className="text-[11px] font-mono text-light-text dark:text-dark-muted mt-0.5">
+                      {formatPercent(pred.probability)} · {(pred.probability).toFixed(3)} raw
+                      {pred.coverage !== null && ` · ${Math.round(pred.coverage * 100)}% demand`}
+                    </p>
                   </div>
-                  <p className="text-xs font-semibold text-light-text dark:text-dark-text leading-snug">{pred.training_category}</p>
-                  <p className="text-[11px] font-mono text-light-text dark:text-dark-muted mt-0.5">
-                    {formatPercent(pred.probability)} · {(pred.probability).toFixed(3)} raw
-                    {pred.coverage !== null && ` · ${Math.round(pred.coverage * 100)}% demand`}
-                  </p>
                 </div>
-              </div>
-            );
-          })}
-        </div>
+              );
+            })}
+          </div>
+        )}
       </div>
 
       {/* ── Section 2: Recommended Training Programs (prominent, primary) ──── */}

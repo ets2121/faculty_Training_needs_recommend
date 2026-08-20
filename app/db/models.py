@@ -1,4 +1,4 @@
-﻿from datetime import datetime
+from datetime import datetime
 from sqlalchemy import (
     Boolean, DateTime, ForeignKey, Integer, String, Text, func,
     UniqueConstraint, Index,
@@ -109,9 +109,9 @@ class User(Base):
     updated_at: Mapped[datetime] = mapped_column(DateTime, server_default=func.now(), onupdate=func.now())
 
     role: Mapped["Role"] = relationship("Role", back_populates="users")
-    faculty_profile: Mapped["Faculty | None"] = relationship("Faculty", back_populates="user", uselist=False)
-    campus_admin_profile: Mapped["CampusAdmin | None"] = relationship("CampusAdmin", back_populates="user", uselist=False)
-    department_admin_profile: Mapped["DepartmentAdmin | None"] = relationship("DepartmentAdmin", back_populates="user", uselist=False)
+    faculty_profile: Mapped["Faculty | None"] = relationship("Faculty", back_populates="user", uselist=False, cascade="all, delete-orphan", passive_deletes=True)
+    campus_admin_profile: Mapped["CampusAdmin | None"] = relationship("CampusAdmin", back_populates="user", uselist=False, cascade="all, delete-orphan", passive_deletes=True)
+    department_admin_profile: Mapped["DepartmentAdmin | None"] = relationship("DepartmentAdmin", back_populates="user", uselist=False, cascade="all, delete-orphan", passive_deletes=True)
 
 
 # ─── Campus Admin ────────────────────────────────────────────────────────────
