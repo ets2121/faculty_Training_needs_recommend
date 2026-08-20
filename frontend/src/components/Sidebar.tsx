@@ -39,14 +39,14 @@ export default function Sidebar() {
 
   const deptAdminNav = [
     { href: '/dept-dashboard', label: 'Dept Overview', icon: LayoutDashboard },
-    { href: '/dept-faculty', label: 'Faculty Roster', icon: Users },
+    { href: '/dept-faculty', label: 'Faculty Management', icon: Users },
     { href: '/dept-recommendations', label: 'Model Recommendations', icon: Sparkles },
     { href: '/register-faculty', label: 'Add Faculty Account', icon: UserPlus },
   ];
 
   const campusAdminNav = [
     { href: '/campus-dashboard', label: 'Campus Overview', icon: LayoutDashboard },
-    { href: '/campus-faculty', label: 'Campus Faculty Roster', icon: Users },
+    { href: '/campus-faculty', label: 'Campus Faculty Management', icon: Users },
     { href: '/campus-recommendations', label: 'Campus Model Synthesis', icon: Sparkles },
     { href: '/campus-departments', label: 'Academic Departments', icon: Building },
     { href: '/register-admin', label: 'Add Dept Admin', icon: UserPlus },

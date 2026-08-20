@@ -118,7 +118,7 @@ export default function CampusFacultyPage() {
         </div>
 
         <h1 className="text-2xl sm:text-3xl font-extrabold text-light-text dark:text-white tracking-tight">
-          Campus Faculty Roster & Reassignment
+          Campus Faculty Management & Reassignment
         </h1>
         <p className="text-xs text-light-text dark:text-dark-muted max-w-2xl leading-relaxed">
           Supervise instructor accounts assigned to {campusName}, track needs assessment progress, and transfer faculty between academic departments.

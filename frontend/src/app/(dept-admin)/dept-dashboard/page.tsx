@@ -129,7 +129,7 @@ export default function DeptDashboardPage() {
       icon: Users,
       color: 'from-sky-500 to-blue-600',
       glow: 'shadow-sky-500/20',
-      title: 'Faculty Roster',
+      title: 'Faculty Management',
       description: 'View, manage, and monitor faculty members in your department. Edit profiles and track assessments.',
       stat: loading ? '...' : String(stats.total),
       statLabel: 'Faculty Members',

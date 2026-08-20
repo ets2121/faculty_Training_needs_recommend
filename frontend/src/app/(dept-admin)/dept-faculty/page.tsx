@@ -136,7 +136,7 @@ export default function DeptFacultyPage() {
         <div>
           <div className="flex items-center gap-2 mb-1">
             <Users className="w-6 h-6 text-brand-gold" />
-            <h1 className="text-2xl font-extrabold text-light-text dark:text-white">Faculty Roster</h1>
+            <h1 className="text-2xl font-extrabold text-light-text dark:text-white">Faculty Management</h1>
           </div>
           <p className="text-sm text-light-text dark:text-dark-muted">
             {deptName} ({deptCode}) &mdash; Manage and track department faculty members
@@ -209,7 +209,7 @@ export default function DeptFacultyPage() {
       <div className="bg-white/80 dark:bg-dark-card/70 border border-light-border dark:border-dark-border rounded-3xl shadow-lg overflow-hidden">
         {loading ? (
           <div className="flex items-center justify-center py-20 text-light-text dark:text-dark-muted text-sm">
-            <RefreshCw className="w-5 h-5 mr-2 animate-spin" /> Loading faculty roster...
+            <RefreshCw className="w-5 h-5 mr-2 animate-spin" /> Loading faculty list...
           </div>
         ) : paginated.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-20 text-center">
@@ -357,7 +357,7 @@ export default function DeptFacultyPage() {
           onClose={() => setDeletingUser(null)}
           onDeleted={() => {
             setDeletingUser(null);
-            showToast('success', 'Account Deleted', 'Faculty member removed from roster.');
+            showToast('success', 'Account Deleted', 'Faculty member removed successfully.');
             loadFaculty();
           }}
         />

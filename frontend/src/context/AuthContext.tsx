@@ -62,10 +62,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         router.push('/faculty-dashboard');
       } else if (loggedUser.role === 'department_admin') {
         router.push('/dept-dashboard');
+      } else if (loggedUser.role === 'campus_admin') {
+        router.push('/campus-dashboard');
       } else if (loggedUser.role === 'system_admin') {
         router.push('/admin-dashboard');
       } else {
-        router.push('/dashboard');
+        router.push('/login');
       }
     } catch (err: any) {
       const detail = err.response?.data?.detail || 'Invalid login credentials.';

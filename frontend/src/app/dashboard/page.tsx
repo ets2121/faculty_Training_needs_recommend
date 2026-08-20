@@ -15,7 +15,9 @@ export default function DashboardRedirectPage() {
       } else {
         if (user.role === 'faculty') router.push('/faculty-dashboard');
         else if (user.role === 'department_admin') router.push('/dept-dashboard');
+        else if (user.role === 'campus_admin') router.push('/campus-dashboard');
         else if (user.role === 'system_admin') router.push('/admin-dashboard');
+        else router.push('/login');
       }
     }
   }, [user, loading, router]);
