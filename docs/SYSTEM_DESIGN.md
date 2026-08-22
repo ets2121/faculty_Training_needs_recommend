@@ -1,531 +1,433 @@
-# QSU Faculty Training Needs Recommender
+# QSU Faculty Training Needs Recommender — System Design
 
-## Training Catalog and Transparent Prediction API
+> **Version 3.0** — Transparent ML Recommendations · Multi-Campus RBAC · Next.js Full-Stack
 
-### 1. Goal
+---
 
-The system has two separate parts:
+## 1. System Overview
 
-1.  **ML Prediction**
-    -   Uses faculty questionnaire data.
-    -   Predicts training-need categories.
-    -   Returns the model's actual prediction scores/probabilities.
-2.  **Training Catalog**
-    -   Contains the actual training programs that can be recommended.
-    -   Is NOT the ML model itself.
-    -   Matches available training programs to the predicted training
-        categories and faculty preferences.
+The QSU Faculty Training Needs Recommender is composed of three integrated layers:
 
-Main flow:
-
-Questionnaire → Feature Processing → ML Model → Transparent Prediction →
-Catalog Matching → Recommended Training Programs
-
-------------------------------------------------------------------------
-
-## 2. Questionnaire Role
-
-The questionnaire is used to collect the dataset used for model training
-and also defines the input structure used by the production API.
-
-The questionnaire contains:
-
--   Faculty profile
--   Training history
--   Competency proficiency
--   Competency importance
--   Emerging training needs
--   Preferred learning modality
--   Preferred schedule
--   Preferred duration
--   Barriers to training participation
--   Top five priority training topics
-
-The current questionnaire includes emerging areas such as:
-
--   Artificial Intelligence
--   Machine Learning
--   Data Analytics
--   Cybersecurity
--   Cloud Computing
--   Learning Management Systems
--   Educational Technology
--   Statistical Software
--   Research Methods
-
-It also includes competency areas such as teaching, research,
-publication writing, quality assurance, technology transfer, leadership,
-and other professional competencies.
-
-The production API should follow the same logical input structure as the
-questionnaire.
-
-------------------------------------------------------------------------
-
-## 3. What the ML Model Does
-
-The ML model does NOT directly select a specific catalog title.
-
-Instead, it predicts training-need categories based on the faculty data.
-
-Example:
-
-``` text
-Faculty input
-  ↓
-ML model
-  ↓
-Artificial Intelligence: 0.87
-Educational Technology: 0.76
-Research Methods: 0.61
+```
+┌──────────────────────────────────────────────────────────────┐
+│  LAYER 1: Data Collection                                    │
+│  6-Part Online Questionnaire (Next.js frontend)              │
+│  Competency proficiency · Importance ratings · Profile       │
+└────────────────────────────┬─────────────────────────────────┘
+                             │
+┌────────────────────────────▼─────────────────────────────────┐
+│  LAYER 2: ML Prediction                                      │
+│  Random Forest One-vs-Rest Multi-label Classifier            │
+│  Predicts training-need CATEGORIES with probability scores   │
+│  Returns transparent model metadata with each prediction     │
+└────────────────────────────┬─────────────────────────────────┘
+                             │
+┌────────────────────────────▼─────────────────────────────────┐
+│  LAYER 3: Catalog Matching                                   │
+│  Training programs are ranked by Match Score                 │
+│  Match Score = category probability × preference alignment   │
+│  Output: ranked recommendations with match_score field       │
+└──────────────────────────────────────────────────────────────┘
 ```
 
-These are model predictions.
+---
 
-The catalog is used afterward to find actual available training
-programs.
+## 2. Questionnaire Structure (6 Parts)
 
-------------------------------------------------------------------------
+The questionnaire is the system's primary data collection mechanism. It serves two roles:
 
-## 4. Training Catalog
+1. **Training data** — collected responses are used to train the ML model
+2. **Inference input** — a faculty member's completed questionnaire is used to generate their recommendation
 
-The catalog is a separate data source containing available training
-programs.
+### Parts and Required Status
 
-Example catalog item:
+| Part | Content | Required for Recommendation? |
+|---|---|---|
+| Part 1 | Personal Profile (department, rank, age, sex, years teaching) | Yes |
+| Part 2 | Training History (number of trainings, training areas) | Yes |
+| Part 3 | Competency Assessment (proficiency + importance per area) | Yes |
+| Part 4 | Emerging Training Needs (AI, ML, Cybersecurity, etc.) | No (Part 4 optional) |
+| Part 5 | Preferred Modality + Schedule + Duration | Yes |
+| Part 6 | Barriers to Training Participation | Yes |
 
-``` text
-training_id: TRN-001
-title: Generative AI for Higher Education
-description: Introduction to practical generative AI tools and responsible use in teaching, research, and academic work.
-categories:
-  - Artificial Intelligence
-  - Educational Technology
-target_competencies:
-  - Computer Literacy and Digital Technologies
-  - Effective Teaching and Classroom Management
-modalities:
-  - Webinar
-  - Blended Learning
-durations:
-  - One day
-  - Two days
-schedules:
-  - Saturdays
-  - Semester Break
-status: active
+### Questionnaire Status Lifecycle
+
+```
+[not_started]
+     │ submit Part 1
+     ▼
+[in_progress]
+     │ complete Parts 1, 2, 3, 5, 6
+     ▼
+[eligible] ─────────────────────────► recommendation generated
+     │
+     ▼
+[has_recommendation]
 ```
 
-The catalog can contain many training programs.
+**Department recommendation filtering:** Only faculty in `eligible` or `has_recommendation` status are included. Faculty in `not_started` or `in_progress` are skipped and listed in the response's `skipped_faculty[]` array.
 
-Adding a new catalog item does not normally require retraining the ML
-model if the item uses existing training categories/features that the
-model already understands.
+---
 
-------------------------------------------------------------------------
+## 3. ML Model Design
 
-## 5. Catalog Matching
+### Model Type
 
-After prediction, the system searches the catalog.
+**One-vs-Rest Random Forest** multi-label classifier
 
-Example:
-
-``` text
-ML prediction:
-Artificial Intelligence = 0.87
-Educational Technology = 0.76
-
-Catalog:
-TRN-001 → Generative AI for Higher Education
-TRN-014 → Digital Tools for Modern Teaching
-TRN-021 → AI Tools for Academic Research
+```
+Input Features
+     │
+     ▼
+OneHotEncoder (categorical: department, sex, employment_status,
+               academic_rank, education, years_teaching, etc.)
+StandardScaler (numeric: competency scores, emerging needs ratings,
+                barrier ratings)
+     │
+     ▼
+ColumnTransformer → Feature Matrix (67 features)
+     │
+     ▼
+RandomForestClassifier (n_estimators=100) per label
+     │
+     ▼
+Predict probability per training-need category
 ```
 
-The recommendation service can consider:
+### Target Labels (9 categories)
 
--   Predicted training category
--   Prediction probability
--   Competency gaps
--   Preferred learning modality
--   Preferred schedule
--   Preferred duration
--   Training barriers
--   Catalog status
+1. Research Methods
+2. Educational Technology
+3. Artificial Intelligence
+4. Outcomes-Based Education (OBE)
+5. Data Analytics
+6. Leadership & Management
+7. Quality Assurance
+8. Cybersecurity
+9. Instructional Design
 
-The final recommendation should come from the catalog, not directly from
-a model class name.
+### Critical Research Constraint
 
-------------------------------------------------------------------------
+Labels **must** come from the respondent's actual Part VIII Top Five priorities. Do NOT derive:
 
-## 6. Important Rule About New Catalog Items
-
-### Adding a new training program
-
-No retraining is required when adding a new catalog program if:
-
--   The catalog item uses existing categories.
--   The existing model can already predict those categories.
--   The new program fits the existing questionnaire/model feature space.
-
-Example:
-
-``` text
-Existing model category:
-Artificial Intelligence
-
-New catalog item:
-AI-Powered Research Tools for Faculty
-
-Result:
-No model retraining required.
+```
+Top Five = Importance - Proficiency   ← WRONG — creates target leakage
 ```
 
-### Adding a completely new training category
+The model must learn to predict actual human priority rankings, not a mathematical gap calculation.
 
-Retraining may be required when the system needs to predict a category
-that is not represented by the questionnaire/model.
+### Model Artifacts
 
-Example:
+| File | Description |
+|---|---|
+| `models/training_recommender_v{timestamp}.joblib` | Trained sklearn pipeline |
+| `models/labels_v{timestamp}.joblib` | MultiLabelBinarizer encoder |
+| `models/metadata_v{timestamp}.json` | Training stats (samples, features, labels, F1) |
+| `models/active.json` | Pointer to active model version |
 
-``` text
-New category:
-Drone Technology
+### Model Versioning
 
-Current questionnaire:
-No question measuring Drone Technology need.
-
-Current model:
-Does not predict Drone Technology.
+```json
+// models/active.json
+{ "version": "v20260820180225" }
 ```
 
-To make this a true ML-predicted category:
+The `ModelService` class loads the active model at startup. The System Admin can hot-swap the active version from the `/ml-pipeline` page without restarting the server.
 
-1.  Add an appropriate questionnaire item.
-2.  Collect new training data.
-3.  Update the dataset.
-4.  Retrain the model.
-5.  Validate the model.
-6.  Deploy the new model.
+---
 
-------------------------------------------------------------------------
+## 4. Recommendation Pipeline
 
-## 7. Why Keep the Catalog Separate
+### Individual Recommendation
 
-Benefits:
+```
+faculty_id (query param)
+     │
+     ▼
+Validate: questionnaire_status IN ('eligible', 'has_recommendation')
+     │
+     ▼
+build_faculty_record() — assemble feature dict from all questionnaire parts
+     │
+     ▼
+individual(model, record) — ML inference
+     │  ├── model.predict_proba() → category probability scores
+     │  └── catalog matching → match_score ranked programs
+     ▼
+Store result → Faculty.last_recommendation_json
+Update → Faculty.questionnaire_status = 'has_recommendation'
+Log → TrainingRecommendationRequest history
+     │
+     ▼
+Return transparent result (model metadata + scores + ranked recommendations)
+```
 
--   Training programs can be added without retraining in normal cases.
--   Training titles and descriptions can change without changing the
-    model.
--   Programs can be activated or deactivated.
--   Administrators can maintain the catalog.
--   The model remains focused on predicting training needs.
--   Recommendations can reflect currently available programs.
--   The system can explain how a catalog item matched a predicted need.
+### Department Recommendation
 
-This separation also makes the system easier to maintain.
+```
+department_id or department_code (query param)
+     │
+     ▼
+Fetch all active faculty in department
+     │
+     ▼
+Filter: questionnaire_status IN ('eligible', 'has_recommendation')
+     │
+     ▼
+Build faculty records for each eligible member
+     │
+     ▼
+dept_recommendation(model, records[]) — aggregate
+     │  ├── Run individual inference per faculty member
+     │  ├── Average category probabilities (department_score)
+     │  ├── Compute faculty_coverage (% faculty with score > threshold)
+     │  └── Match catalog → match_score ranked programs
+     ▼
+Store individual results back on each faculty record
+Persist to RecommendationHistory table
+     │
+     ▼
+Return: top_categories (with department_score + faculty_coverage)
+        recommendations (with match_score)
+        skipped_faculty[]
+        model metadata
+```
 
-------------------------------------------------------------------------
+### Campus Recommendation
 
-# 8. Transparent Prediction API
+Identical to department recommendation but aggregates across all departments in the campus. Stored as `recommendation_type="campus"` in `RecommendationHistory`.
 
-The production API should expose both:
+---
 
-1.  **Model prediction**
-2.  **Recommended training**
+## 5. Transparency API
 
-These must remain separate.
+Every prediction response includes a `model` block with full transparency metadata:
 
-The prediction section shows what the ML model actually produced.
-
-The recommendation section shows what the recommendation/catalog layer
-selected.
-
-------------------------------------------------------------------------
-
-## 9. Expected API Response
-
-Example:
-
-``` json
+```json
 {
-  "status": "success",
   "model": {
-    "status": "ready",
-    "version": "20260807154126"
+    "version": "v20260820180225",
+    "algorithm": "Random Forest (One-vs-Rest)",
+    "n_estimators": 100,
+    "training_samples": 245,
+    "features": 67,
+    "labels": 9,
+    "timestamp": "2026-08-20T18:02:25"
   },
-  "prediction": {
-    "top_predictions": [
-      {
-        "training_category": "Artificial Intelligence",
-        "probability": 0.87,
-        "rank": 1
-      },
-      {
-        "training_category": "Educational Technology",
-        "probability": 0.76,
-        "rank": 2
-      },
-      {
-        "training_category": "Research Methods",
-        "probability": 0.61,
-        "rank": 3
-      }
-    ],
-    "all_predictions": [
-      {
-        "training_category": "Artificial Intelligence",
-        "probability": 0.87
-      },
-      {
-        "training_category": "Educational Technology",
-        "probability": 0.76
-      },
-      {
-        "training_category": "Research Methods",
-        "probability": 0.61
-      }
-    ]
-  },
+  "top_categories": [
+    { "category": "Research Methods", "score": 0.87 },
+    { "category": "Educational Technology", "score": 0.76 }
+  ],
   "recommendations": [
     {
-      "training_id": "TRN-001",
-      "title": "Generative AI for Higher Education",
-      "category": "Artificial Intelligence",
-      "match_score": 0.92,
-      "reason": "Matches the predicted Artificial Intelligence training need."
-    },
-    {
-      "training_id": "TRN-014",
-      "title": "Digital Tools for Modern Teaching",
-      "category": "Educational Technology",
-      "match_score": 0.81,
-      "reason": "Matches the predicted Educational Technology training need."
+      "rank": 1,
+      "title": "Advanced Research Methods Workshop",
+      "category": "Research Methods",
+      "match_score": 0.94,
+      "modality": "Face-to-face",
+      "duration": "3 days"
     }
   ]
 }
 ```
 
-------------------------------------------------------------------------
+### Match Score Calculation
 
-## 10. Meaning of Prediction Probability
+```
+match_score = category_probability × preference_alignment_factor
 
-A probability such as:
-
-``` text
-Artificial Intelligence = 0.87
+preference_alignment_factor considers:
+  - modality match (faculty's preferred modality vs program modality)
+  - schedule compatibility
+  - category relevance rank
 ```
 
-means the model assigned a probability of 87% to that prediction.
+---
 
-It does NOT mean:
+## 6. Frontend Architecture
 
-``` text
-The model is 87% accurate.
+### Next.js 14 App Router with Role-Based Layouts
+
+```
+frontend/src/app/
+  (faculty)/              ← faculty role group layout
+    faculty-dashboard/
+    questionnaire/
+    my-recommendation/
+    profile/
+  (dept-admin)/           ← department_admin role group layout
+    dept-dashboard/
+    dept-faculty/
+    dept-recommendations/
+    register-faculty/
+  (campus-admin)/         ← campus_admin role group layout
+    campus-dashboard/
+    campus-faculty/
+    campus-departments/
+    campus-recommendations/
+  (sys-admin)/            ← system_admin role group layout
+    admin-dashboard/
+    user-management/
+    catalog-management/
+    ml-pipeline/
+    register-admin/
 ```
 
-Prediction probability and model accuracy are different measurements.
+### Key Shared Components
 
-Model accuracy should be evaluated separately using the
-training/validation/test process.
+| Component | Purpose |
+|---|---|
+| `GeneratingProgressModal.tsx` | 4-step animated progress modal during recommendation generation |
+| `RecommendationCard.tsx` | Displays Model Transparency Card + ranked programs with match scores |
+| `Sidebar.tsx` | Role-aware navigation sidebar |
+| `StatusBadge.tsx` | Color-coded questionnaire status indicator |
+| `Pagination.tsx` | Reusable table pagination (all admin roster pages) |
+| `UserModals.tsx` | Add/Edit/Delete modal dialogs for user management |
+| `TransferFacultyModal.tsx` | Move faculty between departments |
+| `AdminVisualCharts.tsx` | Charts for admin dashboards |
 
-------------------------------------------------------------------------
+### GeneratingProgressModal — 4-Step Flow
 
-## 11. Meaning of Recommendation Match Score
-
-The `match_score` belongs to the recommendation layer.
-
-Example:
-
-``` text
-prediction probability:
-Artificial Intelligence = 0.87
-
-catalog match:
-Generative AI for Higher Education = 0.92
+```typescript
+const STEPS = [
+  "Loading questionnaire data...",
+  "Running ML inference...",
+  "Matching training catalog...",
+  "Finalizing results..."
+]
 ```
 
-These numbers have different meanings.
+The modal shows animated progress and auto-closes when the API returns the result.
 
-`0.87` = ML model prediction probability.
+### Auth Flow
 
-`0.92` = recommendation/catalog matching score.
-
-Do not present them as the same measurement.
-
-------------------------------------------------------------------------
-
-## 12. Frontend Usage
-
-The frontend can show normal faculty users:
-
-``` text
-Recommended Training
-
-1. Generative AI for Higher Education
-2. Digital Tools for Modern Teaching
-3. AI Tools for Academic Research
+```
+/login → POST /api/v1/auth/login → JWT token stored in localStorage
+     │
+     ▼
+AuthContext reads token → extracts role
+     │
+     ▼
+Next.js redirect to role-appropriate dashboard:
+  faculty         → /faculty-dashboard
+  department_admin → /dept-dashboard
+  campus_admin    → /campus-dashboard
+  system_admin    → /admin-dashboard
 ```
 
-An administrator/researcher can have a separate:
+---
 
-``` text
-View Prediction Details
+## 7. Database Schema (Key Tables)
+
+```sql
+-- Core entities
+users           (id, username, email, full_name, hashed_password, role_id, is_active)
+roles           (id, name)  -- faculty, department_admin, campus_admin, system_admin
+campuses        (id, name, code, status)
+departments     (id, name, code, campus_id, status)
+faculty         (id, user_id, department_id, questionnaire_status,
+                 last_recommendation_json, last_recommendation_at, status)
+
+-- Questionnaire parts (stored as JSONB/TEXT per part)
+faculty_profile               (faculty_id, profile_json)
+faculty_training_history      (faculty_id, history_json)
+faculty_competency            (faculty_id, competency_json)
+faculty_emerging_needs        (faculty_id, needs_json)
+faculty_preferences           (faculty_id, prefs_json)
+faculty_barriers              (faculty_id, barriers_json)
+
+-- Catalog & Recommendations
+training_catalog              (id, title, category, modality, duration, provider, status)
+recommendation_history        (id, campus_id, department_id, recommendation_type,
+                               model_version, response_json, created_at)
+training_recommendation_requests (id, faculty_id, requested_by_user_id,
+                                  recommendation_type, model_version,
+                                  recommendation_json, created_at)
+audit_logs                    (id, user_id, action, entity_type, entity_id,
+                               old_values, new_values, ip_address, created_at)
 ```
 
-section.
+---
 
-Example:
+## 8. API Route Map
 
-``` text
-Model Version: 20260807154126
+| Method | Route | Roles | Description |
+|---|---|---|---|
+| GET | `/api/v1/health` | Public | Health check + model status |
+| POST | `/api/v1/auth/login` | Public | JWT authentication |
+| POST | `/api/v1/auth/register` | Public | Faculty self-registration |
+| GET | `/api/v1/profile/me` | Faculty | Own profile |
+| POST | `/api/v1/profile/request-recommendation` | Faculty | Generate own recommendation |
+| GET | `/api/v1/profile/last-recommendation` | Faculty | Retrieve last recommendation |
+| GET/POST/PATCH | `/api/v1/questionnaire/*` | Faculty | Questionnaire CRUD |
+| GET/POST/PUT/DELETE | `/api/v1/users/*` | Admin+ | User management |
+| GET | `/api/v1/campuses` | Admin+ | Campus list |
+| GET | `/api/v1/campuses/{id}/departments` | Admin+ | Departments in campus |
+| POST | `/api/v1/recommendations/individual` | Dept/Campus/Sys Admin | Individual recommendation |
+| POST | `/api/v1/recommendations/department` | Dept/Campus/Sys Admin | Department recommendation |
+| GET | `/api/v1/recommendations/department/last` | Dept/Campus/Sys Admin | Latest department rec |
+| GET | `/api/v1/recommendations/department/history` | Admin+ | Department rec history |
+| POST | `/api/v1/recommendations/campus` | Campus/Sys Admin | Campus recommendation |
+| GET | `/api/v1/recommendations/campus/last` | Campus/Sys Admin | Latest campus rec |
+| GET | `/api/v1/recommendations/campus/history` | Campus/Sys Admin | Campus rec history |
+| GET | `/api/v1/recommendations/faculty/{id}/last` | Dept/Campus/Sys Admin | Faculty last rec |
+| GET/POST/PUT/DELETE | `/api/v1/catalog/*` | Sys Admin | Training catalog CRUD |
+| POST | `/api/v1/training/train` | Sys Admin | Trigger model training |
+| GET | `/api/v1/audit-logs` | Sys Admin | Audit log access |
 
-Top Model Predictions
+---
 
-Artificial Intelligence       87%
-Educational Technology        76%
-Research Methods              61%
+## 9. Multi-Campus Structure
+
+QSU operates three campuses, each with their own departments:
+
+```
+QSU System
+  ├── QSU Diffun Campus
+  │   ├── BSCS (Computer Science)
+  │   ├── BSBA (Business Administration)
+  │   ├── BSED (Education)
+  │   └── ...
+  ├── QSU Maddela Campus
+  │   └── ...
+  └── QSU Cabarroguis Campus
+      └── ...
 ```
 
-This provides transparency without forcing normal users to understand
-the ML internals.
+Campus admins have read/write access only within their campus. Department admins have access only within their department. The `campus_id` and `department_id` are enforced at the API layer via RBAC checks.
 
-------------------------------------------------------------------------
+---
 
-## 13. API Design Principle
+## 10. Deployment
 
-Keep these concepts separate:
+### Local Development
 
-``` text
-MODEL
-  ↓
-PREDICTION
-  ↓
-CATALOG MATCHING
-  ↓
-RECOMMENDATION
+```
+Backend:  uvicorn app.main:app --reload        → http://localhost:8000
+Frontend: npm run dev (in frontend/)            → http://localhost:3000
+Database: XAMPP MySQL                           → localhost:3306
 ```
 
-Do not combine the raw model prediction and the final catalog
-recommendation into one unexplained value.
+### Production Recommended Stack
 
-------------------------------------------------------------------------
+```
+Frontend (Vercel / Nginx)
+     │ HTTPS
+     ▼
+FastAPI (Uvicorn + Gunicorn workers)
+     │
+     ├── MySQL (RDS / PlanetScale)
+     └── ML Models (S3 / Backblaze object storage)
 
-## 14. Missing or Incomplete Faculty Data
-
-A production faculty record may not contain every possible value.
-
-Examples:
-
--   No training history
--   No administrative designation
--   No previous training records
--   Some optional profile fields are missing
-
-The API should still be able to process the record when the model
-supports missing/default values.
-
-Missing data should not be invented.
-
-Use appropriate defaults or preprocessing rules defined by the trained
-model.
-
-The system should clearly identify missing information when it affects
-recommendation quality.
-
-------------------------------------------------------------------------
-
-## 15. Training History vs Current Training Need
-
-Training history is evidence about what the faculty member attended
-previously.
-
-It should not automatically mean that the faculty member should receive
-the same training again.
-
-The model should use the complete questionnaire information, especially:
-
--   Competency proficiency
--   Competency importance
--   Emerging training needs
--   Training history
--   Preferences
--   Barriers
-
-The catalog layer then selects available programs.
-
-------------------------------------------------------------------------
-
-## 16. AI Coding Agent Requirements
-
-When implementing this system:
-
-### Model layer
-
--   Load the trained model.
--   Load model labels/classes.
--   Return model version.
--   Provide `ready()` status.
--   Generate prediction probabilities.
--   Return ranked predictions.
--   Do not directly select catalog titles.
-
-### Catalog layer
-
--   Load catalog data.
--   Filter inactive/unavailable programs.
--   Match predicted categories to catalog categories.
--   Consider faculty preferences where applicable.
--   Produce a recommendation score.
--   Return the actual catalog training ID and title.
-
-### API layer
-
-The response should contain:
-
-``` text
-status
-model
-prediction
-recommendations
+Background:
+  Model training → Separate Celery/RQ worker
+  Audit logs     → Indexed for search
 ```
 
-The API should not hide the model prediction behind the recommendation
-result.
+### Docker
 
-------------------------------------------------------------------------
-
-## 17. Final Architecture
-
-``` text
-                    QUESTIONNAIRE
-                         │
-                         ▼
-                  FACULTY INPUT
-                         │
-                         ▼
-                  FEATURE PROCESSOR
-                         │
-                         ▼
-                    ML MODEL
-                         │
-             ┌───────────┴───────────┐
-             ▼                       ▼
-      MODEL PREDICTION          MODEL VERSION
-             │
-             ▼
-     TRANSPARENT OUTPUT
-             │
-             ▼
-      CATALOG MATCHING
-             │
-             ▼
-    RECOMMENDED TRAINING
+```bash
+docker-compose up -d
 ```
 
-The important design rule is:
-
-**The ML model predicts training needs. The catalog provides the actual
-training programs.**
-
-This allows the system to remain flexible while keeping the ML
-prediction transparent.
+The `docker-compose.yml` starts the FastAPI backend with MySQL. The frontend is deployed separately.

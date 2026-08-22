@@ -1,64 +1,229 @@
-# Architectural and Methodological Design
-## QSU Faculty Training Needs Recommender System
+# QSU Faculty Training Needs Recommender — Thesis Methodology
 
-This document provides a formal, thesis-ready explanation of the core architectural decisions, machine learning methodologies, and system design patterns utilized in the QSU Faculty Training Needs Recommender System.
+> Academic methodology narrative for thesis documentation.
+> System Version 3.0 — Multi-Campus · RBAC · Transparent ML Recommendations
 
 ---
 
-## 1. Introduction
+## 1. Research Overview
 
-The QSU Faculty Training Needs Recommender is an intelligent backend system designed to bridge the gap between faculty survey data and actionable professional development programs. The system is engineered to handle dynamic university requirements where faculty profiles continuously evolve and the catalog of available training programs changes frequently. To address these challenges, the system employs a decoupled, multi-layer architecture integrating a machine learning classification engine with a rule-based recommendation matching system.
+This study presents the design, development, and evaluation of an intelligent web-based Faculty Training Needs Recommender System for Quirino State University (QSU). The system collects structured faculty assessment data through a six-part online questionnaire, processes it using a supervised machine learning pipeline, and generates personalized training program recommendations with full model transparency.
 
-## 2. Machine Learning Methodology: Multi-Label Classification
+The system serves three hierarchical operational contexts:
+1. **Individual faculty** — personalized training recommendations based on competency assessment
+2. **Department** — aggregated training priorities for department-level planning
+3. **Campus** — institution-wide training demand analysis across all departments
 
-### 2.1 The Problem Context
-Faculty training needs are not mutually exclusive. A single faculty member may require development in multiple areas simultaneously (e.g., "Artificial Intelligence", "Research Methods", and "Effective Teaching"). Therefore, framing this as a standard multi-class classification problem (where only one outcome is predicted) would result in significant information loss. The system must predict an arbitrary subset of relevant training topics for each faculty profile.
+---
 
-### 2.2 Algorithm Selection: One-vs-Rest Random Forest
-The system utilizes a **Random Forest Classifier** wrapped in a **One-vs-Rest (OvR)** meta-estimator. 
+## 2. Conceptual Framework
 
-**Why Random Forest?**
-1. **Non-linear Relationships**: Faculty profiles consist of diverse categorical (e.g., Academic Rank, Department) and numerical features (e.g., Age). Random Forests inherently capture complex, non-linear interactions between these features without requiring extensive manual feature engineering.
-2. **Robustness to Overfitting**: By aggregating the predictions of multiple decision trees (ensemble learning), Random Forests reduce the variance of the model and prevent overfitting on smaller institutional datasets.
-3. **Interpretability via Probabilities**: Unlike black-box neural networks, tree-based models can output reliable probability estimates for each class, which is critical for ranking recommendations.
+```
+[Input]                [Processing]              [Output]
+Faculty profile    →   Feature Engineering   →   Category Scores
+Training history   →   ML Inference         →   Match-Score Ranked
+Competency         →   Catalog Matching     →   Training Programs
+Emerging needs     →   Aggregation (dept)   →   Dept Priorities
+Preferences        →   Persistence          →   Recommendation History
+```
 
-**Why One-vs-Rest (OvR)?**
-To solve the multi-label challenge, the OvR strategy trains a separate, independent Random Forest model for each possible training category (e.g., one model predicts "Needs AI training vs. Doesn't need AI training", another predicts "Needs Research Methods vs Doesn't"). This allows the system to output independent probability scores for every training category simultaneously, enabling the system to rank a faculty member's needs objectively from highest to lowest priority.
+---
 
-## 3. System Architecture: Separation of Concerns
+## 3. Data Collection Instrument
 
-A major architectural challenge in recommender systems is maintaining system stability when the inventory (the available training programs) changes. 
+The questionnaire tool is based on the official QSU Faculty Training Needs Assessment Tool and is organized into six parts:
 
-### 3.1 The Flaw of Tightly-Coupled Models
-In traditional systems, the machine learning model is trained directly on the inventory items (e.g., predicting exactly which seminar a faculty member should attend). If the university replaces an old seminar with a new one, the entire ML model breaks and must be retrained from scratch because its output classes are now invalid.
+| Part | Content | Required |
+|---|---|---|
+| 1 | Personal Profile (rank, department, years of service) | Yes |
+| 2 | Training History (attended programs, topic areas) | Yes |
+| 3 | Competency Assessment (proficiency + importance per 20 areas) | Yes |
+| 4 | Emerging Training Needs (AI, ML, Cybersecurity, etc.) | Optional |
+| 5 | Preferred Modality, Schedule, Duration | Yes |
+| 6 | Barriers to Training Participation | Yes |
 
-### 3.2 The Decoupled Solution
-This system solves the inventory problem by separating the **Prediction Engine** from the **Catalog Service**:
+A faculty member's questionnaire is considered complete when Parts 1, 2, 3, 5, and 6 are submitted (`questionnaire_status = 'eligible'`).
 
-1. **The Machine Learning Layer**: Predicts *abstract competency categories* (e.g., "Data Analytics", "Leadership"). It does not know about specific seminars. 
-2. **The Catalog Matching Layer**: Acts as a bridge. It takes the predicted categories and searches a dynamic JSON database (`training_catalog.json`) of currently active seminars. 
+---
 
-**Why use this approach?**
-This decoupling ensures high system longevity. The university administration can add, remove, or modify specific training programs (e.g., changing "Intro to ChatGPT" to "Advanced AI in Education") at any time via the Catalog API without ever needing to retrain the machine learning model. The ML model only needs retraining when the fundamental demographic patterns of the faculty change.
+## 4. Machine Learning Model
 
-## 4. Transparent API Design
+### Algorithm
 
-The application exposes a "Transparent API" architecture. Instead of simply returning a black-box list of recommended seminars, the API returns a deeply structured JSON response containing:
+**Random Forest Classifier with One-vs-Rest Multi-label Classification**
 
-1. **Top Predictions**: The abstract ML predictions alongside their raw mathematical probability scores.
-2. **Rankings**: The ordinal ranking of the faculty member's needs.
-3. **Match Scores**: When a specific catalog program is recommended, the API calculates and returns a `match_score`, explaining *why* the seminar was chosen based on the faculty member's predicted needs.
+Random Forest was selected as the baseline model for the following reasons:
+- Handles mixed feature types (categorical + numeric)
+- Robust to outliers and missing values
+- Produces probability scores per label
+- Interpretable feature importance
+- Suitable for small-to-medium dataset sizes
 
-**Why use this approach?**
-In institutional decision-making, AI transparency is vital. Administrators and faculty must trust the system's output. By providing the raw probabilities and match scores, the system provides an audit trail that explains its internal logic, transforming the AI from an unexplainable "black box" into a transparent decision-support tool.
+### Feature Engineering
 
-## 5. Deployment and Model Portability
+```
+Categorical inputs → OneHotEncoder
+Numeric inputs     → StandardScaler
+                     ↓
+              ColumnTransformer
+                     ↓
+             Feature Matrix (~67 features)
+```
 
-The system utilizes an automated deployment pipeline designed around standard Python serialization (`joblib`). 
+**Categorical features:** department, sex, employment_status, academic_rank, education, years_teaching, training areas, preferred modality
 
-### 5.1 Artifact Synchronization
-When the model is trained, the pipeline exports not just the predictive model, but also the data preprocessors (e.g., `MultiLabelBinarizer`, `StandardScaler`, `OneHotEncoder`) into strict, version-controlled artifacts (e.g., `v20260812055414`). This guarantees that the exact mathematical transformations applied during training are identically applied during live production inference, preventing data drift.
+**Numeric features:** competency proficiency scores (10 areas), competency importance scores (10 areas), emerging training need ratings (9 areas), barrier ratings (4 areas), trainings_last_3_years
 
-### 5.2 The Google Colab Integration
-To democratize model training and allow leveraging cloud GPUs, the system includes a fully functional Google Colab equivalent. The Colab notebook is mathematically and structurally identical to the backend's `train.py`. 
-By rigorously pinning dependency versions (e.g., `scikit-learn==1.7.1`), the architecture allows data scientists to experiment, train, and export models in the cloud, and inject those models into the live FastAPI backend with zero code changes—a true plug-and-play architecture.
+### Target Labels (9 training-need categories)
+
+1. Research Methods
+2. Educational Technology
+3. Artificial Intelligence
+4. Outcomes-Based Education (OBE)
+5. Data Analytics
+6. Leadership & Management
+7. Quality Assurance
+8. Cybersecurity
+9. Instructional Design
+
+### Critical Integrity Constraint
+
+The model targets **must** be the actual Top Five priority training topics selected by each respondent in Part VIII of the questionnaire form. They must NOT be derived algorithmically from the competency gap (Importance - Proficiency score).
+
+Deriving targets from input features creates **target leakage**, which inflates model performance metrics and produces a system that cannot generalize to unseen faculty preferences.
+
+### Training Procedure
+
+```bash
+python train.py
+```
+
+Steps:
+1. Load `data/raw/faculty_training.csv`
+2. Multi-label binarize the top_1…top_5 columns
+3. Apply ColumnTransformer feature pipeline
+4. Train `RandomForestClassifier(n_estimators=100)` via `OneVsRestClassifier`
+5. Evaluate on 20% held-out test set
+6. Report micro/macro F1, precision, recall, Recall@5
+7. Save versioned artifact to `models/`
+8. Update `models/active.json`
+
+---
+
+## 5. Transparency & Explainability
+
+The system is designed for academic and institutional accountability. Every recommendation includes:
+
+### Model Transparency Card
+
+```json
+{
+  "model": {
+    "version": "v20260820180225",
+    "algorithm": "Random Forest (One-vs-Rest)",
+    "n_estimators": 100,
+    "training_samples": 245,
+    "features": 67,
+    "labels": 9
+  }
+}
+```
+
+### Category Probability Scores
+
+Raw ML probability scores are exposed per category, not hidden behind opaque rankings.
+
+### Match Score
+
+Each recommended training program displays a `match_score` (0–1) that reflects the combined relevance of the ML prediction and alignment with the faculty member's stated preferences (modality, schedule, duration).
+
+### Department Transparency
+
+For department-level recommendations, the system reports:
+- `department_score`: average category probability across all eligible faculty
+- `faculty_coverage`: proportion of faculty with score above threshold
+- `eligible_faculty_count` vs `total_faculty_in_dept`
+- `skipped_faculty` with their specific status reason
+
+---
+
+## 6. System Evaluation
+
+### Quantitative Metrics
+
+Report all of the following on a held-out test set (never seen during training):
+
+| Metric | Target |
+|---|---|
+| Micro F1 | > 0.75 |
+| Macro F1 | > 0.70 |
+| Precision | > 0.75 |
+| Recall | > 0.75 |
+| Recall@5 | > 0.85 |
+
+### Baseline Comparison
+
+A stronger thesis compares the ML model against:
+
+1. **Competency-gap baseline** — ranks categories by `(importance - proficiency)`, recommend top-5
+2. **ML model** — Random Forest predictions
+3. **Ground truth** — actual respondent Top Five priorities from questionnaire Part VIII
+
+The comparison should use Recall@5 and Normalized Discounted Cumulative Gain (NDCG) as the primary metrics.
+
+### Functional Evaluation
+
+In addition to model metrics, evaluate:
+- Questionnaire completion rate
+- System usability (SUS scale)
+- Stakeholder acceptance (department heads and faculty)
+- Recommendation relevance rating by department heads
+
+---
+
+## 7. Role-Based Access Design
+
+The system implements four roles aligned with QSU's organizational structure:
+
+| Role | Real-world Equivalent | System Scope |
+|---|---|---|
+| `faculty` | Teaching faculty | Own assessment and recommendation |
+| `department_admin` | Program Chair / Department Head | Department faculty roster and recommendations |
+| `campus_admin` | Campus Director / Dean | All departments in one campus |
+| `system_admin` | IT Administrator | Full system access, model management |
+
+---
+
+## 8. Multi-Campus Architecture
+
+QSU operates across three campuses (Diffun, Maddela, Cabarroguis). The system supports all three within a single database using a `campuses` → `departments` → `faculty` hierarchy.
+
+This design allows:
+- Campus-specific recommendations
+- Cross-campus comparisons by system admin
+- Institutional planning at campus and university level
+
+---
+
+## 9. Privacy & Ethics
+
+- All faculty data is stored with anonymized internal IDs
+- Questionnaire responses are confidential and used only for academic recommendation purposes
+- All administrative operations are audit-logged with timestamps and IP addresses
+- The system complies with QSU's data privacy obligations under RA 10173 (Data Privacy Act of 2012)
+
+---
+
+## 10. Technology Stack
+
+| Layer | Technology | Version |
+|---|---|---|
+| Frontend | Next.js + TypeScript | 14.x |
+| UI Styling | Tailwind CSS | 3.x |
+| Backend API | FastAPI | 0.11x |
+| ORM | SQLAlchemy | 2.x |
+| Database | MySQL (XAMPP) | 8.x |
+| ML Library | scikit-learn | 1.x |
+| Auth | JWT (PyJWT + bcrypt) | — |
+| Migrations | Alembic | — |
+| Testing | pytest + httpx | — |

@@ -1,6 +1,6 @@
-# QSU Faculty Training Recommender — Complete API Reference v2.0
+# QSU Faculty Training Recommender — API Reference v3.0
 
-> **Version 2.0** — MySQL + RBAC + Multi-Part Questionnaire + Next.js Ready
+> **Version 3.0** — Multi-Campus · RBAC · Transparent Recommendations · Match Scores
 
 ---
 
@@ -9,238 +9,138 @@
 1. [Architecture Overview](#1-architecture-overview)
 2. [Server Setup](#2-server-setup)
 3. [Authentication](#3-authentication)
-4. [Account Hierarchy](#4-account-hierarchy)
-5. [Role-Based Access Control](#5-role-based-access-control)
+4. [Account Hierarchy & RBAC](#4-account-hierarchy--rbac)
+5. [Questionnaire Status Lifecycle](#5-questionnaire-status-lifecycle)
 6. [Endpoints Reference](#6-endpoints-reference)
    - [Health](#61-health)
    - [Auth — Login & Register](#62-auth--login--register)
    - [Profile — Faculty Self-Service](#63-profile--faculty-self-service)
    - [Questionnaire — Multi-Part Form](#64-questionnaire--multi-part-form)
    - [Users — Admin Management](#65-users--admin-management)
-   - [Recommendations](#66-recommendations)
-   - [Training Catalog](#67-training-catalog)
-   - [Model Training](#68-model-training)
-   - [Audit Logs](#69-audit-logs)
-7. [Postman Testing Guide](#7-postman-testing-guide)
-8. [Next.js Integration Guide](#8-nextjs-integration-guide)
-9. [Error Reference](#9-error-reference)
+   - [Campuses & Departments](#66-campuses--departments)
+   - [Recommendations](#67-recommendations)
+   - [Training Catalog](#68-training-catalog)
+   - [Model Training](#69-model-training)
+   - [Audit Logs](#610-audit-logs)
+7. [Recommendation Response Schemas](#7-recommendation-response-schemas)
+8. [Error Reference](#8-error-reference)
+9. [Postman Testing Guide](#9-postman-testing-guide)
 
 ---
 
 ## 1. Architecture Overview
 
 ```
-                    ┌─────────────────────────────────────────┐
-                    │         Next.js Frontend                │
-                    │  (Faculty Dashboard / Admin Panel)      │
-                    └────────────────┬────────────────────────┘
-                                     │ HTTPS + JWT Bearer Token
-                                     ▼
-                    ┌─────────────────────────────────────────┐
-                    │         FastAPI REST API v2.0           │
-                    │                                         │
-                    │  /auth          /profile                │
-                    │  /questionnaire /users                  │
-                    │  /recommendations /catalog              │
-                    │  /training      /audit-logs             │
-                    └──────────┬──────────────────┬──────────┘
-                               │                  │
-                    ┌──────────▼───────┐  ┌───────▼──────────┐
-                    │   MySQL (XAMPP)  │  │  ML Model (.joblib)│
-                    │                 │  │  scikit-learn       │
-                    │  users          │  │  Random Forest      │
-                    │  faculty        │  │  Multi-label        │
-                    │  departments    │  └─────────────────────┘
-                    │  questionnaire  │
-                    │  training_catalog│
-                    │  audit_logs     │
-                    └─────────────────┘
+Next.js Frontend (Faculty / Dept Admin / Campus Admin / Sys Admin)
+                │ HTTPS + JWT Bearer Token
+                ▼
+        FastAPI REST API v3.0
+        Base URL: http://localhost:8000/api/v1
+                │
+      ┌─────────┴────────┐
+      ▼                  ▼
+  MySQL DB          ML Model (.joblib)
+  (XAMPP)           scikit-learn Random Forest
 ```
-
-### Questionnaire Flow & Status Lifecycle
-
-```
-Faculty Login
-     │
-     ▼
-Dashboard: status = "not_started"
-     │
-     ▼
-Submit Part 1 (Personal Profile)  ──► Saved to MySQL ──► status = "in_progress"
-     │ (must be complete before Part 2 unlocks)
-     ▼
-Submit Parts 2, 3, 4, 5, 6 ───────► Saved to MySQL ──► status = "eligible"
-     │
-     ▼
-POST /profile/request-recommendation
-     │
-     ▼
-Result generated ─────────────────► Saved to Faculty.last_recommendation_json
-                                    status = "has_recommendation"
-```
-
-#### Status Lifecycle (`faculty.questionnaire_status`)
-
-- `not_started`: Default when account is created. No questionnaire parts submitted yet.
-- `in_progress`: Faculty has saved at least one part, but missing required parts (1, 2, 3, 5, or 6).
-- `eligible`: All 5 required parts (1, 2, 3, 5, 6) are completed. Ready for recommendation execution.
-- `has_recommendation`: Recommendation has been executed and saved directly to the faculty record.
-
-> **Department Recommendation Filtering Rule:**
-> `POST /api/v1/recommendations/department` automatically filters faculty members by `questionnaire_status IN ('eligible', 'has_recommendation')`. Any faculty with `not_started` or `in_progress` status are automatically excluded to guarantee valid, complete data payloads.
 
 ---
 
 ## 2. Server Setup
 
-### Prerequisites
-- XAMPP (MySQL running on port 3306)
-- Python 3.11+
-- Virtual environment activated
-
-### Start the Server
-
+**Start backend:**
 ```powershell
-# 1. Create MySQL database
-.venv\Scripts\python scripts/create_mysql_db.py
-
-# 2. Create tables + seed roles, departments, default admin, catalog
-.venv\Scripts\python scripts/seed_db.py
-
-# 3. Start API server
 .venv\Scripts\uvicorn app.main:app --reload
 ```
 
-### Endpoints
-| URL | Purpose |
-|---|---|
-| `http://127.0.0.1:8000` | API root |
-| `http://127.0.0.1:8000/api/v1` | Versioned API prefix |
-| `http://127.0.0.1:8000/docs` | Swagger UI (interactive testing) |
-| `http://127.0.0.1:8000/redoc` | ReDoc documentation |
-| `http://127.0.0.1:8000/openapi.json` | OpenAPI schema (for Next.js codegen) |
+**Swagger UI:** http://127.0.0.1:8000/docs
+**ReDoc:** http://127.0.0.1:8000/redoc
+**Base URL:** `http://127.0.0.1:8000/api/v1`
 
 ---
 
 ## 3. Authentication
 
-### JWT Bearer Token
+All protected endpoints require a JWT Bearer token.
 
-All protected endpoints require a valid JWT token in the Authorization header:
-
-```http
-Authorization: Bearer <your_access_token>
-```
-
-Obtain a token via `POST /api/v1/auth/login`. Tokens expire based on the `ACCESS_TOKEN_EXPIRE_MINUTES` setting in `.env` (default: 60 minutes).
-
-### Admin API Key (Legacy — Training & Catalog Write)
+### Login
 
 ```http
-X-Admin-API-Key: change-this-in-production
+POST /api/v1/auth/login
+Content-Type: application/x-www-form-urlencoded
+
+username=admin&password=admin123
 ```
 
-Used only for model training triggers and catalog item creation.
+**Response:**
+```json
+{
+  "access_token": "eyJhbGci...",
+  "token_type": "bearer",
+  "role": "system_admin",
+  "full_name": "System Administrator"
+}
+```
+
+**Using the token:**
+```http
+Authorization: Bearer <access_token>
+```
+
+Token lifetime: configured via `ACCESS_TOKEN_EXPIRE_MINUTES` in `.env` (default: 480 minutes / 8 hours).
 
 ---
 
-## 4. Account Hierarchy
+## 4. Account Hierarchy & RBAC
 
-Account creation follows a **strict top-down hierarchy**:
-
-```
-system_admin
-    │
-    └──► creates ──► department_admin  (requires department_code)
-                         │
-                         └──► creates ──► faculty  (within their own department only)
-                                              │
-                                              └──► CANNOT create any accounts
-```
-
-| Creator | Can Create | Restrictions |
+| Role | Scope | Key Permissions |
 |---|---|---|
-| `system_admin` | `department_admin`, `system_admin` | Must supply `department_code` for dept admin |
-| `department_admin` | `faculty` only | Only within their own department |
-| `faculty` | Nothing | Cannot call `/auth/register` |
+| `faculty` | Self only | Questionnaire, own recommendation |
+| `department_admin` | Own department | Faculty roster, dept recommendation |
+| `campus_admin` | Own campus | All departments, campus recommendation |
+| `system_admin` | All campuses | Full access, ML training, user management |
+
+### Enforcement
+
+- `department_admin`: API validates `faculty.department_id == admin.department_id`
+- `campus_admin`: API validates `faculty.department.campus_id == admin.campus_id`
+- `faculty`: Cannot call admin recommendation endpoints (403 Forbidden)
 
 ---
 
-### Seeded Test Accounts (Ready for Next.js Testing)
+## 5. Questionnaire Status Lifecycle
 
-The database seed script (`.venv\Scripts\python scripts/seed_db.py`) pre-configures all necessary user accounts, departments, questionnaire forms, and stored recommendations across all status levels:
+```
+not_started  →  in_progress  →  eligible  →  has_recommendation
+```
 
-| Username | Password | Role | Department | `questionnaire_status` | Ideal Next.js Testing Use Case |
-|---|---|---|---|---|---|
-| `admin` | `admin123` | `system_admin` | *All* | — | Admin panel dashboard, user management, audit logs, model training |
-| `dept_bsit` | `dept123` | `department_admin` | `BSIT` | — | BSIT Dept Admin dashboard, department recommendations, faculty monitoring |
-| `dept_bsed` | `dept123` | `department_admin` | `BSED` | — | BSED Dept Admin dashboard, cross-department comparison |
-| `prof_santos` | `faculty123` | `faculty` | `BSIT` | `has_recommendation` | Faculty Dashboard with **active recommendation result** & completed questionnaire |
-| `prof_reyes` | `faculty123` | `faculty` | `BSIT` | `eligible` | Faculty Dashboard ready to click **"Request Recommendation"** |
-| `prof_cruz` | `faculty123` | `faculty` | `BSIT` | `in_progress` | Faculty Dashboard testing **Part 3 resume flow** (Parts 1 & 2 done) |
-| `prof_garcia` | `faculty123` | `faculty` | `BSIT` | `not_started` | Faculty Dashboard testing **fresh onboarding & Part 1 start** |
-| `prof_torres` | `faculty123` | `faculty` | `BSED` | `eligible` | BSED Faculty Dashboard testing |
+| Status | Trigger |
+|---|---|
+| `not_started` | Default after account creation |
+| `in_progress` | At least one questionnaire part saved |
+| `eligible` | All 5 required parts (1,2,3,5,6) complete |
+| `has_recommendation` | `POST /recommendations/individual` or `POST /profile/request-recommendation` called successfully |
 
-**Default Admin Account** (created by seed script):
-- Username: `admin`
-- Password: `admin123`
-- Role: `system_admin`
-
-> **Important:** Change the default admin password immediately in production.
-
----
-
-## 5. Role-Based Access Control
-
-| Endpoint | faculty | department_admin | system_admin |
-|---|:---:|:---:|:---:|
-| `GET /health` | ✅ | ✅ | ✅ |
-| `POST /auth/login` | ✅ | ✅ | ✅ |
-| `GET /auth/me` | ✅ | ✅ | ✅ |
-| `POST /auth/register` | ❌ | ✅ (faculty in own dept) | ✅ (dept_admin / system_admin) |
-| **Profile** | | | |
-| `GET /profile` | ✅ (own) | ❌ | ❌ |
-| `PATCH /profile` | ✅ (own) | ❌ | ❌ |
-| `POST /profile/request-recommendation` | ✅ (own, min parts required) | ❌ | ❌ |
-| `GET /profile/recommendation-history` | ✅ (own) | ❌ | ❌ |
-| **Questionnaire** | | | |
-| `GET /questionnaire/progress` | ✅ (own) | ❌ | ❌ |
-| `GET /questionnaire/parts/{n}` | ✅ (own) | ❌ | ❌ |
-| `PUT /questionnaire/parts/{n}` | ✅ (own) | ❌ | ❌ |
-| `GET /questionnaire/can-recommend` | ✅ (own) | ❌ | ❌ |
-| **Users Management** | | | |
-| `GET /users` | ❌ | ✅ (own dept faculty) | ✅ (all) |
-| `GET /users/{id}` | ❌ | ✅ (own dept) | ✅ (all) |
-| `GET /users/{id}/questionnaire-status` | ❌ | ✅ (own dept) | ✅ (all) |
-| `PATCH /users/{id}` | ❌ | ✅ (own dept, limited) | ✅ (all) |
-| **Recommendations** | | | |
-| `POST /recommendations/individual` | ❌ (use /profile) | ✅ (own dept faculty) | ✅ (any faculty) |
-| `POST /recommendations/department` | ❌ | ✅ (own dept only) | ✅ (any dept) |
-| **Catalog** | | | |
-| `GET /catalog` | ✅ | ✅ | ✅ |
-| `POST /catalog` | ❌ | ❌ | ✅ (Admin Key) |
-| **Training** | | | |
-| `POST /training/train` | ❌ | ❌ | ✅ (Admin Key) |
-| **Audit Logs** | | | |
-| `GET /audit-logs` | ❌ | ❌ | ✅ |
+**Recommendation filtering:** Endpoints `POST /recommendations/department` and `POST /recommendations/campus` automatically skip faculty with `not_started` or `in_progress` status. These appear in the response's `skipped_faculty[]` array.
 
 ---
 
 ## 6. Endpoints Reference
 
----
-
 ### 6.1 Health
 
-**`GET /api/v1/health`** — No auth required
+```http
+GET /api/v1/health
+```
 
+No auth required.
+
+**Response:**
 ```json
 {
   "status": "ok",
-  "model": {
-    "status": "ready",
-    "version": "20260812055414"
-  }
+  "model_ready": true,
+  "model_version": "v20260820180225",
+  "database": "connected"
 }
 ```
 
@@ -249,101 +149,24 @@ The database seed script (`.venv\Scripts\python scripts/seed_db.py`) pre-configu
 ### 6.2 Auth — Login & Register
 
 #### Login
+```http
+POST /api/v1/auth/login
+Content-Type: application/x-www-form-urlencoded
 
-**`POST /api/v1/auth/login`** — No auth required
-
-**Request:**
-```json
-{
-  "username": "admin",
-  "password": "admin123"
-}
+username=johndoe&password=pass123
 ```
 
-**Response (200):**
-```json
+#### Faculty Self-Registration
+```http
+POST /api/v1/auth/register
+Content-Type: application/json
+
 {
-  "access_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
-  "token_type": "bearer",
-  "user": {
-    "id": 1,
-    "username": "admin",
-    "full_name": "System Administrator",
-    "role": "system_admin",
-    "department": null
-  }
-}
-```
-
-**Errors:**
-- `401` — Invalid username or password
-- `403` — Account is inactive
-
----
-
-#### Get My Auth Profile
-
-**`GET /api/v1/auth/me`** — Requires JWT
-
-```json
-{
-  "id": 2,
-  "username": "prof_santos",
-  "email": "santos@qsu.edu.ph",
-  "full_name": "Maria Santos",
-  "role": "faculty",
-  "department": {
-    "id": 1,
-    "code": "BSIT",
-    "name": "Bachelor of Science in Information Technology"
-  },
-  "status": "active"
-}
-```
-
----
-
-#### Register Account
-
-**`POST /api/v1/auth/register`** — Requires JWT (dept_admin or system_admin only)
-
-**Creating a Department Admin** (system_admin only):
-```json
-{
-  "username": "dept_bsit",
-  "password": "securepass123",
-  "email": "bsit.chair@qsu.edu.ph",
-  "full_name": "BSIT Department Chair",
-  "role": "department_admin",
-  "department_code": "BSIT"
-}
-```
-
-**Creating a Faculty Account** (department_admin):
-```json
-{
-  "username": "prof_reyes",
-  "password": "securepass123",
-  "email": "reyes@qsu.edu.ph",
-  "full_name": "Juan Reyes",
-  "role": "faculty",
-  "department_code": "BSIT",
-  "faculty_code": "BSIT-001",
-  "academic_rank": "Instructor I",
-  "highest_degree": "Master's Degree",
-  "specialization": "Computer Science"
-}
-```
-
-**Available Department Codes:**
-`BSIT`, `BSED`, `BSCE`, `BEED`, `BSBA`, `BSCS`, `BAELS`, `BSMATH`, `BSHM`, `BSMidwifery`
-
-**Response (201):**
-```json
-{
-  "status": "success",
-  "message": "Account for 'prof_reyes' (faculty) created successfully.",
-  "user_id": 5
+  "username": "jdoe",
+  "email": "jdoe@qsu.edu.ph",
+  "full_name": "John Doe",
+  "password": "pass123",
+  "department_id": 3
 }
 ```
 
@@ -351,388 +174,117 @@ The database seed script (`.venv\Scripts\python scripts/seed_db.py`) pre-configu
 
 ### 6.3 Profile — Faculty Self-Service
 
-All `/profile` endpoints are **faculty-only**. Admins should use `/users` instead.
+All routes require `Authorization: Bearer <token>` (faculty role).
 
----
-
-#### Get Own Profile
-
-**`GET /api/v1/profile`** — Requires JWT (faculty only)
-
-```json
-{
-  "user": {
-    "id": 3,
-    "username": "prof_reyes",
-    "email": "reyes@qsu.edu.ph",
-    "full_name": "Juan Reyes",
-    "status": "active"
-  },
-  "faculty_profile": {
-    "faculty_id": 2,
-    "faculty_code": "BSIT-001",
-    "academic_rank": "Instructor I",
-    "highest_degree": "Master's Degree",
-    "specialization": "Computer Science",
-    "department": {
-      "code": "BSIT",
-      "name": "Bachelor of Science in Information Technology"
-    }
-  },
-  "questionnaire_progress": {
-    "eligible_for_recommendation": false,
-    "required_parts_completed": "1/5",
-    "total_parts_completed": "1/8",
-    "parts_status": {
-      "Personal Profile": "complete",
-      "Educational Background": "not_completed",
-      "Professional Background": "not_completed",
-      "Training History": "not_completed",
-      "Competency Assessment": "not_completed",
-      "Emerging Training Needs": "not_completed",
-      "Learning Preferences": "not_completed",
-      "Barriers to Training": "not_completed"
-    }
-  }
-}
+#### Get own profile
+```http
+GET /api/v1/profile/me
 ```
 
----
+#### Update own profile
+```http
+PUT /api/v1/profile/me
+Content-Type: application/json
 
-#### Update Own Profile
-
-**`PATCH /api/v1/profile`** — Requires JWT (faculty only)
-
-```json
-{
-  "full_name": "Juan dela Cruz Reyes",
-  "email": "jd.reyes@qsu.edu.ph",
-  "academic_rank": "Instructor II",
-  "specialization": "Software Engineering",
-  "highest_degree": "Master's Degree"
-}
+{ "full_name": "Updated Name", "email": "new@email.com" }
 ```
 
-All fields are optional. Only provided fields are updated.
-
----
-
-#### Request My Training Recommendation
-
-**`POST /api/v1/profile/request-recommendation`** — Requires JWT (faculty only)
-
-No request body. Uses saved questionnaire data from MySQL.
-
-**Requires:** Parts 1, 2, 3, 5, and 6 must be complete.
-
-**Response (200):**
-```json
-{
-  "status": "success",
-  "model": { "status": "ready", "version": "20260812055414" },
-  "prediction": {
-    "top_predictions": [
-      { "rank": 1, "training_category": "Artificial Intelligence", "probability": 0.87 },
-      { "rank": 2, "training_category": "Educational Technology", "probability": 0.81 }
-    ],
-    "all_predictions": [...]
-  },
-  "recommendations": [
-    {
-      "training_id": "TRN-001",
-      "title": "AI in Higher Education: Tools and Applications",
-      "category": "Artificial Intelligence",
-      "match_score": 0.92,
-      "reason": "Matches the predicted Artificial Intelligence training need. Aligns with preferred modality (Webinar).",
-      "description": "..."
-    }
-  ]
-}
+#### Request own recommendation
+```http
+POST /api/v1/profile/request-recommendation
 ```
 
-**Error (400):**
-```json
-{
-  "detail": "Please complete the following questionnaire parts first: ['Educational Background', 'Competency Assessment']"
-}
+Triggers ML inference for the authenticated faculty member. The faculty must be `eligible` or `has_recommendation` status. Returns the full transparent recommendation result.
+
+#### Get own last recommendation
+```http
+GET /api/v1/profile/last-recommendation
 ```
 
----
-
-#### View Recommendation History
-
-**`GET /api/v1/profile/recommendation-history`** — Requires JWT (faculty only)
-
-```json
-{
-  "faculty_id": 2,
-  "total": 3,
-  "history": [
-    {
-      "id": 1,
-      "recommendation_type": "individual",
-      "model_version": "20260812055414",
-      "created_at": "2026-08-12T10:45:00",
-      "recommendation": { ... }
-    }
-  ]
-}
-```
+Returns the stored recommendation JSON without re-running inference.
 
 ---
 
 ### 6.4 Questionnaire — Multi-Part Form
 
-All `/questionnaire` endpoints are **faculty-only**. Parts must be completed in order — Part N cannot be submitted until Part N-1 is complete.
+Faculty complete the questionnaire in parts. Each part can be saved independently.
 
-#### Part Overview
+```http
+# Part 1 — Personal Profile
+POST /api/v1/questionnaire/part1
+PUT  /api/v1/questionnaire/part1
+GET  /api/v1/questionnaire/part1
 
-| Part | Name | Required for Recommendation |
-|---|---|:---:|
-| 1 | Personal Profile | ✅ Yes |
-| 2 | Educational Background | ✅ Yes |
-| 3 | Professional Background | ✅ Yes |
-| 4 | Training History | ❌ No |
-| 5 | Competency Assessment | ✅ Yes |
-| 6 | Emerging Training Needs | ✅ Yes |
-| 7 | Learning Preferences | ❌ No |
-| 8 | Barriers to Training | ❌ No |
+# Part 2 — Training History
+POST /api/v1/questionnaire/part2
+PUT  /api/v1/questionnaire/part2
+GET  /api/v1/questionnaire/part2
 
----
+# Part 3 — Competency Assessment
+POST /api/v1/questionnaire/part3
+PUT  /api/v1/questionnaire/part3
+GET  /api/v1/questionnaire/part3
 
-#### Get Progress
+# Part 4 — Emerging Training Needs
+POST /api/v1/questionnaire/part4
+PUT  /api/v1/questionnaire/part4
+GET  /api/v1/questionnaire/part4
 
-**`GET /api/v1/questionnaire/progress`** — Requires JWT (faculty only)
+# Part 5 — Preferred Modality / Schedule / Duration
+POST /api/v1/questionnaire/part5
+PUT  /api/v1/questionnaire/part5
+GET  /api/v1/questionnaire/part5
 
-```json
-{
-  "faculty_id": 2,
-  "eligible_for_recommendation": false,
-  "required_parts_completed": "3/5",
-  "total_parts_completed": "3/8",
-  "parts": [
-    {
-      "part_number": 1,
-      "label": "Personal Profile",
-      "required_for_recommendation": true,
-      "status": "complete",
-      "updated_at": "2026-08-12T10:00:00"
-    },
-    {
-      "part_number": 2,
-      "label": "Educational Background",
-      "required_for_recommendation": true,
-      "status": "complete",
-      "updated_at": "2026-08-12T10:05:00"
-    },
-    {
-      "part_number": 3,
-      "label": "Professional Background",
-      "required_for_recommendation": true,
-      "status": "complete",
-      "updated_at": "2026-08-12T10:10:00"
-    },
-    {
-      "part_number": 4,
-      "label": "Training History",
-      "required_for_recommendation": false,
-      "status": "not_started",
-      "updated_at": null
-    },
-    {
-      "part_number": 5,
-      "label": "Competency Assessment",
-      "required_for_recommendation": true,
-      "status": "not_started",
-      "updated_at": null
-    }
-  ]
-}
+# Part 6 — Barriers
+POST /api/v1/questionnaire/part6
+PUT  /api/v1/questionnaire/part6
+GET  /api/v1/questionnaire/part6
+
+# Status check
+GET /api/v1/questionnaire/status
 ```
 
----
-
-#### Get Saved Part Data
-
-**`GET /api/v1/questionnaire/parts/{part_number}`** — Requires JWT (faculty only)
-
+**Part 1 Example Body:**
 ```json
 {
-  "part_number": 1,
-  "label": "Personal Profile",
-  "is_complete": true,
-  "data": {
-    "department": "BSIT",
-    "age": 32,
-    "sex": "Female",
-    "employment_status": "Permanent"
-  },
-  "updated_at": "2026-08-12T10:00:00"
-}
-```
-
----
-
-#### Submit / Update a Part
-
-**`PUT /api/v1/questionnaire/parts/{part_number}`** — Requires JWT (faculty only)
-
-Submitting a part validates it and marks it complete. You can re-submit to update data.
-
-**Part 1 — Personal Profile**
-```json
-{
-  "department": "BSIT",
+  "department": "BSCS",
   "age": 32,
-  "sex": "Female",
-  "employment_status": "Permanent"
-}
-```
-Valid `sex` values: `Male`, `Female`, `Prefer not to say`
-
----
-
-**Part 2 — Educational Background**
-```json
-{
-  "highest_educational_attainment": "Master's Degree",
-  "field_of_specialization": "Computer Science"
-}
-```
-
----
-
-**Part 3 — Professional Background**
-```json
-{
+  "sex": "Male",
+  "employment_status": "Permanent",
   "academic_rank": "Instructor I",
-  "years_teaching": "1-4 years",
+  "highest_educational_attainment": "Master's Degree",
+  "field_of_specialization": "Computer Science",
+  "years_teaching": "5-10 years",
   "administrative_designation": "None",
   "trainings_last_3_years": "3-5"
 }
 ```
 
----
-
-**Part 4 — Training History** *(optional)*
-```json
-{
-  "training_areas": ["Instruction", "Research", "Technology Integration"],
-  "training_modalities_attended": ["Webinar", "Face-to-Face"]
-}
-```
-
----
-
-**Part 5 — Competency Assessment** *(required)*
-
-Each competency must have `proficiency` (1–5) and `importance` (1–5):
+**Part 3 Example Body (Competency):**
 ```json
 {
   "competency": {
     "research_competency": { "proficiency": 2, "importance": 5 },
     "computer_literacy_digital_technologies": { "proficiency": 3, "importance": 5 },
-    "outcomes_based_education": { "proficiency": 2, "importance": 4 },
-    "student_development": { "proficiency": 3, "importance": 4 },
-    "curriculum_development": { "proficiency": 2, "importance": 4 },
-    "instructional_material_development": { "proficiency": 2, "importance": 3 },
-    "community_extension": { "proficiency": 3, "importance": 3 }
+    "outcomes_based_education": { "proficiency": 2, "importance": 5 },
+    "teaching_learning_process": { "proficiency": 4, "importance": 5 },
+    "publication_writing": { "proficiency": 1, "importance": 4 }
   }
 }
 ```
 
----
-
-**Part 6 — Emerging Training Needs** *(required)*
-
-Rate each area 1 (Not Important) to 5 (Most Important):
+**Status Response:**
 ```json
 {
-  "emerging_training_needs": {
-    "artificial_intelligence": 5,
-    "machine_learning": 4,
-    "data_analytics": 4,
-    "cybersecurity": 3,
-    "cloud_computing": 2,
-    "learning_management_systems": 4,
-    "educational_technology": 5,
-    "statistical_software": 3,
-    "research_methods": 4,
-    "grant_writing": 3
+  "questionnaire_status": "eligible",
+  "parts_completed": {
+    "part1": true,
+    "part2": true,
+    "part3": true,
+    "part4": false,
+    "part5": true,
+    "part6": true
   }
-}
-```
-
----
-
-**Part 7 — Learning Preferences** *(optional)*
-```json
-{
-  "preferred_learning_modality": ["Webinar", "Blended Learning"],
-  "preferred_schedule": ["Saturdays"],
-  "preferred_duration": ["Two days"]
-}
-```
-
----
-
-**Part 8 — Barriers to Training** *(optional)*
-
-Rate each barrier 1–5:
-```json
-{
-  "barriers": {
-    "heavy_teaching_workload": 4,
-    "time_constraints": 4,
-    "lack_of_budget": 3,
-    "internet_connectivity": 2,
-    "family_responsibilities": 3,
-    "lack_of_information": 2
-  }
-}
-```
-
-**Successful submission response:**
-```json
-{
-  "status": "success",
-  "message": "Part 1 (Personal Profile) saved successfully.",
-  "part_number": 1,
-  "is_complete": true,
-  "eligible_for_recommendation": false
-}
-```
-
-**Error — previous part not complete:**
-```json
-{
-  "detail": "Part 4 (Training History) must be completed before submitting Part 5."
-}
-```
-
----
-
-#### Check Eligibility
-
-**`GET /api/v1/questionnaire/can-recommend`** — Requires JWT (faculty only)
-
-```json
-{
-  "eligible": false,
-  "missing_required_parts": [
-    { "part_number": 5, "label": "Competency Assessment" },
-    { "part_number": 6, "label": "Emerging Training Needs" }
-  ],
-  "message": "Please complete the following required parts first: ['Competency Assessment', 'Emerging Training Needs']"
-}
-```
-
-When eligible:
-```json
-{
-  "eligible": true,
-  "missing_required_parts": [],
-  "message": "You are eligible to request a training recommendation."
 }
 ```
 
@@ -740,899 +292,496 @@ When eligible:
 
 ### 6.5 Users — Admin Management
 
-Only `department_admin` and `system_admin` can access `/users`. Faculty must use `/profile`.
+Requires admin role (department_admin, campus_admin, or system_admin).
 
----
+#### List users
+```http
+GET /api/v1/users?page=1&per_page=20&role=faculty&campus_id=1&department_id=3&status=active
+```
 
-#### List Users
+Returns paginated list with headers:
+- `X-Total-Count` — total matching records
+- `X-Page` — current page
+- `X-Per-Page` — page size
 
-**`GET /api/v1/users`** — Requires JWT (admin roles only)
+#### Get single user
+```http
+GET /api/v1/users/{user_id}
+```
 
-- `system_admin`: all users
-- `department_admin`: only faculty in their department
+#### Create user (admin-managed)
+```http
+POST /api/v1/users
+Content-Type: application/json
 
-```json
 {
-  "users": [
-    {
-      "id": 3,
-      "username": "prof_reyes",
-      "email": "reyes@qsu.edu.ph",
-      "full_name": "Juan Reyes",
-      "role": "faculty",
-      "department_code": "BSIT",
-      "department_name": "Bachelor of Science in Information Technology",
-      "status": "active"
-    }
-  ]
+  "username": "jsmith",
+  "full_name": "Jane Smith",
+  "email": "jsmith@qsu.edu.ph",
+  "password": "securepass",
+  "role": "faculty",
+  "department_id": 3,
+  "campus_id": 1
 }
+```
+
+#### Update user
+```http
+PUT /api/v1/users/{user_id}
+Content-Type: application/json
+
+{ "full_name": "Jane M. Smith", "is_active": true }
+```
+
+#### Delete user
+```http
+DELETE /api/v1/users/{user_id}
+```
+
+#### List users by campus
+```http
+GET /api/v1/users?campus_id=1&role=faculty
 ```
 
 ---
 
-#### Get User by ID
+### 6.6 Campuses & Departments
 
-**`GET /api/v1/users/{user_id}`** — Requires JWT (admin roles)
+#### List all campuses
+```http
+GET /api/v1/campuses
+```
 
-Same structure as list item above.
+#### Get campus details
+```http
+GET /api/v1/campuses/{campus_id}
+```
 
----
+#### List departments in campus
+```http
+GET /api/v1/campuses/{campus_id}/departments
+```
 
-#### Get User's Questionnaire Status
+#### Create department (system_admin)
+```http
+POST /api/v1/campuses/{campus_id}/departments
+Content-Type: application/json
 
-**`GET /api/v1/users/{user_id}/questionnaire-status`** — Requires JWT (admin roles)
-
-Allows department admin to see which parts a faculty member has completed:
-
-```json
-{
-  "user_id": 3,
-  "faculty_id": 2,
-  "username": "prof_reyes",
-  "full_name": "Juan Reyes",
-  "eligible_for_recommendation": false,
-  "required_parts_completed": "3/5",
-  "total_parts_completed": "3/8",
-  "parts": [
-    { "part_number": 1, "label": "Personal Profile", "required": true, "status": "complete" },
-    { "part_number": 2, "label": "Educational Background", "required": true, "status": "complete" },
-    { "part_number": 3, "label": "Professional Background", "required": true, "status": "complete" },
-    { "part_number": 4, "label": "Training History", "required": false, "status": "not_started" },
-    { "part_number": 5, "label": "Competency Assessment", "required": true, "status": "not_started" },
-    { "part_number": 6, "label": "Emerging Training Needs", "required": true, "status": "not_started" },
-    { "part_number": 7, "label": "Learning Preferences", "required": false, "status": "not_started" },
-    { "part_number": 8, "label": "Barriers to Training", "required": false, "status": "not_started" }
-  ]
-}
+{ "name": "BS Information Technology", "code": "BSIT" }
 ```
 
 ---
 
-#### Update User
+### 6.7 Recommendations
 
-**`PATCH /api/v1/users/{user_id}`** — Requires JWT (admin roles)
+> **Note:** Faculty members cannot call any of these endpoints. Faculty use `POST /api/v1/profile/request-recommendation` instead.
 
-```json
-{
-  "full_name": "Updated Name",
-  "email": "newemail@qsu.edu.ph",
-  "status": "inactive"
-}
+#### Individual Recommendation
+
+```http
+POST /api/v1/recommendations/individual?faculty_id=42
+Authorization: Bearer <token>
 ```
 
-> `status` can only be changed by `system_admin`.
+**RBAC:**
+- `department_admin`: faculty must be in their department
+- `campus_admin`: faculty must be in their campus
+- `system_admin`: any faculty
 
----
+**Validation:** Faculty must have `questionnaire_status` in `['eligible', 'has_recommendation']`
 
-### 6.6 Recommendations
-
-All recommendation endpoints require JWT. Faculty use `/profile/request-recommendation` instead.
-
----
-
-#### Individual Recommendation (Admin Use)
-
-**`POST /api/v1/recommendations/individual?faculty_id=2`** — Requires JWT
-
-- `department_admin`: can only run for faculty in their own department
-- `system_admin`: can run for any faculty
-- `faculty`: **403 Forbidden** — use `/profile/request-recommendation`
-
-Automatically uses saved questionnaire data from MySQL. No request body needed.
-
-**Query parameter:** `faculty_id` (required)
-
-**Response:** Same structure as `/profile/request-recommendation`
-
-**Error — not eligible:**
-```json
-{
-  "detail": "Faculty ID 2 has not completed the minimum questionnaire requirements (Parts 1, 2, 3, 5, 6)."
-}
-```
+**Returns:** Full transparent recommendation result (see Section 7).
 
 ---
 
 #### Department Recommendation
 
-**`POST /api/v1/recommendations/department?department_code=BSIT`** — Requires JWT
+```http
+POST /api/v1/recommendations/department?department_id=3
+POST /api/v1/recommendations/department?department_code=BSCS&campus_id=1
+Authorization: Bearer <token>
+```
 
-- `department_admin`: auto-uses their own department (`department_code` ignored)
-- `system_admin`: must specify `department_code` as query parameter
-- `faculty`: **403 Forbidden**
+**RBAC:**
+- `department_admin`: always uses their own department (params ignored)
+- `campus_admin`: must specify a department in their campus
+- `system_admin`: any department
 
-Automatically fetches all eligible faculty from MySQL (with `questionnaire_status` in `'eligible'` or `'has_recommendation'`), filters out incomplete ones, and runs the recommendation. Stores individual results back on each faculty record.
+**Processing:**
+1. Fetches all active faculty in the department
+2. Filters to `eligible`/`has_recommendation` status
+3. Runs individual inference per eligible faculty
+4. Aggregates category scores and faculty coverage
+5. Persists individual results back to each faculty record
+6. Stores department result in `RecommendationHistory`
+
+**Response includes:**
+```json
+{
+  "department": "BSCS",
+  "department_id": 3,
+  "campus_name": "QSU Diffun",
+  "total_faculty_in_dept": 15,
+  "eligible_faculty_count": 12,
+  "skipped_faculty": [
+    {"faculty_id": 7, "questionnaire_status": "in_progress"}
+  ],
+  "top_categories": [...],
+  "recommendations": [...],
+  "model": {...},
+  "generated_at": "..."
+}
+```
+
+---
+
+#### Get Last Department Recommendation
+
+```http
+GET /api/v1/recommendations/department/last?department_id=3
+```
+
+Returns most recent stored department recommendation without re-running inference.
+
+**Response:** Same schema as POST above, plus `"has_recommendation": true`
+
+---
+
+#### Department Recommendation History
+
+```http
+GET /api/v1/recommendations/department/history?department_id=3&limit=10
+```
+
+Returns list of past department recommendations in descending order.
+
+---
+
+#### Campus Recommendation
+
+```http
+POST /api/v1/recommendations/campus
+POST /api/v1/recommendations/campus?campus_id=2
+Authorization: Bearer <token>
+```
+
+**RBAC:** `campus_admin` or `system_admin` only.
+- `campus_admin`: uses their own campus (campus_id param ignored)
+- `system_admin`: must specify campus_id
+
+Aggregates recommendations across ALL departments in the campus.
+
+---
+
+#### Get Last Campus Recommendation
+
+```http
+GET /api/v1/recommendations/campus/last?campus_id=1
+```
+
+---
+
+#### Campus Recommendation History
+
+```http
+GET /api/v1/recommendations/campus/history?campus_id=1&limit=10
+```
+
+---
+
+#### Get Faculty Last Recommendation (Admin view)
+
+```http
+GET /api/v1/recommendations/faculty/42/last
+Authorization: Bearer <token>
+```
+
+Returns stored recommendation for a specific faculty member. Used by department/campus admins to review individual faculty results.
+
+**Note:** Faculty members use `GET /api/v1/profile/last-recommendation` instead.
+
+---
+
+### 6.8 Training Catalog
+
+```http
+# List all training programs
+GET /api/v1/catalog?category=AI&status=active&page=1&per_page=20
+
+# Get single program
+GET /api/v1/catalog/{program_id}
+
+# Create program (system_admin only)
+POST /api/v1/catalog
+Content-Type: application/json
+{
+  "title": "AI and Machine Learning for Educators",
+  "category": "Artificial Intelligence",
+  "modality": "Blended Learning",
+  "duration": "3 days",
+  "provider": "QSU ICT Department",
+  "description": "Hands-on AI/ML tools for classroom use"
+}
+
+# Update program
+PUT /api/v1/catalog/{program_id}
+
+# Delete program
+DELETE /api/v1/catalog/{program_id}
+```
+
+---
+
+### 6.9 Model Training
+
+Requires `system_admin` role.
+
+#### Trigger training
+```http
+POST /api/v1/training/train
+Authorization: Bearer <token>
+```
+
+Trains a new model version from `data/raw/faculty_training.csv`. Returns training metrics.
 
 **Response:**
 ```json
 {
-  "status": "success",
-  "department": "BSIT",
-  "department_name": "Bachelor of Science in Information Technology",
-  "total_faculty_in_dept": 10,
-  "eligible_faculty_count": 7,
-  "skipped_faculty": [
-    { "faculty_id": 4, "questionnaire_status": "in_progress" }
-  ],
-  "individual_results_stored": 7,
-  "model": { "status": "ready", "version": "20260812055414" },
-  "faculty_count": 7,
-  "prediction": {
-    "top_categories": [
-      {
-        "training_category": "Artificial Intelligence",
-        "department_score": 0.81,
-        "faculty_coverage": 0.86,
-        "rank": 1
-      }
-    ]
-  },
-  "recommendations": [...]
-}
-```
-
----
-
-#### Get Faculty Last Stored Recommendation (Admin View)
-
-**`GET /api/v1/recommendations/faculty/{faculty_id}/last`** — Requires JWT (Admin roles)
-
-Allows department and system administrators to inspect the latest recommendation stored on a specific faculty member's record.
-
----
-
-### 6.7 Non-Auth Testing Endpoints (Development / Postman Testing)
-
-These endpoints do **NOT** require authentication or JWT tokens. They take raw faculty JSON payloads directly in the request body and return ML prediction and catalog match results instantly without writing to MySQL.
-
-Set `ENABLE_TEST_ENDPOINTS=false` in `.env` to disable them in production.
-
-#### Test Individual Recommendation (No Auth)
-
-**`POST /api/v1/test/recommendations/individual`** — No Auth
-
-**Request Body:**
-```json
-{
-  "faculty": {
-    "department": "BSIT",
-    "age": 35,
-    "sex": "Male",
-    "employment_status": "Permanent",
-    "academic_rank": "Assistant Professor",
-    "highest_educational_attainment": "Master's Degree",
-    "field_of_specialization": "Computer Science",
-    "years_teaching": "5-10 years",
-    "emerging_training_needs": {
-      "artificial_intelligence": 5,
-      "educational_technology": 4
-    },
-    "preferred_learning_modality": ["Webinar"]
-  }
-}
-```
-
-#### Test Department Recommendation (No Auth)
-
-**`POST /api/v1/test/recommendations/department`** — No Auth
-
-**Request Body:**
-```json
-{
-  "department": "BSIT",
-  "faculty": [
-    { "department": "BSIT", "age": 35, "emerging_training_needs": {"artificial_intelligence": 5} },
-    { "department": "BSIT", "age": 42, "emerging_training_needs": {"data_analytics": 5} }
-  ]
-}
-```
-
----
-
-### 6.7 Training Catalog
-
-#### List Catalog
-
-**`GET /api/v1/catalog`** — No auth required
-
-```
-GET /api/v1/catalog?include_inactive=false
-```
-
-```json
-{
-  "items": [
-    {
-      "training_id": "TRN-001",
-      "title": "AI in Higher Education: Tools and Applications",
-      "description": "...",
-      "categories": ["Artificial Intelligence"],
-      "target_competencies": ["Computer Literacy & Digital Technologies"],
-      "modalities": ["Webinar", "Blended Learning"],
-      "durations": ["Two days"],
-      "schedules": ["Saturdays"],
-      "status": "active"
-    }
-  ]
-}
-```
-
----
-
-#### Add Catalog Item
-
-**`POST /api/v1/catalog`** — Requires `X-Admin-API-Key` header
-
-```json
-{
-  "title": "ChatGPT Prompting for Educators",
-  "description": "Learn prompt engineering for academic use cases.",
-  "categories": ["Artificial Intelligence", "Educational Technology"],
-  "target_competencies": ["Computer Literacy & Digital Technologies"],
-  "modalities": ["Webinar"],
-  "durations": ["One day"],
-  "schedules": ["Saturdays"],
-  "status": "active"
-}
-```
-
----
-
-### 6.8 Model Training
-
-#### Trigger Retraining
-
-**`POST /api/v1/training/train`** — Requires `X-Admin-API-Key`
-
-Retrains the ML model from `data/raw/faculty_training.csv`. Saves metrics to MySQL `model_registry`.
-
-```json
-{
-  "version": "20260812180000",
-  "artifact": "models/training_recommender_v20260812180000.joblib",
+  "version": "v20260822120000",
   "metrics": {
-    "f1_micro": 0.81,
-    "f1_macro": 0.78
-  }
-}
-```
-
----
-
-### 6.9 Audit Logs
-
-**`GET /api/v1/audit-logs`** — Requires JWT (system_admin only)
-
-**Query parameters:** `limit`, `offset`, `action`, `user_id`
-
-**Recorded Actions:**
-
-| Action | Triggered By |
-|---|---|
-| `login` | Successful login |
-| `create_user` | New account created |
-| `update_user` | User profile updated |
-| `update_profile` | Faculty updated own profile |
-| `submit_questionnaire_part` | Faculty saved a questionnaire part |
-| `request_recommendation` | Faculty requested own recommendation |
-| `individual_recommendation` | Admin ran individual recommendation |
-| `department_recommendation` | Dept admin ran department recommendation |
-| `add_catalog_item` | Catalog item added |
-| `train_model` | Model retraining triggered |
-
----
-
-## 7. Postman Testing Guide
-
-### 7.1 Setup
-
-1. Install [Postman](https://www.postman.com/downloads/)
-2. Create collection: **QSU Training Recommender v2**
-3. Add collection variables:
-   - `base_url` → `http://127.0.0.1:8000/api/v1`
-   - `admin_token` → *(auto-set by Tests tab)*
-   - `faculty_token` → *(auto-set by Tests tab)*
-   - `dept_token` → *(auto-set by Tests tab)*
-   - `admin_key` → `change-this-in-production`
-
----
-
-### 7.2 Complete Test Sequence
-
-#### Test 1 — Health Check
-| | |
-|---|---|
-| **Method** | `GET` |
-| **URL** | `{{base_url}}/health` |
-
----
-
-#### Test 2 — Admin Login (save token)
-| | |
-|---|---|
-| **Method** | `POST` |
-| **URL** | `{{base_url}}/auth/login` |
-| **Body** | `{"username": "admin", "password": "admin123"}` |
-
-**Tests tab (auto-save token):**
-```javascript
-const res = pm.response.json();
-if (res.access_token) {
-    pm.collectionVariables.set("admin_token", res.access_token);
-}
-pm.test("Login successful", () => pm.response.to.have.status(200));
-pm.test("Has access_token", () => pm.expect(res.access_token).to.be.a('string'));
-pm.test("Role is system_admin", () => pm.expect(res.user.role).to.eql("system_admin"));
-```
-
----
-
-#### Test 3 — Create Department Admin
-| | |
-|---|---|
-| **Method** | `POST` |
-| **URL** | `{{base_url}}/auth/register` |
-| **Headers** | `Authorization: Bearer {{admin_token}}` |
-| **Body** | See below |
-
-```json
-{
-  "username": "dept_bsit",
-  "password": "password123",
-  "full_name": "BSIT Department Chair",
-  "role": "department_admin",
-  "department_code": "BSIT"
-}
-```
-
----
-
-#### Test 4 — Dept Admin Login
-| | |
-|---|---|
-| **Method** | `POST` |
-| **URL** | `{{base_url}}/auth/login` |
-| **Body** | `{"username": "dept_bsit", "password": "password123"}` |
-
-**Tests tab:**
-```javascript
-const res = pm.response.json();
-pm.collectionVariables.set("dept_token", res.access_token);
-pm.test("Role is department_admin", () => pm.expect(res.user.role).to.eql("department_admin"));
-```
-
----
-
-#### Test 5 — Dept Admin Creates Faculty Account
-| | |
-|---|---|
-| **Method** | `POST` |
-| **URL** | `{{base_url}}/auth/register` |
-| **Headers** | `Authorization: Bearer {{dept_token}}` |
-
-```json
-{
-  "username": "prof_santos",
-  "password": "password123",
-  "full_name": "Maria Santos",
-  "role": "faculty",
-  "department_code": "BSIT",
-  "faculty_code": "BSIT-001",
-  "academic_rank": "Instructor I"
-}
-```
-
----
-
-#### Test 6 — Faculty Login
-| | |
-|---|---|
-| **Method** | `POST` |
-| **URL** | `{{base_url}}/auth/login` |
-| **Body** | `{"username": "prof_santos", "password": "password123"}` |
-
-**Tests tab:**
-```javascript
-const res = pm.response.json();
-pm.collectionVariables.set("faculty_token", res.access_token);
-pm.test("Role is faculty", () => pm.expect(res.user.role).to.eql("faculty"));
-```
-
----
-
-#### Test 7 — Faculty: View Profile + Progress
-| | |
-|---|---|
-| **Method** | `GET` |
-| **URL** | `{{base_url}}/profile` |
-| **Headers** | `Authorization: Bearer {{faculty_token}}` |
-
----
-
-#### Test 8 — Faculty: Check Questionnaire Progress
-| | |
-|---|---|
-| **Method** | `GET` |
-| **URL** | `{{base_url}}/questionnaire/progress` |
-| **Headers** | `Authorization: Bearer {{faculty_token}}` |
-
----
-
-#### Test 9 — Faculty: Submit Part 1 (Personal Profile)
-| | |
-|---|---|
-| **Method** | `PUT` |
-| **URL** | `{{base_url}}/questionnaire/parts/1` |
-| **Headers** | `Authorization: Bearer {{faculty_token}}`, `Content-Type: application/json` |
-
-```json
-{
-  "department": "BSIT",
-  "age": 32,
-  "sex": "Female",
-  "employment_status": "Permanent"
-}
-```
-
----
-
-#### Test 10 — Faculty: Submit Part 2
-| | |
-|---|---|
-| **Method** | `PUT` |
-| **URL** | `{{base_url}}/questionnaire/parts/2` |
-| **Headers** | `Authorization: Bearer {{faculty_token}}` |
-
-```json
-{
-  "highest_educational_attainment": "Master's Degree",
-  "field_of_specialization": "Computer Science"
-}
-```
-
----
-
-#### Test 11 — Faculty: Submit Part 3
-```json
-{
-  "academic_rank": "Instructor I",
-  "years_teaching": "1-4 years",
-  "administrative_designation": "None",
-  "trainings_last_3_years": "3-5"
-}
-```
-
----
-
-#### Test 12 — Faculty: Submit Part 5 (Competency)
-
-> **Note:** Part 4 is optional. Submit Part 5 directly after Part 3 — this tests that optional parts can be skipped.
-
-```json
-{
-  "competency": {
-    "research_competency": {"proficiency": 2, "importance": 5},
-    "computer_literacy_digital_technologies": {"proficiency": 3, "importance": 5},
-    "outcomes_based_education": {"proficiency": 2, "importance": 4},
-    "student_development": {"proficiency": 3, "importance": 4}
-  }
-}
-```
-
-> **Note:** Part 5 requires Part 4 to be submitted first (sequential rule). Submit Part 4 with empty arrays, then Part 5.
-
-**Part 4 first:**
-```json
-{
-  "training_areas": [],
-  "training_modalities_attended": []
-}
-```
-
----
-
-#### Test 13 — Faculty: Submit Part 6 (Emerging Needs)
-```json
-{
-  "emerging_training_needs": {
-    "artificial_intelligence": 5,
-    "machine_learning": 4,
-    "data_analytics": 4,
-    "educational_technology": 5,
-    "research_methods": 4
-  }
-}
-```
-
----
-
-#### Test 14 — Faculty: Check Eligibility
-| | |
-|---|---|
-| **Method** | `GET` |
-| **URL** | `{{base_url}}/questionnaire/can-recommend` |
-| **Headers** | `Authorization: Bearer {{faculty_token}}` |
-
-Expected: `"eligible": true`
-
----
-
-#### Test 15 — Faculty: Request Recommendation
-| | |
-|---|---|
-| **Method** | `POST` |
-| **URL** | `{{base_url}}/profile/request-recommendation` |
-| **Headers** | `Authorization: Bearer {{faculty_token}}` |
-| **Body** | None |
-
----
-
-#### Test 16 — Dept Admin: Run Department Recommendation
-| | |
-|---|---|
-| **Method** | `POST` |
-| **URL** | `{{base_url}}/recommendations/department` |
-| **Headers** | `Authorization: Bearer {{dept_token}}` |
-
-No body needed. Auto-uses own department.
-
----
-
-#### Test 17 — Security: Faculty Cannot Access Dept Recommendation
-| | |
-|---|---|
-| **Method** | `POST` |
-| **URL** | `{{base_url}}/recommendations/department` |
-| **Headers** | `Authorization: Bearer {{faculty_token}}` |
-
-**Expected:** `403 Forbidden`
-
----
-
-#### Test 18 — Security: Faculty Cannot Access Users List
-| | |
-|---|---|
-| **Method** | `GET` |
-| **URL** | `{{base_url}}/users` |
-| **Headers** | `Authorization: Bearer {{faculty_token}}` |
-
-**Expected:** `403 Forbidden`
-
----
-
-#### Test 19 — Dept Admin: View Faculty Questionnaire Status
-| | |
-|---|---|
-| **Method** | `GET` |
-| **URL** | `{{base_url}}/users/3/questionnaire-status` |
-| **Headers** | `Authorization: Bearer {{dept_token}}` |
-
----
-
-#### Test 20 — Admin: View Audit Logs
-| | |
-|---|---|
-| **Method** | `GET` |
-| **URL** | `{{base_url}}/audit-logs?limit=20` |
-| **Headers** | `Authorization: Bearer {{admin_token}}` |
-
----
-
-## 8. Next.js Integration Guide
-
-### 8.1 Environment Setup
-
-Create `.env.local` in your Next.js project:
-```env
-NEXT_PUBLIC_API_URL=http://127.0.0.1:8000/api/v1
-NEXT_PUBLIC_APP_NAME=QSU Training Recommender
-```
-
-### 8.2 Axios Instance with JWT Interceptor
-
-```typescript
-// lib/api.ts
-import axios from 'axios';
-
-const api = axios.create({
-  baseURL: process.env.NEXT_PUBLIC_API_URL,
-  headers: {
-    'Content-Type': 'application/json',
+    "f1_micro": 0.82,
+    "f1_macro": 0.79,
+    "precision": 0.84,
+    "recall": 0.80,
+    "training_samples": 245,
+    "test_samples": 62
   },
-});
-
-// Attach JWT token to every request automatically
-api.interceptors.request.use((config) => {
-  const token = localStorage.getItem('access_token');
-  if (token) {
-    config.headers.Authorization = `Bearer ${token}`;
-  }
-  return config;
-});
-
-// Handle 401 — redirect to login
-api.interceptors.response.use(
-  (response) => response,
-  (error) => {
-    if (error.response?.status === 401) {
-      localStorage.removeItem('access_token');
-      window.location.href = '/login';
-    }
-    return Promise.reject(error);
-  }
-);
-
-export default api;
-```
-
-### 8.3 Auth Context
-
-```typescript
-// context/AuthContext.tsx
-import { createContext, useContext, useState, useEffect } from 'react';
-import api from '@/lib/api';
-
-interface AuthUser {
-  id: number;
-  username: string;
-  full_name: string;
-  role: 'faculty' | 'department_admin' | 'system_admin';
-  department: { id: number; code: string; name: string } | null;
-}
-
-interface AuthContextType {
-  user: AuthUser | null;
-  login: (username: string, password: string) => Promise<void>;
-  logout: () => void;
-  isLoading: boolean;
-}
-
-const AuthContext = createContext<AuthContextType | null>(null);
-
-export function AuthProvider({ children }: { children: React.ReactNode }) {
-  const [user, setUser] = useState<AuthUser | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
-
-  useEffect(() => {
-    const token = localStorage.getItem('access_token');
-    if (token) {
-      api.get('/auth/me')
-        .then((res) => setUser(res.data))
-        .catch(() => localStorage.removeItem('access_token'))
-        .finally(() => setIsLoading(false));
-    } else {
-      setIsLoading(false);
-    }
-  }, []);
-
-  const login = async (username: string, password: string) => {
-    const res = await api.post('/auth/login', { username, password });
-    localStorage.setItem('access_token', res.data.access_token);
-    setUser(res.data.user);
-  };
-
-  const logout = () => {
-    localStorage.removeItem('access_token');
-    setUser(null);
-  };
-
-  return (
-    <AuthContext.Provider value={{ user, login, logout, isLoading }}>
-      {children}
-    </AuthContext.Provider>
-  );
-}
-
-export const useAuth = () => {
-  const ctx = useContext(AuthContext);
-  if (!ctx) throw new Error('useAuth must be used within AuthProvider');
-  return ctx;
-};
-```
-
-### 8.4 Role-Based Route Guard
-
-```typescript
-// components/RoleGuard.tsx
-import { useAuth } from '@/context/AuthContext';
-import { useRouter } from 'next/router';
-import { useEffect } from 'react';
-
-interface RoleGuardProps {
-  children: React.ReactNode;
-  allowedRoles: ('faculty' | 'department_admin' | 'system_admin')[];
-}
-
-export default function RoleGuard({ children, allowedRoles }: RoleGuardProps) {
-  const { user, isLoading } = useAuth();
-  const router = useRouter();
-
-  useEffect(() => {
-    if (!isLoading && !user) {
-      router.push('/login');
-    } else if (!isLoading && user && !allowedRoles.includes(user.role)) {
-      router.push('/unauthorized');
-    }
-  }, [user, isLoading, allowedRoles, router]);
-
-  if (isLoading || !user) return <div>Loading...</div>;
-  if (!allowedRoles.includes(user.role)) return null;
-  return <>{children}</>;
+  "model_path": "models/training_recommender_v20260822120000.joblib"
 }
 ```
 
-### 8.5 Questionnaire Hooks
-
-```typescript
-// hooks/useQuestionnaire.ts
-import { useState, useEffect } from 'react';
-import api from '@/lib/api';
-
-export interface PartStatus {
-  part_number: number;
-  label: string;
-  required_for_recommendation: boolean;
-  status: 'complete' | 'in_progress' | 'not_started';
-  updated_at: string | null;
-}
-
-export interface QuestionnaireProgress {
-  faculty_id: number;
-  eligible_for_recommendation: boolean;
-  required_parts_completed: string;
-  total_parts_completed: string;
-  parts: PartStatus[];
-}
-
-export function useQuestionnaireProgress() {
-  const [progress, setProgress] = useState<QuestionnaireProgress | null>(null);
-  const [loading, setLoading] = useState(true);
-
-  const refresh = async () => {
-    try {
-      const res = await api.get('/questionnaire/progress');
-      setProgress(res.data);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  useEffect(() => { refresh(); }, []);
-
-  return { progress, loading, refresh };
-}
-
-export function useSubmitPart() {
-  const [submitting, setSubmitting] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-
-  const submitPart = async (partNumber: number, data: Record<string, unknown>) => {
-    setSubmitting(true);
-    setError(null);
-    try {
-      const res = await api.put(`/questionnaire/parts/${partNumber}`, data);
-      return res.data;
-    } catch (err: any) {
-      setError(err.response?.data?.detail || 'Submission failed');
-      throw err;
-    } finally {
-      setSubmitting(false);
-    }
-  };
-
-  return { submitPart, submitting, error };
-}
+#### List available model versions
+```http
+GET /api/v1/training/versions
 ```
 
-### 8.6 Recommended Next.js Page Structure
+#### Set active model version
+```http
+POST /api/v1/training/activate
+Content-Type: application/json
 
-```
-app/
-├── (auth)/
-│   └── login/page.tsx               # Login form → POST /auth/login
-├── (faculty)/
-│   ├── dashboard/page.tsx           # GET /profile (progress summary)
-│   ├── questionnaire/
-│   │   ├── page.tsx                 # GET /questionnaire/progress
-│   │   └── parts/[part]/page.tsx   # GET+PUT /questionnaire/parts/{n}
-│   └── recommendations/
-│       └── page.tsx                 # POST /profile/request-recommendation
-├── (dept-admin)/
-│   ├── dashboard/page.tsx           # GET /users (dept faculty list)
-│   ├── faculty/[id]/page.tsx        # GET /users/{id}/questionnaire-status
-│   └── recommendations/page.tsx    # POST /recommendations/department
-├── (system-admin)/
-│   ├── dashboard/page.tsx
-│   ├── users/page.tsx              # GET /users (all)
-│   ├── departments/page.tsx
-│   ├── catalog/page.tsx            # GET+POST /catalog
-│   └── audit-logs/page.tsx         # GET /audit-logs
-└── unauthorized/page.tsx
-```
-
-### 8.7 OpenAPI Type Generation
-
-Generate TypeScript types automatically from the API schema:
-
-```bash
-# Install openapi-typescript
-npm install -D openapi-typescript
-
-# Generate types from running server
-npx openapi-typescript http://127.0.0.1:8000/openapi.json -o types/api.d.ts
-```
-
-Then use in your code:
-```typescript
-import type { paths } from '@/types/api';
+{ "version": "v20260820180225" }
 ```
 
 ---
 
-## 9. Error Reference
+### 6.10 Audit Logs
 
-| Status | Meaning | Common Cause |
-|---|---|---|
-| `200` | OK | Request successful |
-| `201` | Created | New user/resource created |
-| `400` | Bad Request | Missing required questionnaire parts, invalid body |
-| `401` | Unauthorized | Missing or expired JWT token |
-| `403` | Forbidden | Valid token but wrong role or department scope violation |
-| `404` | Not Found | Faculty/user/department not found |
-| `409` | Conflict | Username or email already exists |
-| `422` | Unprocessable Entity | Validation error (invalid field values, missing required fields) |
-| `503` | Service Unavailable | ML model not loaded (run training first) |
+Requires `system_admin` role.
 
-**Standard Error Body:**
-```json
-{
-  "detail": "Human-readable explanation of what went wrong."
-}
+```http
+GET /api/v1/audit-logs?action=department_recommendation&limit=50&page=1
 ```
 
-**Validation Error (422):**
+**Logged actions:** `login`, `individual_recommendation`, `department_recommendation`, `campus_recommendation`, `model_training`, `user_create`, `user_update`, `user_delete`, `catalog_create`, `catalog_update`, `catalog_delete`
+
+---
+
+## 7. Recommendation Response Schemas
+
+### Individual Recommendation
+
 ```json
 {
-  "detail": [
+  "model": {
+    "version": "v20260820180225",
+    "algorithm": "Random Forest (One-vs-Rest)",
+    "n_estimators": 100,
+    "training_samples": 245,
+    "features": 67,
+    "labels": 9,
+    "timestamp": "2026-08-20T18:02:25"
+  },
+  "top_categories": [
+    { "category": "Research Methods", "score": 0.87 },
+    { "category": "Educational Technology", "score": 0.76 },
+    { "category": "Artificial Intelligence", "score": 0.65 }
+  ],
+  "recommendations": [
     {
-      "loc": ["body", "department"],
-      "msg": "field required",
-      "type": "value_error.missing"
+      "rank": 1,
+      "title": "Advanced Research Methods Workshop",
+      "category": "Research Methods",
+      "match_score": 0.94,
+      "modality": "Face-to-face",
+      "duration": "3 days",
+      "provider": "QSU Graduate School"
+    },
+    {
+      "rank": 2,
+      "title": "EdTech Integration for Modern Classrooms",
+      "category": "Educational Technology",
+      "match_score": 0.81,
+      "modality": "Blended Learning",
+      "duration": "2 days",
+      "provider": "QSU ICT Department"
     }
-  ]
+  ],
+  "generated_at": "2026-08-20T18:05:33+08:00"
 }
 ```
 
-**RBAC Violation (403):**
+### Department Recommendation
+
 ```json
 {
-  "detail": "Faculty members cannot generate department recommendations."
+  "department": "BSCS",
+  "department_id": 3,
+  "department_name": "BS Computer Science",
+  "campus_id": 1,
+  "campus_code": "DIFFUN",
+  "campus_name": "QSU Diffun",
+  "total_faculty_in_dept": 15,
+  "eligible_faculty_count": 12,
+  "skipped_faculty": [
+    { "faculty_id": 7, "questionnaire_status": "in_progress" },
+    { "faculty_id": 14, "questionnaire_status": "not_started" }
+  ],
+  "individual_results_stored": 12,
+  "top_categories": [
+    {
+      "category": "Artificial Intelligence",
+      "department_score": 0.82,
+      "faculty_coverage": 0.75
+    },
+    {
+      "category": "Research Methods",
+      "department_score": 0.71,
+      "faculty_coverage": 0.67
+    }
+  ],
+  "recommendations": [
+    {
+      "rank": 1,
+      "title": "AI and Machine Learning for Educators",
+      "category": "Artificial Intelligence",
+      "match_score": 0.91
+    }
+  ],
+  "model": {
+    "version": "v20260820180225",
+    "algorithm": "Random Forest (One-vs-Rest)"
+  },
+  "has_recommendation": true,
+  "generated_at": "2026-08-20T18:05:33+08:00"
 }
 ```
 
-**Questionnaire Sequence Violation (400):**
+### Field Glossary
+
+| Field | Type | Description |
+|---|---|---|
+| `model.version` | string | Model artifact version timestamp |
+| `model.algorithm` | string | Algorithm name |
+| `model.training_samples` | int | Number of training samples |
+| `top_categories[].score` | float (0–1) | ML probability score for this category |
+| `top_categories[].department_score` | float (0–1) | Averaged faculty scores for this category |
+| `top_categories[].faculty_coverage` | float (0–1) | Fraction of faculty with score above threshold |
+| `recommendations[].match_score` | float (0–1) | Combined relevance × preference alignment score |
+| `recommendations[].rank` | int | Rank by match_score descending |
+| `skipped_faculty[].questionnaire_status` | string | Status of excluded faculty |
+| `eligible_faculty_count` | int | Faculty actually processed by the model |
+| `has_recommendation` | bool | Whether a recommendation exists for this entity |
+
+---
+
+## 8. Error Reference
+
+| HTTP Status | Code | Common Cause |
+|---|---|---|
+| 400 | `BAD_REQUEST` | Validation error, missing required params, faculty not eligible |
+| 401 | `UNAUTHORIZED` | No token or expired token |
+| 403 | `FORBIDDEN` | Role does not have permission (e.g., faculty calling /recommendations/department) |
+| 404 | `NOT_FOUND` | Faculty, department, or campus not found |
+| 409 | `CONFLICT` | Username/email already registered |
+| 503 | `SERVICE_UNAVAILABLE` | No active trained model loaded |
+
+**Example 400 (not eligible):**
 ```json
 {
-  "detail": "Part 4 (Training History) must be completed before submitting Part 5."
+  "detail": "Faculty ID 7 has questionnaire_status='in_progress'. Required: one of ['eligible', 'has_recommendation']. Faculty must complete Parts 1, 2, 3, 5, and 6 first."
 }
 ```
+
+**Example 503 (no model):**
+```json
+{
+  "detail": "No trained model is active. Contact your system administrator."
+}
+```
+
+---
+
+## 9. Postman Testing Guide
+
+### 1. Set up environment variable
+```
+BASE_URL = http://127.0.0.1:8000/api/v1
+TOKEN    = (set after login)
+```
+
+### 2. Login as System Admin
+```
+POST {{BASE_URL}}/auth/login
+Body (form-data): username=admin, password=admin123
+→ Copy access_token to TOKEN variable
+```
+
+### 3. Test health check
+```
+GET {{BASE_URL}}/health
+→ Expect: model_ready = true
+```
+
+### 4. Get faculty list
+```
+GET {{BASE_URL}}/users?role=faculty&per_page=20
+Authorization: Bearer {{TOKEN}}
+```
+
+### 5. Generate individual recommendation
+```
+POST {{BASE_URL}}/recommendations/individual?faculty_id=1
+Authorization: Bearer {{TOKEN}}
+→ Must have eligible faculty
+```
+
+### 6. Generate department recommendation
+```
+POST {{BASE_URL}}/recommendations/department?department_code=BSCS&campus_id=1
+Authorization: Bearer {{TOKEN}}
+```
+
+### 7. Retrieve last department recommendation (read-only)
+```
+GET {{BASE_URL}}/recommendations/department/last?department_code=BSCS&campus_id=1
+Authorization: Bearer {{TOKEN}}
+```
+
+### 8. Trigger model training (system_admin only)
+```
+POST {{BASE_URL}}/training/train
+Authorization: Bearer {{TOKEN}}
+→ Requires data/raw/faculty_training.csv to exist
+```
+
+### Test Account Reference
+
+See [TEST_ACCOUNTS.md](../TEST_ACCOUNTS.md) for all seeded credentials.
+
+| Role | Username | Password |
+|---|---|---|
+| System Admin | `admin` | `admin123` |
+| Campus Admin (Diffun) | `campus_diffun` | `campus123` |
+| Dept Admin (BSCS) | `dept_bscs` | `dept123` |
+| Faculty | `faculty01` | `faculty123` |

@@ -1,390 +1,468 @@
-# QSU Faculty Training Needs Recommender — Production-Oriented Backend
+# QSU Faculty Training Needs Recommender System
 
-## Scope
+> **Version 3.0** — Multi-Campus · Full-Stack Next.js + FastAPI · Random Forest ML · Model Transparency · RBAC
 
-This backend is designed around the uploaded **QSU Faculty Training Needs Recommender System**
-questionnaire. The questionnaire contains respondent profile, training history, competency
-assessment, emerging training needs, preferred modality, availability, barriers, and Top Five
-priority training topics.
+A production-grade web application that recommends personalized faculty training programs for Quirino State University (QSU). The system collects structured competency data via an online questionnaire, processes it through a trained Random Forest model, and surfaces transparent, match-score-ranked training recommendations across three access tiers: **Faculty**, **Department Admin**, and **Campus Admin**.
 
-Source: uploaded questionnaire (`TRAINING NEEDS ASSESSMENT TOOL-Faculty.pdf`).
+---
 
-### Important source constraint
+## Table of Contents
 
-The printed department checklist in the questionnaire contains:
-BSCE, BEED, BSBA, BSCS, BAELS, BSMATH, BSHM, BSMidwifery, with BSHM appearing twice.
-The software therefore keeps department values configurable rather than hard-coding a fixed
-department-to-training rule. BSIT and future departments can be added to the department catalog
-without changing the model architecture.
+1. [Architecture](#1-architecture)
+2. [Tech Stack](#2-tech-stack)
+3. [Role-Based Access Control](#3-role-based-access-control)
+4. [Frontend Pages](#4-frontend-pages)
+5. [Recommendation Engine](#5-recommendation-engine)
+6. [Quick Start](#6-quick-start)
+7. [Frontend Setup](#7-frontend-setup)
+8. [ML Model Training](#8-ml-model-training)
+9. [Documentation Index](#9-documentation-index)
+10. [Project Structure](#10-project-structure)
+11. [Security & Privacy](#11-security--privacy)
 
-The questionnaire itself does NOT specify a particular machine-learning algorithm or a fixed
-mapping from competencies to training titles. Those parts in this backend are implementation
-choices and should be validated with your research adviser and actual institutional training
-catalog.
+---
 
-## Architecture
+## 1. Architecture
 
-```text
-Frontend / Mobile / Admin Dashboard
-              |
-              v
-        FastAPI REST API
-              |
-       +------+------+
-       |             |
-       v             v
-Individual       Department
-Prediction       Recommendation
-       |             |
-       +------+------+
-              |
-         Model Service
-              |
-       scikit-learn model
-              |
-       Feature Pipeline
-              |
-     Real anonymized survey data
+```
+┌─────────────────────────────────────────────────────────────────┐
+│                    Next.js 14 Frontend                          │
+│   Faculty Dashboard · Dept Admin · Campus Admin · Sys Admin     │
+│            (Role-based routing, Tailwind CSS)                   │
+└──────────────────────────┬──────────────────────────────────────┘
+                           │ HTTPS + JWT Bearer Token
+                           ▼
+┌─────────────────────────────────────────────────────────────────┐
+│                   FastAPI REST API v3.0                         │
+│                                                                 │
+│  /auth          /profile        /questionnaire                  │
+│  /recommendations              /users       /campuses           │
+│  /catalog       /training       /audit-logs                     │
+└──────┬───────────────────────────────────────┬──────────────────┘
+       │                                       │
+┌──────▼───────────────────┐    ┌──────────────▼───────────────┐
+│     MySQL (XAMPP)        │    │   ML Model Pipeline          │
+│                          │    │                              │
+│  users                   │    │  Random Forest (scikit-learn)│
+│  faculty                 │    │  One-vs-Rest Multi-label     │
+│  departments             │    │  Versioned .joblib artifacts │
+│  campuses                │    │  Feature Pipeline:           │
+│  questionnaire_*         │    │   OneHotEncoder + Scaler     │
+│  training_catalog        │    │  models/active.json          │
+│  recommendation_history  │    └──────────────────────────────┘
+│  audit_logs              │
+└──────────────────────────┘
 ```
 
-## Packages
+### Questionnaire → Recommendation Flow
 
-- FastAPI: REST API
-- Pydantic: request/response validation
-- SQLAlchemy + **MySQL** (via PyMySQL): application data (RBAC, catalog, audit logs)
-- Alembic: database migrations
-- PyJWT + bcrypt: JWT authentication and password hashing
-- pandas/numpy: data processing
-- scikit-learn: preprocessing + Random Forest multi-label model
-- joblib: model artifacts
-- pytest/httpx: testing
+```
+Faculty Login
+     │
+     ▼
+Complete 6-Part Questionnaire  ──► questionnaire_status = "eligible"
+     │
+     ▼
+Request Recommendation
+     │
+     ▼
+GeneratingProgressModal (4-step animated inference):
+  1. Loading questionnaire data
+  2. Running ML inference
+  3. Matching training catalog
+  4. Finalizing results
+     │
+     ▼
+Model Transparency Card  ──► Model version, algorithm, training stats
+     │
+     ▼
+Ranked Training Recommendations with Match Scores
+```
 
-## Documentation
+---
 
-| Document | Description |
+## 2. Tech Stack
+
+### Backend
+| Package | Purpose |
 |---|---|
-| [docs/TEST_CREDENTIALS.md](docs/TEST_CREDENTIALS.md) | **Seeded test user login credentials reference** |
-| [docs/API_REFERENCE.md](docs/API_REFERENCE.md) | **Full API reference + Postman testing guide** |
-| [docs/THESIS_METHODOLOGY.md](docs/THESIS_METHODOLOGY.md) | Academic methodology narrative |
-| [Database Schema & Access-Control Implementation Instructions.md](Database%20Schema%20%26%20Access-Control%20Implementation%20Instructions.md) | RBAC schema specification |
+| FastAPI | REST API framework |
+| Pydantic | Request/response validation |
+| SQLAlchemy + PyMySQL | ORM + MySQL connector |
+| Alembic | Database migrations |
+| PyJWT + bcrypt | JWT auth + password hashing |
+| pandas / numpy | Data processing |
+| scikit-learn | Random Forest multi-label model |
+| joblib | Model artifact serialization |
+| pytest / httpx | Testing |
+| zoneinfo | Asia/Manila timezone handling |
 
-## Setup
+### Frontend
+| Package | Purpose |
+|---|---|
+| Next.js 14 | React framework with App Router |
+| TypeScript | Type-safe frontend code |
+| Tailwind CSS | Utility-first styling |
+| React Context | Auth state management |
 
-### Local
+---
 
-```bash
+## 3. Role-Based Access Control
+
+| Role | Account Scope | Recommendation Access |
+|---|---|---|
+| `faculty` | Self only | Own recommendation via `/profile/request-recommendation` |
+| `department_admin` | Own department | Individual + Department-level recommendation |
+| `campus_admin` | Entire campus | Department + Campus-level aggregated recommendation |
+| `system_admin` | All campuses | Full unrestricted access + ML pipeline management |
+
+### Faculty Status Lifecycle
+
+| Status | Meaning | Recommendation Eligible? |
+|---|---|---|
+| `not_started` | No questionnaire parts submitted | No |
+| `in_progress` | Some parts submitted, not all required | No |
+| `eligible` | All 5 required parts (1,2,3,5,6) complete | Yes |
+| `has_recommendation` | Recommendation generated and stored | Yes |
+
+> **Department Recommendation Rule:** Only faculty with `eligible` or `has_recommendation` status are included. Incomplete faculty are automatically skipped and listed in `skipped_faculty[]` in the response.
+
+---
+
+## 4. Frontend Pages
+
+### Faculty Role
+| Route | Page | Description |
+|---|---|---|
+| `/faculty-dashboard` | Faculty Dashboard | Status overview, recommendation summary |
+| `/questionnaire` | Questionnaire | 6-part assessment form |
+| `/my-recommendation` | My Recommendation | Model Transparency + Match-Score ranked programs |
+| `/profile` | Profile | Self-service profile management |
+
+### Department Admin Role
+| Route | Page | Description |
+|---|---|---|
+| `/dept-dashboard` | Department Dashboard | Faculty stats, quick actions |
+| `/dept-faculty` | Faculty Roster | Faculty list with status filter + pagination |
+| `/dept-recommendations` | Dept Recommendations | Model Transparency + Department training priorities |
+| `/register-faculty` | Register Faculty | Add new faculty members |
+
+### Campus Admin Role
+| Route | Page | Description |
+|---|---|---|
+| `/campus-dashboard` | Campus Dashboard | Multi-department overview |
+| `/campus-faculty` | Campus Faculty | All campus faculty with status filter |
+| `/campus-departments` | Departments | Department management |
+| `/campus-recommendations` | Campus Recommendations | Aggregated campus-wide recommendations |
+
+### System Admin Role
+| Route | Page | Description |
+|---|---|---|
+| `/admin-dashboard` | Admin Hub | System-wide analytics |
+| `/user-management` | User Management | Full user CRUD with pagination |
+| `/catalog-management` | Training Catalog | Training program CRUD |
+| `/ml-pipeline` | ML Pipeline | Model training, versioning, active model management |
+| `/register-admin` | Register Admin | Create department/campus/system admins |
+
+---
+
+## 5. Recommendation Engine
+
+### Model Transparency
+
+Every recommendation response includes a `model` block with full transparency metadata:
+
+```json
+{
+  "model": {
+    "version": "v20260820180225",
+    "algorithm": "Random Forest (One-vs-Rest)",
+    "n_estimators": 100,
+    "training_samples": 245,
+    "features": 67,
+    "labels": 9,
+    "timestamp": "2026-08-20T18:02:25"
+  }
+}
+```
+
+### Individual Recommendation Response
+
+```json
+{
+  "model": { "version": "...", "algorithm": "...", "..." },
+  "top_categories": [
+    { "category": "Research Methods", "score": 0.87 },
+    { "category": "Educational Technology", "score": 0.76 }
+  ],
+  "recommendations": [
+    {
+      "rank": 1,
+      "title": "Advanced Research Methods for Faculty",
+      "category": "Research Methods",
+      "match_score": 0.94,
+      "modality": "Face-to-face",
+      "duration": "3 days",
+      "provider": "QSU Graduate School"
+    }
+  ],
+  "generated_at": "2026-08-20T18:02:25+08:00"
+}
+```
+
+### Department Recommendation Response
+
+```json
+{
+  "department": "BSCS",
+  "department_id": 3,
+  "campus_name": "QSU Diffun",
+  "eligible_faculty_count": 12,
+  "total_faculty_in_dept": 15,
+  "skipped_faculty": [{"faculty_id": 7, "questionnaire_status": "in_progress"}],
+  "top_categories": [
+    {
+      "category": "Artificial Intelligence",
+      "department_score": 0.82,
+      "faculty_coverage": 0.75
+    }
+  ],
+  "recommendations": [
+    {
+      "rank": 1,
+      "title": "AI and Machine Learning for Educators",
+      "match_score": 0.91
+    }
+  ],
+  "model": { "version": "..." },
+  "generated_at": "2026-08-20T18:02:25+08:00"
+}
+```
+
+### GeneratingProgressModal
+
+A 4-step animated modal that provides visual feedback during recommendation generation:
+
+1. **Loading questionnaire data** — Retrieves faculty responses
+2. **Running ML inference** — Random Forest prediction pipeline
+3. **Matching training catalog** — Aligns predictions with available programs
+4. **Finalizing results** — Persists recommendation to faculty record
+
+---
+
+## 6. Quick Start
+
+### Prerequisites
+- XAMPP (MySQL running on port 3306)
+- Python 3.11+
+- Node.js 18+
+
+### Backend Setup
+
+```powershell
+# Clone and set up virtual environment
 python -m venv .venv
-# Windows
 .venv\Scripts\activate
-# Linux/macOS
-source .venv/bin/activate
 
+# Install dependencies
 pip install -r requirements.txt
-copy .env.example .env
-```
 
-For PowerShell use:
-```powershell
+# Configure environment
 Copy-Item .env.example .env
-```
+# Edit .env with your MySQL credentials and JWT secret
 
-### Database (MySQL via XAMPP)
-
-1. Start XAMPP → ensure **MySQL** is running.
-2. Create the database:
-```powershell
+# Create database
 .venv\Scripts\python scripts/create_mysql_db.py
-```
-3. Create all tables and seed roles, departments, admin user, and training catalog:
-```powershell
+
+# Run migrations and seed data
 .venv\Scripts\python scripts/seed_db.py
-```
-4. Start the API:
-```powershell
+
+# Start API server
 .venv\Scripts\uvicorn app.main:app --reload
 ```
-5. Open Swagger UI at: **http://127.0.0.1:8000/docs**
 
-**Default admin account:** `admin` / `admin123`
+API available at: **http://127.0.0.1:8000**
+Swagger UI: **http://127.0.0.1:8000/docs**
 
-> See [docs/API_REFERENCE.md](docs/API_REFERENCE.md) for the full Postman testing guide.
+### Default Admin Credentials
 
-## Dataset
+| Role | Username | Password |
+|---|---|---|
+| System Admin | `admin` | `admin123` |
 
-The model target is:
-```text
-priority_1
-priority_2
-priority_3
-priority_4
-priority_5
+> See [TEST_ACCOUNTS.md](TEST_ACCOUNTS.md) and [docs/TEST_CREDENTIALS.md](docs/TEST_CREDENTIALS.md) for all seeded test accounts.
+
+---
+
+## 7. Frontend Setup
+
+```powershell
+cd frontend
+
+# Install dependencies
+npm install
+
+# Configure environment
+Copy-Item .env.example .env.local
+# Set NEXT_PUBLIC_API_URL=http://localhost:8000
+
+# Start development server
+npm run dev
 ```
 
-These should contain the respondent's actual Top Five priority training topics from Part VIII.
+Frontend available at: **http://localhost:3000**
 
-Do not generate target labels from the input features when creating the final research dataset.
-That would create target leakage / circular labels.
+---
 
-### Real-data workflow
-
-```text
-Google Forms / Web Form / Excel
-          |
-          v
-Raw anonymized export
-          |
-          v
-Explicit schema mapping
-          |
-          v
-data/raw/faculty_training.csv
-          |
-          v
-train.py
-          |
-          v
-model artifact
-```
-
-## Training
+## 8. ML Model Training
 
 ```bash
 python train.py
 ```
 
-The trainer:
-1. reads the dataset
-2. treats Top Five priorities as multi-label targets
-3. one-hot encodes categorical inputs
-4. scales numeric inputs
-5. trains a One-vs-Rest Random Forest
-6. evaluates on a held-out test set
-7. saves a versioned model artifact
-8. writes `models/active.json`
+The trainer performs:
+1. Reads `data/raw/faculty_training.csv`
+2. Treats Top-5 priority topics as multi-label targets (no derived labels)
+3. One-hot encodes categorical inputs
+4. Standard-scales numeric inputs
+5. Trains a One-vs-Rest Random Forest classifier
+6. Evaluates on a held-out test set (F1, Precision, Recall, Recall@5)
+7. Saves a versioned artifact: `models/training_recommender_v{timestamp}.joblib`
+8. Updates `models/active.json` to point to the new model
 
-For a thesis, also maintain a final untouched validation set and report:
-- micro/macro F1
-- precision
-- recall
-- Top-K metrics such as Recall@5
-- baseline comparison
+### Model Versioning
 
-## Run API
-
-```bash
-uvicorn app.main:app --reload
+```
+models/
+  active.json                        ← { "version": "v20260820180225" }
+  training_recommender_v*.joblib     ← Model pipeline
+  labels_v*.joblib                   ← Label encoder
+  metadata_v*.json                   ← Training stats
 ```
 
-Swagger:
-```text
-http://127.0.0.1:8000/docs
+The System Admin can switch the active model version from the `/ml-pipeline` page without restarting the server.
+
+---
+
+## 9. Documentation Index
+
+| Document | Description |
+|---|---|
+| [README.md](README.md) | This file — full project overview |
+| [TEST_ACCOUNTS.md](TEST_ACCOUNTS.md) | All seeded test account credentials |
+| [docs/API_REFERENCE.md](docs/API_REFERENCE.md) | Complete API endpoint reference |
+| [docs/SYSTEM_DESIGN.md](docs/SYSTEM_DESIGN.md) | Architecture & ML pipeline design |
+| [docs/THESIS_METHODOLOGY.md](docs/THESIS_METHODOLOGY.md) | Academic methodology narrative |
+| [docs/TEST_CREDENTIALS.md](docs/TEST_CREDENTIALS.md) | Test credential reference |
+| [data/raw/README.md](data/raw/README.md) | Dataset schema and usage |
+| [notebooks/README.md](notebooks/README.md) | Colab notebook guide |
+
+---
+
+## 10. Project Structure
+
+```
+faculty_Training_needs_recommend/
+│
+├── app/                          # FastAPI application
+│   ├── main.py                   # App entry point, CORS, route registration
+│   ├── api/                      # Route handlers
+│   │   ├── auth.py               # Login / register
+│   │   ├── profile.py            # Faculty self-service + recommendation request
+│   │   ├── predictions.py        # Individual / Department / Campus recommendations
+│   │   ├── questionnaire.py      # 6-part questionnaire CRUD
+│   │   ├── users.py              # Admin user management
+│   │   ├── campuses.py           # Campus & department management
+│   │   ├── catalog.py            # Training catalog CRUD
+│   │   ├── training.py           # ML model training trigger
+│   │   ├── audit.py              # Audit log access
+│   │   └── health.py             # Health check
+│   ├── core/
+│   │   ├── config.py             # Settings (env vars)
+│   │   └── security.py           # JWT, RBAC helpers, audit logger
+│   ├── db/
+│   │   ├── models.py             # SQLAlchemy ORM models
+│   │   ├── session.py            # DB session factory
+│   │   ├── init_db.py            # Table initialization
+│   │   └── seed.py               # Seed data
+│   ├── ml/
+│   │   ├── predictor.py          # ModelService — loads active model
+│   │   ├── features.py           # Feature engineering pipeline
+│   │   ├── trainer.py            # Model training logic
+│   │   └── schema.py             # ML input/output schemas
+│   └── services/
+│       ├── recommendation.py     # individual() / department() aggregation
+│       └── catalog.py            # Catalog matching + match_score calculation
+│
+├── frontend/                     # Next.js 14 frontend
+│   └── src/
+│       ├── app/
+│       │   ├── (faculty)/        # Faculty role pages
+│       │   ├── (dept-admin)/     # Department admin pages
+│       │   ├── (campus-admin)/   # Campus admin pages
+│       │   └── (sys-admin)/      # System admin pages
+│       ├── components/
+│       │   ├── GeneratingProgressModal.tsx   # 4-step recommendation progress modal
+│       │   ├── RecommendationCard.tsx        # Transparent recommendation display card
+│       │   ├── Sidebar.tsx                   # Role-aware navigation sidebar
+│       │   ├── StatusBadge.tsx               # Questionnaire status indicator
+│       │   ├── Pagination.tsx                # Reusable table pagination
+│       │   └── ...
+│       ├── context/              # Auth context
+│       ├── lib/                  # API client (api.ts)
+│       └── types/                # TypeScript interfaces
+│
+├── models/                       # Versioned ML model artifacts
+│   ├── active.json               # Active model pointer
+│   └── training_recommender_v*.joblib
+│
+├── data/
+│   └── raw/faculty_training.csv  # Training dataset
+│
+├── docs/                         # Technical documentation
+├── tests/                        # pytest test suites
+├── alembic/                      # DB migration scripts
+├── scripts/                      # DB setup & utility scripts
+├── train.py                      # Model training entry point
+├── requirements.txt
+└── docker-compose.yml
 ```
 
-## Endpoints
+---
 
-For full request/response schemas, JSON examples, and cURL commands, see [docs/API_REFERENCE.md](file:///e:/Traiing%20recomender%20system/qsu_training_recommender_production/docs/API_REFERENCE.md).
+## 11. Security & Privacy
 
-For a thesis-ready explanation of the system architecture, model choices, and API design, see [docs/THESIS_METHODOLOGY.md](file:///e:/Traiing%20recomender%20system/qsu_training_recommender_production/docs/THESIS_METHODOLOGY.md).
+The questionnaire data is confidential and anonymized for academic purposes. Production deployment must:
 
-For details on the Catalog and Transparent API architecture, see [docs/SYSTEM_DESIGN.md](file:///e:/Traiing%20recomender%20system/qsu_training_recommender_production/docs/SYSTEM_DESIGN.md).
+- Store only anonymized faculty IDs (no unnecessary PII)
+- Use HTTPS everywhere
+- Restrict CORS to known frontend origins
+- Rotate JWT secrets regularly
+- Use Alembic for all schema changes
+- Enable audit logging (all write operations are logged)
+- Restrict model training to `system_admin` role only
+- Never log full questionnaire payloads
+- Separate dataset storage from public API access
 
-### Health
+### Audit Log Coverage
 
-```http
-GET /api/v1/health
-```
+All sensitive operations are automatically logged to `audit_logs`:
 
-### Individual recommendation
+| Operation | Logged Fields |
+|---|---|
+| `login` | user_id, IP |
+| `individual_recommendation` | faculty_id, model_version |
+| `department_recommendation` | dept, campus, eligible count |
+| `campus_recommendation` | campus, eligible count |
+| `model_training` | version, metrics |
+| `user_create/update/delete` | user_id, role changes |
 
-```http
-POST /api/v1/recommendations/individual
-```
+---
 
-Body shape:
+## Dataset Note
 
-```json
-{
-  "faculty": {
-    "department": "BSED",
-    "age": 35,
-    "sex": "Female",
-    "employment_status": "Permanent",
-    "academic_rank": "Assistant Professor",
-    "highest_educational_attainment": "Master's Degree",
-    "field_of_specialization": "English",
-    "years_teaching": "5-10 years",
-    "administrative_designation": "None",
-    "trainings_last_3_years": "1-2",
-    "training_areas": ["Instruction", "Research"],
-    "competency": {
-      "research_competency": {"proficiency": 2, "importance": 5},
-      "computer_literacy_digital_technologies": {"proficiency": 3, "importance": 5},
-      "outcomes_based_education": {"proficiency": 2, "importance": 5}
-    },
-    "emerging_training_needs": {
-      "artificial_intelligence": 4,
-      "machine_learning": 2,
-      "data_analytics": 3,
-      "cybersecurity": 2,
-      "cloud_computing": 2,
-      "learning_management_systems": 4,
-      "educational_technology": 5,
-      "statistical_software": 4,
-      "research_methods": 5
-    },
-    "preferred_learning_modality": ["Webinar", "Blended Learning"],
-    "preferred_schedule": ["Saturdays"],
-    "preferred_duration": ["Two days"],
-    "barriers": {
-      "heavy_teaching_workload": 4,
-      "time_constraints": 4,
-      "lack_of_budget": 3,
-      "internet_connectivity": 2
-    }
-  }
-}
-```
+The model target is the faculty's **actual** Top Five priority training topics from Part VIII of the questionnaire. Labels must **not** be derived from the competency gap (Importance - Proficiency) — that creates target leakage. For a rigorous thesis evaluation, compare:
 
-### Department recommendation
-
-```http
-POST /api/v1/recommendations/department
-```
-
-Body:
-
-```json
-{
-  "department": "BSED",
-  "faculty": [
-    { "same faculty schema as above" },
-    { "same faculty schema as above" }
-  ]
-}
-```
-
-The system predicts individual needs and aggregates them to produce department-level priorities.
-
-## Retraining API
-
-Training is an administrative operation and is protected with:
-```text
-X-Admin-API-Key: <ADMIN_API_KEY>
-```
-
-Endpoint:
-```http
-POST /api/v1/training/train
-```
-
-For production, do NOT allow ordinary users to trigger training.
-
-Recommended production workflow:
-1. collect/validate new survey data
-2. create a versioned dataset
-3. train in a separate job
-4. evaluate
-5. approve the candidate model
-6. deploy/promote the model
-7. reload/restart API workers
-
-## Why department is not a hard-coded rule
-
-Do NOT implement:
-```text
-if department == BSIT: AI
-if department == BSED: OBE
-```
-
-Instead the department is a feature/context value and department recommendations are generated
-from the faculty-level predictions/needs. This allows BSIT, BSED, BSHM, BSBA and future departments
-to use the same architecture.
-
-## Model design
-
-Current production-oriented baseline:
-```text
-Categorical -> OneHotEncoder
-Numeric     -> StandardScaler
-                    |
-                    v
-            Random Forest
-                    |
-                    v
-       One-vs-Rest multi-label
-                    |
-                    v
-              Top Five
-```
-
-This is a starting model, not a claim that Random Forest is optimal for the final study.
-
-## Critical research rule
-
-The real dataset must preserve the respondent's actual Part VIII Top Five priorities as labels.
-
-Do NOT derive:
-```text
-Top Five = Importance - Proficiency
-```
-and then train a model to predict the same derived result.
-
-That would not test whether the model learns actual respondent preferences.
-
-A stronger thesis evaluation compares:
-1. competency-gap baseline
-2. ML model
-3. actual respondent Top Five priorities
-
-## Security and privacy
-
-The questionnaire states that responses are confidential, anonymized, and for academic purposes.
-The production implementation should:
-- avoid storing names unless necessary
-- use a random internal respondent ID
-- encrypt database backups
-- restrict admin/training endpoints
-- use HTTPS in deployment
-- never log full questionnaire payloads
-- restrict CORS
-- rotate admin credentials
-- keep dataset access separate from public API access
-
-## Production deployment
-
-Recommended:
-```text
-Frontend
-   |
- HTTPS
-   |
-Reverse Proxy / Platform
-   |
-FastAPI
-   |
-PostgreSQL
-
-Separate:
-Training Worker / Job
-   |
-Model Registry / Object Storage
-   |
-Approved model
-```
-
-Do not train the model synchronously inside a normal public prediction request.
-
-## Next production improvements
-
-Before final deployment:
-- add real authentication/authorization (JWT/OIDC) instead of a simple admin API key
-- add model approval/rollback
-- add immutable dataset versions
-- add Recall@5 evaluation
-- add model drift monitoring
-- add rate limiting
-- add structured audit logs
-- use PostgreSQL in production
-- put model artifacts in controlled object storage
-- add background training jobs (Celery/RQ/managed jobs)
-- add CI/CD tests
+1. Competency-gap baseline
+2. ML model predictions
+3. Actual respondent Top Five priorities
