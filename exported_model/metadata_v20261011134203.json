@@ -1,0 +1,40 @@
+{
+  "version": "20261011134203",
+  "artifact": "models/training_recommender_v20261011134203.joblib",
+  "labels": "models/labels_v20261011134203.joblib",
+  "metrics": {
+    "exact_match_accuracy": 0.1765,
+    "hamming_accuracy": 0.8062,
+    "jaccard_accuracy": 0.5254,
+    "top1_hit_accuracy": 0.7941,
+    "top3_hit_accuracy": 0.9706,
+    "top5_hit_accuracy": 1.0,
+    "micro_f1": 0.6478,
+    "macro_f1": 0.3238,
+    "micro_precision": 0.6959,
+    "micro_recall": 0.6059,
+    "training_records": 132,
+    "test_records": 34,
+    "train_ratio": 0.8,
+    "test_ratio": 0.2
+  },
+  "topics": [
+    "Artificial Intelligence",
+    "Cloud Computing",
+    "Critical Thinking and Problem Solving",
+    "Cybersecurity",
+    "Data Analytics",
+    "Educational Technology",
+    "Effective Teaching and Classroom Management",
+    "Innovative Instructional Material Development",
+    "Leadership and Strategic Management",
+    "Learning Management Systems",
+    "Machine Learning",
+    "Outcomes-Based Education",
+    "Quality Assurance Management",
+    "Research Methods",
+    "Research and Publication Writing",
+    "Statistical Software",
+    "Technology Transfer and Innovation"
+  ]
+}

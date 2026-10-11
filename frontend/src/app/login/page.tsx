@@ -2,13 +2,16 @@
 
 import React, { useState } from 'react';
 import { useAuth } from '@/context/AuthContext';
-import { LogIn, KeyRound, User, Lock, Sparkles, UserCheck, Eye, EyeOff } from 'lucide-react';
+import { LogIn, KeyRound, User, Lock, Sparkles, UserCheck, Eye, EyeOff, ShieldCheck } from 'lucide-react';
+import DataPrivacyModal from '@/components/DataPrivacyModal';
 
 export default function LoginPage() {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [showPrivacyModal, setShowPrivacyModal] = useState(false);
+  const [acceptedPrivacy, setAcceptedPrivacy] = useState(false);
   
   // Environment variable controls whether demo accounts are available by default
   const envShowDemo = process.env.NEXT_PUBLIC_SHOW_DEMO_ACCOUNTS !== 'false' && process.env.NEXT_PUBLIC_ENABLE_QUICK_LOGIN !== 'false';
@@ -19,6 +22,12 @@ export default function LoginPage() {
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
+
+    if (!acceptedPrivacy) {
+      setError('Please read and accept the Philippine Data Privacy Policy (R.A. No. 10173) to proceed.');
+      return;
+    }
+
     setLoading(true);
     try {
       await login(username, password);
@@ -32,6 +41,7 @@ export default function LoginPage() {
   const autofill = (u: string, p: string) => {
     setUsername(u);
     setPassword(p);
+    setAcceptedPrivacy(true);
   };
 
   return (
@@ -94,6 +104,31 @@ export default function LoginPage() {
                     placeholder="Enter password"
                     className="w-full bg-light-bg dark:bg-dark-bg border border-light-border dark:border-dark-border rounded-xl pl-10 pr-4 py-2.5 text-sm text-light-text dark:text-dark-text placeholder:text-light-text dark:placeholder:text-dark-muted focus:border-brand-green focus:ring-1 focus:ring-brand-green/30 focus:outline-none transition-all"
                   />
+                </div>
+              </div>
+
+              {/* Philippine Data Privacy Act (RA 10173) Agreement Checkbox */}
+              <div className="pt-1">
+                <div className="flex items-start gap-2.5 p-3 rounded-xl border border-light-border dark:border-dark-border bg-light-bg/60 dark:bg-dark-bg/50">
+                  <input
+                    type="checkbox"
+                    id="dataPrivacyConsent"
+                    checked={acceptedPrivacy}
+                    onChange={(e) => setAcceptedPrivacy(e.target.checked)}
+                    className="mt-0.5 w-4 h-4 rounded border-light-border dark:border-dark-border text-brand-green focus:ring-brand-green/30 cursor-pointer accent-brand-green shrink-0"
+                  />
+                  <label htmlFor="dataPrivacyConsent" className="text-xs text-light-text dark:text-dark-text leading-snug cursor-pointer select-none">
+                    I have read and agree to the{' '}
+                    <button
+                      type="button"
+                      onClick={() => setShowPrivacyModal(true)}
+                      className="text-brand-green dark:text-emerald-400 hover:underline font-semibold inline-flex items-center gap-1"
+                    >
+                      <ShieldCheck className="w-3.5 h-3.5 inline shrink-0" />
+                      Philippine Data Privacy Policy (R.A. 10173)
+                    </button>
+                    {' '}and consent to the processing of my faculty competency and training records.
+                  </label>
                 </div>
               </div>
 
@@ -287,6 +322,13 @@ export default function LoginPage() {
           )}
         </div>
       </div>
+
+      {/* Philippine Data Privacy Act (RA 10173) Modal */}
+      <DataPrivacyModal
+        isOpen={showPrivacyModal}
+        onClose={() => setShowPrivacyModal(false)}
+        onAccept={() => setAcceptedPrivacy(true)}
+      />
     </div>
   );
 }
