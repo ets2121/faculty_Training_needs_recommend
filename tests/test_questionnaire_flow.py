@@ -76,7 +76,8 @@ def test_questionnaire_lifecycle_and_recommendation():
                 "password": "password123",
                 "full_name": "Test Dept Head",
                 "role": "department_admin",
-                "department_code": "BSIT"
+                "department_code": "BSIT",
+                "campus_code": "DIFFUN"
             }
         )
         assert dept_admin_res.status_code == 201
