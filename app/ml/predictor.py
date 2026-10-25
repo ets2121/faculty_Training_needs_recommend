@@ -52,146 +52,86 @@ class ModelService:
         self.pipeline = None
         self.labels = []
         self.version: str | None = None
+        self.folder_name: str | None = None
         self.model_path: Path | None = None
         self.labels_path: Path | None = None
+        self.metadata_path: Path | None = None
+        self.metrics: dict[str, Any] = {}
+        self.topics: list[str] = []
+        self.load_error: str | None = None
+        self.active_mtime: float = 0.0
 
-        self._load_model(labels_path)
+        self._load_active_model()
 
     # ============================================================
-    # MODEL LOADING
+    # MODEL LOADING (STRICT ACTIVE.JSON PRIORITY)
     # ============================================================
 
-    def _load_model(
-        self,
-        labels_path: str | Path | None = None,
-    ) -> None:
+    def _load_active_model(self) -> None:
+        """
+        Loads the model specified in models/active.json.
+        Fails fast if active.json is missing or points to nonexistent files.
+        Does NOT silently fall back to random files.
+        """
+        from app.ml.registry import resolve_active_model
 
-        if not self.model_dir.exists():
-            print(
-                f"WARNING: Model directory does not exist: {self.model_dir}. "
-                "No model loaded — service will return HTTP 503 until a model is trained."
-            )
+        active_file = self.model_dir / "active.json"
+        if active_file.is_file():
+            try:
+                self.active_mtime = active_file.stat().st_mtime
+            except Exception:
+                self.active_mtime = 0.0
+        else:
+            self.active_mtime = 0.0
+
+        info = resolve_active_model(self.model_dir)
+        if not info.get("ready"):
+            self.pipeline = None
+            self.labels = []
+            self.version = info.get("version")
+            self.folder_name = info.get("folder_name")
+            self.model_path = None
+            self.labels_path = None
+            self.load_error = info.get("error") or "Active model descriptor is invalid or missing."
+            print(f"WARNING: {self.load_error}")
             return
 
-        model_files: list[Path] = []
-
-        # --------------------------------------------------------
-        # STRUCTURED DIRECTORY
-        # --------------------------------------------------------
-
-        training_dir = self.model_dir / "training"
-
-        if training_dir.exists():
-            model_files.extend(
-                training_dir.glob(
-                    "training_recommender_*.joblib"
-                )
-            )
-
-        # --------------------------------------------------------
-        # FLAT DIRECTORY
-        # --------------------------------------------------------
-
-        model_files.extend(
-            self.model_dir.glob(
-                "training_recommender_*.joblib"
-            )
-        )
-
-        # Remove duplicates
-        model_files = list(
-            dict.fromkeys(model_files)
-        )
-
-        if not model_files:
-            print(
-                "WARNING: No trained model found. "
-                f"Checked: {self.model_dir} and {self.model_dir / 'training'}. "
-                "Service will return HTTP 503 until a model is trained."
-            )
-            return
-
-        # Newest model
-        model_files.sort(
-            key=lambda p: p.stat().st_mtime,
-            reverse=True,
-        )
-
-        model_path = model_files[0]
-
-        self.model_path = model_path
-
-        # --------------------------------------------------------
-        # LOAD MODEL
-        # --------------------------------------------------------
-
-        self.pipeline = joblib.load(
-            model_path
-        )
-
-        print(
-            f"Model loaded: {model_path}"
-        )
-
-        # --------------------------------------------------------
-        # VERSION
-        # --------------------------------------------------------
-
-        self.version = self._extract_version(
-            model_path.name
-        )
-
-        # --------------------------------------------------------
-        # LABELS
-        # --------------------------------------------------------
-
-        if labels_path is not None:
-
-            label_file = Path(
-                labels_path
-            )
-
-            if not label_file.exists():
-                raise FileNotFoundError(
-                    f"Labels file does not exist: "
-                    f"{label_file}"
-                )
-
-        else:
-
-            label_file = (
-                self._find_matching_labels()
-            )
-
-        if label_file is not None:
-
-            self.labels_path = label_file
-
-            self.labels = joblib.load(
-                label_file
-            )
+        try:
+            self.pipeline = joblib.load(info["artifact_path"])
+            self.labels = joblib.load(info["labels_path"])
+            self.version = info.get("version")
+            self.folder_name = info.get("folder_name")
+            self.model_path = Path(info["artifact_path"])
+            self.labels_path = Path(info["labels_path"])
+            self.metadata_path = Path(info["metadata_path"]) if info.get("metadata_path") else None
+            self.metrics = info.get("metrics", {})
+            self.topics = info.get("topics", [])
+            self.load_error = None
 
             print(
-                f"Labels loaded: {label_file}"
+                f"Active model successfully loaded: version={self.version}, "
+                f"folder={self.folder_name}, artifact={self.model_path}"
             )
+        except Exception as exc:
+            self.pipeline = None
+            self.labels = []
+            self.load_error = f"Failed to deserialize active model artifacts: {exc}"
+            print(f"ERROR: {self.load_error}")
 
-        else:
+    def ensure_active(self) -> None:
+        """
+        Verifies if active.json has been updated on disk.
+        If changed or if model is not loaded, reloads on-the-fly.
+        Raises RuntimeError if model is missing or invalid.
+        """
+        active_file = self.model_dir / "active.json"
+        current_mtime = active_file.stat().st_mtime if active_file.is_file() else 0.0
 
-            print(
-                "WARNING: No labels file found."
-            )
+        if current_mtime != self.active_mtime or self.pipeline is None:
+            self._load_active_model()
 
-        print(
-            f"Model version: {self.version}"
-        )
-
-        expected = (
-            self._get_expected_features()
-        )
-
-        print(
-            f"Expected features: {len(expected)}"
-        )
+        if not self.ready():
+            raise RuntimeError(self.load_error or "Active model is not ready.")
 
     # ============================================================
     # VERSION
@@ -288,8 +228,7 @@ class ModelService:
     # ============================================================
 
     def ready(self) -> bool:
-
-        return self.pipeline is not None
+        return self.pipeline is not None and self.load_error is None
 
     # ============================================================
     # EXPECTED FEATURES
@@ -548,12 +487,7 @@ class ModelService:
         records: list[dict[str, Any]],
         top_k: int = 5,
     ) -> list[list[dict[str, Any]]]:
-
-        if not self.ready():
-
-            raise RuntimeError(
-                "Model is not loaded."
-            )
+        self.ensure_active()
 
         if not records:
             return []
@@ -671,8 +605,7 @@ class ModelService:
         records: list[dict[str, Any]],
         top_k: int = 5,
     ) -> list[dict[str, Any]]:
-        if not self.ready():
-            raise RuntimeError("Model is not loaded.")
+        self.ensure_active()
         if not records:
             return []
 

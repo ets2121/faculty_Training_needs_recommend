@@ -161,10 +161,12 @@ def request_my_recommendation(
 
     settings = get_settings()
     model = ModelService(settings.model_dir)
-    if not model.ready():
+    try:
+        model.ensure_active()
+    except Exception as exc:
         raise HTTPException(
             status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
-            detail="No trained model is currently active. Please contact your administrator.",
+            detail=f"Active model error: {exc}",
         )
 
     record = build_faculty_record(faculty.id, faculty, db)

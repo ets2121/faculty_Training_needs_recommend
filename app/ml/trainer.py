@@ -63,27 +63,40 @@ def train_from_dataframe(df: pd.DataFrame, model_dir: str) -> dict:
     }
 
     version = datetime.now(timezone.utc).strftime("v%Y%m%d%H%M%S")
+    folder_name = version
     model_path = Path(model_dir)
-    model_path.mkdir(parents=True, exist_ok=True)
-    artifact = model_path / f"training_recommender_{version}.joblib"
-    labels_path = model_path / f"labels_{version}.joblib"
-    meta_path = model_path / f"metadata_{version}.json"
+    dest_dir = model_path / folder_name
+    dest_dir.mkdir(parents=True, exist_ok=True)
+
+    artifact = dest_dir / f"training_recommender_{version}.joblib"
+    labels_path = dest_dir / f"labels_{version}.joblib"
+    meta_path = dest_dir / f"metadata_{version}.json"
 
     joblib.dump(pipeline, artifact)
     joblib.dump(mlb, labels_path)
     meta_path.write_text(json.dumps({
         "version": version,
-        "artifact": str(artifact),
-        "labels": str(labels_path),
+        "folder": folder_name,
+        "artifact": str(artifact).replace("\\", "/"),
+        "labels": str(labels_path).replace("\\", "/"),
         "metrics": metrics,
-    }, indent=2))
+        "trained_at": datetime.now(timezone.utc).isoformat(),
+    }, indent=2), encoding="utf-8")
 
-    # Atomic-ish pointer file used by the API to find the active model.
+    # Atomic pointer file used by the API to identify the active model
     (model_path / "active.json").write_text(json.dumps({
         "version": version,
-        "artifact": str(artifact),
-        "labels": str(labels_path),
-        "metadata": str(meta_path),
-    }, indent=2))
+        "folder": folder_name,
+        "artifact": str(artifact).replace("\\", "/"),
+        "labels": str(labels_path).replace("\\", "/"),
+        "metadata": str(meta_path).replace("\\", "/"),
+        "activated_at": datetime.now(timezone.utc).isoformat(),
+    }, indent=2), encoding="utf-8")
 
-    return {"version": version, "metrics": metrics, "artifact": str(artifact)}
+    return {
+        "version": version,
+        "folder": folder_name,
+        "metrics": metrics,
+        "artifact": str(artifact).replace("\\", "/"),
+        "labels": str(labels_path).replace("\\", "/"),
+    }
