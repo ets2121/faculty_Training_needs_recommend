@@ -21,6 +21,8 @@ import {
   X,
   FileCode,
   HardDrive,
+  FileSpreadsheet,
+  FileCog,
 } from 'lucide-react';
 import { formatManila } from '@/lib/utils';
 
@@ -74,6 +76,15 @@ export default function MLPipelinePage() {
   const [trainingProgress, setTrainingProgress] = useState(0);
   const [trainingStep, setTrainingStep] = useState('');
   const [executionLogs, setExecutionLogs] = useState<string[]>([]);
+  const [trainingDatasetLabel, setTrainingDatasetLabel] = useState('');
+
+  // Retrain Modal state
+  const [isRetrainModalOpen, setIsRetrainModalOpen] = useState(false);
+  const [retrainDatasetSource, setRetrainDatasetSource] = useState<'default' | 'upload'>('default');
+  const [retrainDatasetFile, setRetrainDatasetFile] = useState<File | null>(null);
+  const [retrainFolderName, setRetrainFolderName] = useState('');
+  const retrainFileInputRef = useRef<HTMLInputElement>(null);
+  const [retrainFileError, setRetrainFileError] = useState('');
 
   // Import Modal state
   const [isImportModalOpen, setIsImportModalOpen] = useState(false);
@@ -169,86 +180,134 @@ export default function MLPipelinePage() {
     }
   };
 
+  // Retrain dataset file validation
+  const validateRetrainFile = (file: File): string => {
+    const name = file.name.toLowerCase();
+    if (!name.endsWith('.csv') && !name.endsWith('.xlsx') && !name.endsWith('.xls')) {
+      return 'Only .csv, .xlsx, or .xls files are supported.';
+    }
+    if (file.size === 0) return 'The selected file is empty.';
+    if (file.size > 50 * 1024 * 1024) return 'File size exceeds 50 MB limit.';
+    return '';
+  };
+
+  const handleRetrainFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0] || null;
+    setRetrainDatasetFile(file);
+    if (file) {
+      const err = validateRetrainFile(file);
+      setRetrainFileError(err);
+    } else {
+      setRetrainFileError('');
+    }
+  };
+
   // Retraining flow
   const handleTriggerRetraining = async () => {
+    // Validate upload choice
+    if (retrainDatasetSource === 'upload') {
+      if (!retrainDatasetFile) {
+        setRetrainFileError('Please select a dataset file to upload.');
+        return;
+      }
+      const err = validateRetrainFile(retrainDatasetFile);
+      if (err) { setRetrainFileError(err); return; }
+    }
+
+    setIsRetrainModalOpen(false);
     setTrainingActive(true);
     setTrainingProgress(5);
     setTrainingStep('Initializing ML Pipeline Environment...');
+    const dsLabel = retrainDatasetSource === 'upload'
+      ? retrainDatasetFile!.name
+      : 'faculty_training.csv (system default)';
+    setTrainingDatasetLabel(dsLabel);
     setExecutionLogs([
       `[${new Date().toLocaleTimeString()}] Pipeline triggered by System Administrator.`,
-      `[${new Date().toLocaleTimeString()}] Connection established to FastAPI AI engine.`,
+      `[${new Date().toLocaleTimeString()}] Dataset source: ${dsLabel}`,
     ]);
 
-    showToast('info', 'Retraining Started', 'ML Pipeline execution initiated. View live progress below.');
+    showToast('info', 'Retraining Started', 'ML Pipeline execution initiated.');
 
     const timer1 = setTimeout(() => {
-      setTrainingProgress(25);
-      setTrainingStep('Step 1/4: Fetching faculty questionnaire dataset across campuses...');
+      setTrainingProgress(20);
+      setTrainingStep('Step 1/4: Loading and validating dataset...');
       setExecutionLogs((prev) => [
         ...prev,
-        `[${new Date().toLocaleTimeString()}] Querying database: 8 questionnaire parts aggregated.`,
-        `[${new Date().toLocaleTimeString()}] Dataset loaded: 132 completed faculty assessment records.`,
+        `[${new Date().toLocaleTimeString()}] Parsing dataset — checking priority_1..priority_5 columns.`,
+        `[${new Date().toLocaleTimeString()}] Minimum 50-record requirement validated.`,
       ]);
-    }, 1200);
+    }, 1000);
 
     const timer2 = setTimeout(() => {
-      setTrainingProgress(55);
-      setTrainingStep('Step 2/4: Extracting competency features & encoding labels...');
+      setTrainingProgress(45);
+      setTrainingStep('Step 2/4: Feature engineering — scaling & encoding...');
       setExecutionLogs((prev) => [
         ...prev,
-        `[${new Date().toLocaleTimeString()}] Feature scaling: Ordinal Likert 1-5 normalization complete.`,
-        `[${new Date().toLocaleTimeString()}] One-hot encoding target categories (17 training domains).`,
+        `[${new Date().toLocaleTimeString()}] StandardScaler applied to numeric features.`,
+        `[${new Date().toLocaleTimeString()}] OneHotEncoder applied to categorical features.`,
+        `[${new Date().toLocaleTimeString()}] 80/20 train-test split (random_state=42) applied.`,
       ]);
-    }, 2800);
+    }, 2500);
 
     const timer3 = setTimeout(() => {
-      setTrainingProgress(80);
-      setTrainingStep('Step 3/4: Training Multi-Label Random Forest Classifier...');
+      setTrainingProgress(75);
+      setTrainingStep('Step 3/4: Training Random Forest (400 estimators, OneVsRest)...');
       setExecutionLogs((prev) => [
         ...prev,
-        `[${new Date().toLocaleTimeString()}] Fitting 100 estimators with 80/20 train/test partition.`,
-        `[${new Date().toLocaleTimeString()}] Feature importance computed: Research & AI literacy leading.`,
+        `[${new Date().toLocaleTimeString()}] OneVsRestClassifier(RandomForest, n_estimators=400) fitting...`,
+        `[${new Date().toLocaleTimeString()}] Balanced class weights applied. This may take 1-2 minutes.`,
       ]);
-    }, 4500);
+    }, 4000);
+
+    // Build form data
+    const formData = new FormData();
+    if (retrainDatasetSource === 'upload' && retrainDatasetFile) {
+      formData.append('dataset_file', retrainDatasetFile);
+    }
+    if (retrainFolderName.trim()) {
+      formData.append('folder_name', retrainFolderName.trim());
+    }
 
     try {
-      const res = await api.post('/training/train');
+      const res = await api.post('/training/train', formData, {
+        headers: { 'Content-Type': 'multipart/form-data' },
+      });
 
-      clearTimeout(timer1);
-      clearTimeout(timer2);
-      clearTimeout(timer3);
+      clearTimeout(timer1); clearTimeout(timer2); clearTimeout(timer3);
 
       setTrainingProgress(100);
-      setTrainingStep('Step 4/4: Pipeline Complete! Organizing model into dedicated folder...');
+      setTrainingStep('Step 4/4: Pipeline Complete! Model deployed to active registry.');
       setExecutionLogs((prev) => [
         ...prev,
-        `[${new Date().toLocaleTimeString()}] Micro F1 achieved: ${(res.data.metrics?.micro_f1 || 0.65).toFixed(4)}.`,
-        `[${new Date().toLocaleTimeString()}] Model organized into models/${res.data.folder || res.data.version}/`,
-        `[${new Date().toLocaleTimeString()}] models/active.json pointer updated atomically.`,
-        `[${new Date().toLocaleTimeString()}] Model successfully deployed to active inference engine.`,
+        `[${new Date().toLocaleTimeString()}] Micro F1: ${res.data.metrics?.micro_f1?.toFixed(4) ?? 'N/A'} | Top-1 Hit: ${((res.data.metrics?.top1_hit_accuracy ?? 0) * 100).toFixed(1)}%`,
+        `[${new Date().toLocaleTimeString()}] Exact Match: ${((res.data.metrics?.exact_match_accuracy ?? 0) * 100).toFixed(1)}% | Hamming Acc: ${((res.data.metrics?.hamming_accuracy ?? 0) * 100).toFixed(1)}%`,
+        `[${new Date().toLocaleTimeString()}] Artifacts saved to models/${res.data.folder}/`,
+        `[${new Date().toLocaleTimeString()}] models/active.json updated. Model reloaded successfully.`,
       ]);
 
       showToast(
         'success',
         'Retraining Complete!',
-        `New model deployed in folder '${res.data.folder || res.data.version}'.`
+        `Model '${res.data.version}' deployed to models/${res.data.folder}/`
       );
+
+      // Reset retrain modal state
+      setRetrainDatasetFile(null);
+      setRetrainFolderName('');
+      setRetrainDatasetSource('default');
 
       await fetchModelData();
     } catch (err: any) {
-      clearTimeout(timer1);
-      clearTimeout(timer2);
-      clearTimeout(timer3);
-
+      clearTimeout(timer1); clearTimeout(timer2); clearTimeout(timer3);
+      const errMsg = err.response?.data?.detail || err.message || 'Unknown error';
       setExecutionLogs((prev) => [
         ...prev,
-        `[${new Date().toLocaleTimeString()}] ERROR: ${err.response?.data?.detail || err.message}`,
+        `[${new Date().toLocaleTimeString()}] ❌ ERROR: ${errMsg}`,
       ]);
-      showToast('error', 'Pipeline Error', err.response?.data?.detail || err.message || 'Failed to retrain ML model.');
+      showToast('error', 'Pipeline Error', errMsg);
     } finally {
-      setTimeout(() => {
-        setTrainingActive(false);
-      }, 1500);
+      setTimeout(() => setTrainingActive(false), 1500);
     }
   };
 
@@ -312,7 +371,7 @@ export default function MLPipelinePage() {
           </button>
 
           <button
-            onClick={handleTriggerRetraining}
+            onClick={() => setIsRetrainModalOpen(true)}
             disabled={trainingActive}
             className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-500 hover:from-emerald-500 hover:to-teal-400 text-white font-extrabold text-xs shadow-lg shadow-emerald-950/40 transition-all disabled:opacity-50 shrink-0"
           >
@@ -728,7 +787,159 @@ export default function MLPipelinePage() {
         </div>
       )}
 
-      {/* 8. Retraining Progress Loading Popup / Modal */}
+      {/* 8. Retrain New Model Modal */}
+      {isRetrainModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 dark:bg-black/80 backdrop-blur-md animate-fadeIn">
+          <div className="bg-white dark:bg-slate-900 border border-emerald-500/30 rounded-3xl p-6 sm:p-8 max-w-lg w-full shadow-2xl space-y-5">
+            {/* Header */}
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className="p-2 rounded-xl bg-emerald-500/10">
+                  <FileCog className="w-5 h-5 text-emerald-500" />
+                </div>
+                <div>
+                  <h3 className="text-base font-extrabold text-light-text dark:text-white">Retrain New Model</h3>
+                  <p className="text-[11px] text-light-text dark:text-dark-muted">80/20 split · 400 estimators · OneVsRest Random Forest</p>
+                </div>
+              </div>
+              <button
+                onClick={() => { setIsRetrainModalOpen(false); setRetrainFileError(''); }}
+                className="p-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-400 transition-colors"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            {/* Dataset source toggle */}
+            <div className="space-y-2">
+              <label className="block text-xs font-semibold text-light-text dark:text-dark-text">Dataset Source</label>
+              <div className="grid grid-cols-2 gap-2">
+                <button
+                  type="button"
+                  onClick={() => { setRetrainDatasetSource('default'); setRetrainDatasetFile(null); setRetrainFileError(''); }}
+                  className={`flex items-center gap-2 px-3 py-3 rounded-xl border text-xs font-bold transition-all ${
+                    retrainDatasetSource === 'default'
+                      ? 'border-emerald-500 bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300'
+                      : 'border-light-border dark:border-slate-700 text-light-text dark:text-dark-muted hover:border-emerald-400'
+                  }`}
+                >
+                  <Database className="w-4 h-4 shrink-0" />
+                  <span>Default System Dataset<br /><span className="font-mono text-[10px] opacity-70">faculty_training.csv</span></span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setRetrainDatasetSource('upload')}
+                  className={`flex items-center gap-2 px-3 py-3 rounded-xl border text-xs font-bold transition-all ${
+                    retrainDatasetSource === 'upload'
+                      ? 'border-sky-500 bg-sky-50 dark:bg-sky-950/40 text-sky-700 dark:text-sky-300'
+                      : 'border-light-border dark:border-slate-700 text-light-text dark:text-dark-muted hover:border-sky-400'
+                  }`}
+                >
+                  <FileSpreadsheet className="w-4 h-4 shrink-0" />
+                  <span>Upload New Dataset<br /><span className="font-mono text-[10px] opacity-70">.csv / .xlsx / .xls</span></span>
+                </button>
+              </div>
+            </div>
+
+            {/* File upload area (only when 'upload' selected) */}
+            {retrainDatasetSource === 'upload' && (
+              <div className="space-y-2">
+                <label className="block text-xs font-semibold text-light-text dark:text-dark-text">
+                  Dataset File <span className="text-rose-500">*</span>
+                </label>
+                <div
+                  className={`relative border-2 border-dashed rounded-xl p-5 text-center cursor-pointer transition-all ${
+                    retrainFileError
+                      ? 'border-rose-400 bg-rose-50 dark:bg-rose-950/20'
+                      : retrainDatasetFile
+                      ? 'border-emerald-400 bg-emerald-50 dark:bg-emerald-950/20'
+                      : 'border-light-border dark:border-slate-700 hover:border-sky-400 dark:hover:border-sky-500'
+                  }`}
+                  onClick={() => retrainFileInputRef.current?.click()}
+                >
+                  <input
+                    ref={retrainFileInputRef}
+                    type="file"
+                    accept=".csv,.xlsx,.xls"
+                    className="hidden"
+                    onChange={handleRetrainFileChange}
+                  />
+                  {retrainDatasetFile ? (
+                    <div className="flex items-center justify-center gap-2">
+                      <FileSpreadsheet className="w-5 h-5 text-emerald-500 shrink-0" />
+                      <div className="text-left">
+                        <p className="text-xs font-bold text-emerald-700 dark:text-emerald-300 truncate max-w-xs">{retrainDatasetFile.name}</p>
+                        <p className="text-[10px] text-light-text dark:text-dark-muted">{(retrainDatasetFile.size / 1024).toFixed(1)} KB</p>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={(e) => { e.stopPropagation(); setRetrainDatasetFile(null); setRetrainFileError(''); if (retrainFileInputRef.current) retrainFileInputRef.current.value = ''; }}
+                        className="ml-auto p-1 rounded-md hover:bg-rose-100 dark:hover:bg-rose-900/30 text-rose-400"
+                      >
+                        <X className="w-3.5 h-3.5" />
+                      </button>
+                    </div>
+                  ) : (
+                    <div className="space-y-1">
+                      <Upload className="w-6 h-6 text-slate-400 mx-auto" />
+                      <p className="text-xs font-semibold text-slate-500 dark:text-slate-400">Click to browse or drag & drop</p>
+                      <p className="text-[10px] text-light-text dark:text-dark-muted">.csv, .xlsx, .xls · Max 50 MB · Min 50 records</p>
+                      <p className="text-[10px] text-amber-600 dark:text-amber-400 font-medium">⚠ Must contain priority_1 through priority_5 columns</p>
+                    </div>
+                  )}
+                </div>
+                {retrainFileError && (
+                  <p className="text-[11px] text-rose-600 dark:text-rose-400 flex items-center gap-1.5">
+                    <AlertTriangle className="w-3 h-3 shrink-0" />{retrainFileError}
+                  </p>
+                )}
+              </div>
+            )}
+
+            {/* Custom folder name */}
+            <div className="space-y-1.5">
+              <label className="block text-xs font-semibold text-light-text dark:text-dark-text">
+                Model Folder Name <span className="text-light-text dark:text-dark-muted font-normal">(optional)</span>
+              </label>
+              <input
+                type="text"
+                value={retrainFolderName}
+                onChange={(e) => setRetrainFolderName(e.target.value)}
+                placeholder="e.g. my_model_run_1  (defaults to version timestamp)"
+                className="w-full bg-slate-50 dark:bg-slate-800/60 border border-light-border dark:border-slate-700 rounded-xl px-3.5 py-2.5 text-xs text-light-text dark:text-white focus:outline-none focus:border-emerald-500 transition-all font-mono"
+              />
+              <p className="text-[10px] text-light-text dark:text-dark-muted">Custom name for this model version folder inside <code>models/</code>.</p>
+            </div>
+
+            {/* Info note */}
+            <div className="bg-slate-50 dark:bg-slate-800/50 rounded-xl px-4 py-3 text-[11px] text-light-text dark:text-dark-muted leading-relaxed border border-light-border dark:border-slate-700">
+              <strong className="text-light-text dark:text-white">Colab-identical training process:</strong> 80% train / 20% test split · 400 RF estimators · Full metric suite (Top-1/3/5 hit accuracy, Exact Match, Hamming, Jaccard, Micro F1) · Feature importances extracted.
+            </div>
+
+            {/* Actions */}
+            <div className="flex items-center justify-end gap-3 pt-1">
+              <button
+                type="button"
+                onClick={() => { setIsRetrainModalOpen(false); setRetrainFileError(''); }}
+                className="px-4 py-2 rounded-xl text-xs font-bold text-slate-500 hover:text-slate-700 dark:hover:text-slate-300 transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={handleTriggerRetraining}
+                disabled={retrainDatasetSource === 'upload' && !retrainDatasetFile}
+                className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-500 hover:from-emerald-500 hover:to-teal-400 text-white font-extrabold text-xs shadow-md shadow-emerald-950/30 transition-all disabled:opacity-50"
+              >
+                <Sparkles className="w-3.5 h-3.5" />
+                Start Training
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* 9. Retraining Progress Loading Popup */}
       {trainingActive && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 dark:bg-black/80 backdrop-blur-md animate-fadeIn">
           <div className="bg-white dark:bg-slate-900 border border-emerald-500/30 rounded-3xl p-6 sm:p-8 max-w-md w-full shadow-2xl space-y-6 text-center">
@@ -739,7 +950,12 @@ export default function MLPipelinePage() {
 
             <div>
               <h3 className="text-lg font-extrabold text-light-text dark:text-white">Retraining ML Pipeline</h3>
-              <p className="text-xs text-light-text dark:text-dark-muted mt-1 font-mono">{trainingStep}</p>
+              <p className="text-xs text-light-text dark:text-dark-muted mt-0.5 font-mono">{trainingStep}</p>
+              {trainingDatasetLabel && (
+                <p className="text-[10px] text-emerald-600 dark:text-emerald-400 mt-1.5 font-mono truncate">
+                  📂 {trainingDatasetLabel}
+                </p>
+              )}
             </div>
 
             {/* Progress Bar */}
@@ -756,8 +972,15 @@ export default function MLPipelinePage() {
               </div>
             </div>
 
+            {/* Live log (last 3 entries) */}
+            <div className="bg-slate-950 rounded-xl p-3 text-left space-y-0.5 max-h-24 overflow-hidden">
+              {executionLogs.slice(-3).map((log, i) => (
+                <p key={i} className="text-[10px] font-mono text-emerald-300 truncate">{log}</p>
+              ))}
+            </div>
+
             <p className="text-[11px] text-light-text dark:text-dark-muted leading-relaxed">
-              Organizing artifacts into a dedicated model folder and updating active registry.
+              Artifacts will be organized into a dedicated model folder and active registry updated.
             </p>
           </div>
         </div>

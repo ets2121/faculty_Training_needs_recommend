@@ -1,4 +1,6 @@
 from __future__ import annotations
+
+import io
 from pathlib import Path
 from datetime import datetime, timezone
 import json
@@ -7,7 +9,14 @@ import numpy as np
 import pandas as pd
 from sklearn.compose import ColumnTransformer
 from sklearn.ensemble import RandomForestClassifier
-from sklearn.metrics import f1_score, precision_score, recall_score
+from sklearn.metrics import (
+    accuracy_score,
+    f1_score,
+    hamming_loss,
+    jaccard_score,
+    precision_score,
+    recall_score,
+)
 from sklearn.model_selection import train_test_split
 from sklearn.multiclass import OneVsRestClassifier
 from sklearn.preprocessing import MultiLabelBinarizer, OneHotEncoder, StandardScaler
@@ -17,19 +26,114 @@ from app.ml.features import to_frame
 
 TARGETS = [f"priority_{i}" for i in range(1, 6)]
 
-def train_from_dataframe(df: pd.DataFrame, model_dir: str) -> dict:
+# ---------------------------------------------------------------------------
+# Dataset loader — accepts CSV or Excel bytes, returns validated DataFrame
+# ---------------------------------------------------------------------------
+
+def load_dataset_file(file_bytes: bytes, filename: str) -> pd.DataFrame:
+    """
+    Parse uploaded dataset bytes (CSV or Excel) into a validated DataFrame.
+
+    Validation rules:
+    - File must be .csv, .xlsx, or .xls
+    - Must contain at least one of priority_1..priority_5 target columns
+    - Must have at least 50 rows
+    - Returns a clean pd.DataFrame ready for training
+    """
+    fname = filename.lower()
+
+    try:
+        if fname.endswith(".csv"):
+            # Try UTF-8 first, then latin-1 fallback
+            try:
+                df = pd.read_csv(io.BytesIO(file_bytes), encoding="utf-8")
+            except UnicodeDecodeError:
+                df = pd.read_csv(io.BytesIO(file_bytes), encoding="latin-1")
+        elif fname.endswith(".xlsx"):
+            df = pd.read_excel(io.BytesIO(file_bytes), engine="openpyxl")
+        elif fname.endswith(".xls"):
+            df = pd.read_excel(io.BytesIO(file_bytes), engine="xlrd")
+        else:
+            raise ValueError(
+                f"Unsupported file format '{filename}'. "
+                "Please upload a .csv, .xlsx, or .xls file."
+            )
+    except ValueError:
+        raise
+    except Exception as exc:
+        raise ValueError(f"Failed to parse '{filename}': {exc}") from exc
+
+    if df.empty:
+        raise ValueError("The uploaded file is empty. Please provide a dataset with at least 50 rows.")
+
+    # Check target columns exist
+    missing = [t for t in TARGETS if t not in df.columns]
+    if missing:
+        raise ValueError(
+            f"Required target column(s) missing from dataset: {missing}. "
+            "The dataset must contain columns priority_1 through priority_5. "
+            "Make sure you are uploading the formatted faculty_training.csv (not a raw survey export)."
+        )
+
+    # Check minimum records
+    if len(df) < 50:
+        raise ValueError(
+            f"Dataset has only {len(df)} records — at least 50 are required for a reliable training run."
+        )
+
+    return df
+
+
+# ---------------------------------------------------------------------------
+# Core trainer — mirrors Colab notebook exactly
+# ---------------------------------------------------------------------------
+
+def train_from_dataframe(
+    df: pd.DataFrame,
+    model_dir: str,
+    custom_folder_name: str | None = None,
+) -> dict:
+    """
+    Train a multi-label Random Forest recommender following the exact Colab process:
+    - 80/20 train/test split (random_state=42)
+    - OneVsRest RandomForest(n_estimators=400, min_samples_leaf=2,
+                              class_weight='balanced_subsample', random_state=42)
+    - Full metric suite: exact_match, hamming, jaccard, top-1/3/5 hit accuracy,
+      micro/macro F1, precision, recall
+    - Feature importances from RF estimators
+    - Metadata JSON matching Colab export format
+    - active.json pointer updated atomically
+    """
     if len(df) < 50:
         raise ValueError("At least 50 records are required for a development training run.")
 
-    labels = [sorted(set(x for x in row if pd.notna(x))) for row in df[TARGETS].values.tolist()]
+    # ── Build multi-label targets ──────────────────────────────────────────────
+    labels = [
+        sorted(set(
+            str(x).strip() for x in row
+            if pd.notna(x) and str(x).strip() not in ("", "nan")
+        ))
+        for row in df[TARGETS].values.tolist()
+    ]
     all_topics = sorted(set(x for row in labels for x in row))
+
+    if not all_topics:
+        raise ValueError(
+            "No training categories found in priority_1..priority_5 columns. "
+            "Ensure at least one non-empty value exists in those columns."
+        )
+
     mlb = MultiLabelBinarizer(classes=all_topics)
     y = mlb.fit_transform(labels)
 
-    X_raw = df.drop(columns=TARGETS, errors="ignore")
+    # ── Feature matrix ─────────────────────────────────────────────────────────
+    exclude_cols = TARGETS + ["faculty_id"]
+    X_raw = df.drop(columns=exclude_cols, errors="ignore")
+
     cat_cols = X_raw.select_dtypes(include=["object"]).columns.tolist()
     num_cols = [c for c in X_raw.columns if c not in cat_cols]
 
+    # ── Pipeline — identical to Colab Cell 6 ──────────────────────────────────
     pre = ColumnTransformer([
         ("num", StandardScaler(), num_cols),
         ("cat", OneHotEncoder(handle_unknown="ignore"), cat_cols),
@@ -46,62 +150,147 @@ def train_from_dataframe(df: pd.DataFrame, model_dir: str) -> dict:
     )
 
     pipeline = Pipeline([("preprocessor", pre), ("classifier", classifier)])
+
+    # ── Strict 80% / 20% split — identical to Colab Cell 4 ───────────────────
     X_train, X_test, y_train, y_test = train_test_split(
-        X_raw, y, test_size=0.2, random_state=42
+        X_raw, y, test_size=0.20, train_size=0.80, random_state=42
     )
+
     pipeline.fit(X_train, y_train)
 
-    pred = pipeline.predict(X_test)
+    # ── Predictions ─────────────────────────────────────────────────────────
+    y_pred = pipeline.predict(X_test)
+    y_prob = pipeline.predict_proba(X_test)
 
-    from app.ml.registry import extract_feature_importances
-    feature_importances = extract_feature_importances(pipeline, top_k=6)
+    total_test = len(y_test)
 
+    # ── 1. Multi-Label Accuracy Metrics ────────────────────────────────────────
+    exact_match_acc = float(accuracy_score(y_test, y_pred))
+    hamming_acc     = float(1.0 - hamming_loss(y_test, y_pred))
+    jaccard_acc     = float(jaccard_score(y_test, y_pred, average="samples", zero_division=0))
+
+    # ── 2. Top-K Recommendation Hit Accuracy (Colab Cell 7) ──────────────────
+    top1_hits = top3_hits = top5_hits = 0
+    for i in range(total_test):
+        true_indices = np.where(y_test[i] == 1)[0]
+        pred_ranked  = np.argsort(y_prob[i])[::-1]
+        if pred_ranked[0] in true_indices:
+            top1_hits += 1
+        if any(p in true_indices for p in pred_ranked[:3]):
+            top3_hits += 1
+        if any(p in true_indices for p in pred_ranked[:5]):
+            top5_hits += 1
+
+    top1_accuracy = top1_hits / total_test
+    top3_accuracy = top3_hits / total_test
+    top5_accuracy = top5_hits / total_test
+
+    # ── 3. Micro / Macro F1, Precision, Recall ────────────────────────────────
+    micro_f1        = float(f1_score(y_test, y_pred, average="micro", zero_division=0))
+    macro_f1        = float(f1_score(y_test, y_pred, average="macro", zero_division=0))
+    micro_precision = float(precision_score(y_test, y_pred, average="micro", zero_division=0))
+    micro_recall    = float(recall_score(y_test, y_pred, average="micro", zero_division=0))
+
+    # ── 4. Feature Importances — identical to Colab Cell 7 ───────────────────
+    pre_step = pipeline.named_steps["preprocessor"]
+    clf_step = pipeline.named_steps["classifier"]
+    f_names  = pre_step.get_feature_names_out()
+    imp_mean = np.mean([est.feature_importances_ for est in clf_step.estimators_], axis=0)
+    top_imp_idx = np.argsort(imp_mean)[::-1][:6]
+    max_imp  = float(imp_mean[top_imp_idx[0]]) if len(top_imp_idx) > 0 and imp_mean[top_imp_idx[0]] > 0 else 1.0
+    palette  = ["#10b981", "#0284c7", "#f59e0b", "#e11d48", "#8b5cf6", "#64748b"]
+
+    def _clean_feature_name(n: str) -> str:
+        n = n.replace("num__", "").replace("cat__", "")
+        return (
+            " ".join(n.split("_"))
+            .title()
+            .replace("Obe", "Outcomes-Based Education (OBE)")
+            .replace("Ict", "ICT")
+            .replace("Ai", "Artificial Intelligence")
+            .replace("Lms", "LMS")
+        )
+
+    feature_importances = [
+        {
+            "label": _clean_feature_name(f_names[idx]),
+            "value": max(10, min(100, round((float(imp_mean[idx]) / max_imp) * 100))),
+            "raw_importance": round(float(imp_mean[idx]), 4),
+            "color": palette[i % len(palette)],
+        }
+        for i, idx in enumerate(top_imp_idx)
+    ]
+
+    # ── Full metrics dict — matches Colab metadata exactly ────────────────────
     metrics = {
-        "micro_f1": float(f1_score(y_test, pred, average="micro", zero_division=0)),
-        "macro_f1": float(f1_score(y_test, pred, average="macro", zero_division=0)),
-        "micro_precision": float(precision_score(y_test, pred, average="micro", zero_division=0)),
-        "micro_recall": float(recall_score(y_test, pred, average="micro", zero_division=0)),
-        "test_records": int(len(X_test)),
-        "training_records": int(len(X_train)),
-        "topics": all_topics,
-        "feature_importances": feature_importances,
+        "exact_match_accuracy": round(exact_match_acc, 4),
+        "hamming_accuracy":     round(hamming_acc, 4),
+        "jaccard_accuracy":     round(jaccard_acc, 4),
+        "top1_hit_accuracy":    round(top1_accuracy, 4),
+        "top3_hit_accuracy":    round(top3_accuracy, 4),
+        "top5_hit_accuracy":    round(top5_accuracy, 4),
+        "micro_f1":             round(micro_f1, 4),
+        "macro_f1":             round(macro_f1, 4),
+        "micro_precision":      round(micro_precision, 4),
+        "micro_recall":         round(micro_recall, 4),
+        "training_records":     int(len(X_train)),
+        "test_records":         int(len(X_test)),
+        "train_ratio":          0.80,
+        "test_ratio":           0.20,
+        "feature_importances":  feature_importances,
     }
 
+    # ── Persist artifacts ─────────────────────────────────────────────────────
     version = datetime.now(timezone.utc).strftime("v%Y%m%d%H%M%S")
-    folder_name = version
+
+    # Determine folder name: user-supplied, or auto version
+    if custom_folder_name and custom_folder_name.strip():
+        folder_name = custom_folder_name.strip()
+    else:
+        folder_name = version
+
     model_path = Path(model_dir)
-    dest_dir = model_path / folder_name
+    dest_dir   = model_path / folder_name
     dest_dir.mkdir(parents=True, exist_ok=True)
 
-    artifact = dest_dir / f"training_recommender_{version}.joblib"
+    artifact   = dest_dir / f"training_recommender_{version}.joblib"
     labels_path = dest_dir / f"labels_{version}.joblib"
-    meta_path = dest_dir / f"metadata_{version}.json"
+    meta_path  = dest_dir / f"metadata_{version}.json"
 
     joblib.dump(pipeline, artifact)
     joblib.dump(mlb, labels_path)
-    meta_path.write_text(json.dumps({
-        "version": version,
-        "folder": folder_name,
-        "artifact": str(artifact).replace("\\", "/"),
-        "labels": str(labels_path).replace("\\", "/"),
-        "metrics": metrics,
-        "trained_at": datetime.now(timezone.utc).isoformat(),
-    }, indent=2), encoding="utf-8")
 
-    # Atomic pointer file used by the API to identify the active model
-    (model_path / "active.json").write_text(json.dumps({
-        "version": version,
-        "folder": folder_name,
-        "artifact": str(artifact).replace("\\", "/"),
-        "labels": str(labels_path).replace("\\", "/"),
-        "metadata": str(meta_path).replace("\\", "/"),
+    # metadata.json — Colab-compatible format (no folder key, relative model paths)
+    meta_dict = {
+        "version":    version,
+        "artifact":   f"models/{folder_name}/training_recommender_{version}.joblib",
+        "labels":     f"models/{folder_name}/labels_{version}.joblib",
+        "metrics":    metrics,
+        "topics":     all_topics,
+        "trained_at": datetime.now(timezone.utc).isoformat(),
+    }
+    meta_path.write_text(json.dumps(meta_dict, indent=2), encoding="utf-8")
+
+    # active.json — atomic pointer (includes folder for quick resolution)
+    active_dict = {
+        "version":      version,
+        "folder":       folder_name,
+        "artifact":     str(artifact).replace("\\", "/"),
+        "labels":       str(labels_path).replace("\\", "/"),
+        "metadata":     str(meta_path).replace("\\", "/"),
         "activated_at": datetime.now(timezone.utc).isoformat(),
-    }, indent=2), encoding="utf-8")
+    }
+    (model_path / "active.json").write_text(
+        json.dumps(active_dict, indent=2), encoding="utf-8"
+    )
 
     return {
-        "version": version,
-        "folder": folder_name,
-        "metrics": metrics,
-        "artifact": str(artifact).replace("\\", "/"),
-        "labels": str(labels_path).replace("\\", "/"),
+        "version":     version,
+        "folder":      folder_name,
+        "metrics":     metrics,
+        "artifact":    str(artifact).replace("\\", "/"),
+        "labels":      str(labels_path).replace("\\", "/"),
+        "metadata":    str(meta_path).replace("\\", "/"),
+        "topics":      all_topics,
+        "total_records": int(len(df)),
     }

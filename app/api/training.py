@@ -21,7 +21,7 @@ from app.ml.registry import (
     set_active_model_pointer,
     sync_registry_with_db,
 )
-from app.ml.trainer import train_from_dataframe
+from app.ml.trainer import load_dataset_file, train_from_dataframe
 
 router = APIRouter(prefix="/training", tags=["Training"])
 
@@ -169,27 +169,94 @@ async def import_model_archive_endpoint(
 
 
 @router.post("/train", dependencies=[Depends(require_admin)])
-def train(request: Request, db: Session = Depends(get_db)):
+async def train(
+    request: Request,
+    db: Session = Depends(get_db),
+    dataset_file: UploadFile | None = File(None),
+    folder_name: str | None = Form(None),
+):
     """
     Trigger full ML retraining pipeline.
-    Saves artifacts in their own dedicated folder, updates active.json,
-    ensures single is_active=True in model_registry, and reloads engine.
+
+    Optional multipart fields:
+    - dataset_file: .csv, .xlsx, or .xls dataset file. If omitted, the default
+      system dataset (raw_data_path from settings) is used.
+    - folder_name: custom folder name inside models/. Defaults to a timestamp
+      version string (e.g. v20261025123709).
+
+    Returns full metrics matching the Colab notebook output format.
     """
     settings = get_settings()
-    path = Path(settings.raw_data_path)
-    if not path.exists():
-        raise HTTPException(404, f"Training dataset not found: {path}")
 
-    df = pd.read_csv(path)
+    # ── Load dataset ──────────────────────────────────────────────────────────
+    if dataset_file and dataset_file.filename:
+        # Validate file extension before reading
+        fname = dataset_file.filename.lower()
+        if not (fname.endswith(".csv") or fname.endswith(".xlsx") or fname.endswith(".xls")):
+            raise HTTPException(
+                400,
+                detail=(
+                    f"Unsupported file format '{dataset_file.filename}'. "
+                    "Please upload a .csv, .xlsx, or .xls dataset file."
+                ),
+            )
+
+        file_bytes = await dataset_file.read()
+        if len(file_bytes) == 0:
+            raise HTTPException(400, detail="Uploaded dataset file is empty.")
+
+        try:
+            df = load_dataset_file(file_bytes, dataset_file.filename)
+        except ValueError as exc:
+            raise HTTPException(400, detail=str(exc))
+        except Exception as exc:
+            raise HTTPException(
+                400,
+                detail=f"Failed to parse uploaded dataset '{dataset_file.filename}': {exc}",
+            )
+
+        dataset_source = f"uploaded file '{dataset_file.filename}' ({len(df)} records)"
+    else:
+        # Fallback to default system dataset
+        path = Path(settings.raw_data_path)
+        if not path.exists():
+            raise HTTPException(
+                404,
+                detail=(
+                    f"Default training dataset not found: {settings.raw_data_path}. "
+                    "Please upload a dataset file or ensure the default CSV is in place."
+                ),
+            )
+        try:
+            df = pd.read_csv(path)
+        except Exception as exc:
+            raise HTTPException(
+                400,
+                detail=f"Failed to read default dataset '{path}': {exc}",
+            )
+
+        if len(df) < 50:
+            raise HTTPException(
+                400,
+                detail=(
+                    f"Default dataset has only {len(df)} records — "
+                    "at least 50 are required for training."
+                ),
+            )
+
+        dataset_source = f"default system dataset '{path.name}' ({len(df)} records)"
+
+    # ── Train model ───────────────────────────────────────────────────────────
     try:
-        result = train_from_dataframe(df, settings.model_dir)
+        result = train_from_dataframe(df, settings.model_dir, custom_folder_name=folder_name)
+    except ValueError as exc:
+        raise HTTPException(400, detail=str(exc))
     except Exception as exc:
-        raise HTTPException(400, str(exc))
+        raise HTTPException(500, detail=f"Training failed unexpectedly: {exc}")
 
-    # Deactivate all previous models in MySQL to avoid conflict
+    # ── Sync MySQL model_registry ─────────────────────────────────────────────
+    # Deactivate all previous models, then insert/activate the new one
     db.query(ModelRegistry).update({"is_active": False})
-
-    # Record new model registry entry in MySQL
     db.add(ModelRegistry(
         version=result["version"],
         artifact_path=result["artifact"],
@@ -198,18 +265,30 @@ def train(request: Request, db: Session = Depends(get_db)):
     ))
     db.commit()
 
-    # Reload in-memory model
+    # ── Reload in-memory model ────────────────────────────────────────────────
     model = getattr(request.app.state, "model", None)
     if model:
         model._load_active_model()
 
     log_audit(
         db, None, "train_model", entity_type="model", entity_id=result["version"],
-        new_values={"version": result["version"], "metrics": result["metrics"]},
-        ip_address=request.client.host if request.client else None
+        new_values={
+            "version": result["version"],
+            "folder": result["folder"],
+            "dataset_source": dataset_source,
+            "metrics": result["metrics"],
+        },
+        ip_address=request.client.host if request.client else None,
     )
 
-    return result
+    return {
+        **result,
+        "dataset_source": dataset_source,
+        "message": (
+            f"Model '{result['version']}' trained successfully from {dataset_source}. "
+            f"Deployed to models/{result['folder']}/."
+        ),
+    }
 
 
 @router.post("/reload", dependencies=[Depends(require_admin)])
