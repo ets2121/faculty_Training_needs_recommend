@@ -93,10 +93,11 @@ def test_catalog_api_filter_and_add():
             "status": "active"
         }
 
+        from app.core.config import get_settings
         add_res = client.post(
             "/api/v1/catalog",
             json=new_item,
-            headers={"X-Admin-API-Key": "change-this-in-production"}
+            headers={"X-Admin-API-Key": get_settings().admin_api_key}
         )
         assert add_res.status_code == 200, add_res.text
         assert add_res.json()["status"] == "success"

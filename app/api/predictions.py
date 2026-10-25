@@ -1,4 +1,4 @@
-﻿"""
+"""
 Recommendations API — Authenticated endpoints for admin-driven recommendations.
 
 RBAC:
@@ -39,10 +39,17 @@ ELIGIBLE_STATUSES = {"eligible", "has_recommendation"}
 
 def _get_model_or_503(request: Request):
     model = getattr(request.app.state, "model", None)
-    if model is None or not model.ready():
+    if model is None:
         raise HTTPException(
             status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
-            detail="No trained model is active. Contact your system administrator.",
+            detail="No trained model is initialized. Contact your system administrator.",
+        )
+    try:
+        model.ensure_active()
+    except Exception as exc:
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail=f"Active model error: {exc}",
         )
     return model
 

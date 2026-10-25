@@ -76,6 +76,7 @@ def test_questionnaire_lifecycle_and_recommendation():
                 "password": "password123",
                 "full_name": "Test Dept Head",
                 "role": "department_admin",
+                "campus_code": "DIFFUN",
                 "department_code": "BSIT"
             }
         )
