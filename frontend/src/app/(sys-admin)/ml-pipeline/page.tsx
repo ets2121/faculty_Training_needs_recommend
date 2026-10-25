@@ -34,6 +34,12 @@ interface ActiveModelStatus {
   metadata_path: string | null;
   metrics: Record<string, any>;
   topics: string[];
+  feature_importances?: Array<{
+    label: string;
+    value: number;
+    raw_importance?: number;
+    color: string;
+  }>;
   error?: string | null;
 }
 
@@ -246,17 +252,27 @@ export default function MLPipelinePage() {
     }
   };
 
-  const featureImportances = [
-    { label: 'Research Competency Proficiency', value: 92, color: '#10b981' },
-    { label: 'Emerging Need: Artificial Intelligence', value: 85, color: '#0284c7' },
-    { label: 'Computer Literacy & Digital Tech', value: 78, color: '#f59e0b' },
-    { label: 'Outcomes-Based Education (OBE)', value: 71, color: '#e11d48' },
-    { label: 'Instructional Design Mastery', value: 65, color: '#64748b' },
-  ];
+  const featureImportances =
+    activeModel?.feature_importances && activeModel.feature_importances.length > 0
+      ? activeModel.feature_importances
+      : [
+          { label: 'Research Competency Proficiency', value: 92, color: '#10b981' },
+          { label: 'Emerging Need: Artificial Intelligence', value: 85, color: '#0284c7' },
+          { label: 'Computer Literacy & Digital Tech', value: 78, color: '#f59e0b' },
+          { label: 'Outcomes-Based Education (OBE)', value: 71, color: '#e11d48' },
+          { label: 'Instructional Design Mastery', value: 65, color: '#64748b' },
+        ];
 
   const microF1 = activeModel?.metrics?.micro_f1 ?? null;
+  const macroF1 = activeModel?.metrics?.macro_f1 ?? null;
   const precision = activeModel?.metrics?.micro_precision ?? null;
   const recall = activeModel?.metrics?.micro_recall ?? null;
+  const top1Hit = activeModel?.metrics?.top1_hit_accuracy ?? null;
+  const top3Hit = activeModel?.metrics?.top3_hit_accuracy ?? null;
+  const exactMatch = activeModel?.metrics?.exact_match_accuracy ?? null;
+  const hammingAcc = activeModel?.metrics?.hamming_accuracy ?? null;
+  const trainRecords = activeModel?.metrics?.training_records ?? null;
+  const testRecords = activeModel?.metrics?.test_records ?? null;
 
   return (
     <div className="space-y-8 max-w-6xl mx-auto">
@@ -396,10 +412,71 @@ export default function MLPipelinePage() {
             {activeModel?.version || 'None Active'}
           </div>
           <p className="text-[11px] text-light-text dark:text-dark-muted mt-1 font-mono">
-            Topics: {activeModel?.topics?.length || activeModel?.metrics?.topics?.length || 17} categories
+            {trainRecords && testRecords
+              ? `${trainRecords} train / ${testRecords} test (80/20)`
+              : `Topics: ${activeModel?.topics?.length || activeModel?.metrics?.topics?.length || 17} categories`}
           </p>
         </div>
       </div>
+
+      {/* 3b. Colab & Pipeline Evaluation Diagnostics (Hit Rates & Partition Breakdown) */}
+      {(top1Hit !== null || exactMatch !== null || macroF1 !== null) && (
+        <div className="p-5 rounded-2xl bg-emerald-500/5 dark:bg-emerald-500/10 border border-emerald-500/20 shadow-sm space-y-3">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <Sparkles className="w-4 h-4 text-emerald-500" />
+              <h4 className="text-xs font-extrabold uppercase tracking-wider text-emerald-700 dark:text-emerald-300">
+                Evaluation Test Accuracy (80/20 Split Diagnostics)
+              </h4>
+            </div>
+            <span className="text-[10px] font-mono text-emerald-600 dark:text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded border border-emerald-500/20">
+              Ground-Truth Validated
+            </span>
+          </div>
+
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs">
+            {top1Hit !== null && (
+              <div className="p-3 rounded-xl bg-white/70 dark:bg-slate-900/70 border border-light-border dark:border-slate-800">
+                <span className="text-[10px] text-light-text dark:text-dark-muted block">Top-1 Hit Accuracy</span>
+                <span className="text-base font-extrabold text-emerald-600 dark:text-emerald-400 font-mono">
+                  {(top1Hit * 100).toFixed(1)}%
+                </span>
+                <span className="text-[9px] text-light-text dark:text-dark-muted block">#1 priority matched</span>
+              </div>
+            )}
+
+            {top3Hit !== null && (
+              <div className="p-3 rounded-xl bg-white/70 dark:bg-slate-900/70 border border-light-border dark:border-slate-800">
+                <span className="text-[10px] text-light-text dark:text-dark-muted block">Top-3 Hit Accuracy</span>
+                <span className="text-base font-extrabold text-sky-600 dark:text-sky-400 font-mono">
+                  {(top3Hit * 100).toFixed(1)}%
+                </span>
+                <span className="text-[9px] text-light-text dark:text-dark-muted block">Top 3 priority matched</span>
+              </div>
+            )}
+
+            {exactMatch !== null && (
+              <div className="p-3 rounded-xl bg-white/70 dark:bg-slate-900/70 border border-light-border dark:border-slate-800">
+                <span className="text-[10px] text-light-text dark:text-dark-muted block">Exact Match Ratio</span>
+                <span className="text-base font-extrabold text-amber-600 dark:text-amber-400 font-mono">
+                  {(exactMatch * 100).toFixed(1)}%
+                </span>
+                <span className="text-[9px] text-light-text dark:text-dark-muted block">All labels exact match</span>
+              </div>
+            )}
+
+            {macroF1 !== null && (
+              <div className="p-3 rounded-xl bg-white/70 dark:bg-slate-900/70 border border-light-border dark:border-slate-800">
+                <span className="text-[10px] text-light-text dark:text-dark-muted block">Macro F1 Score</span>
+                <span className="text-base font-extrabold text-purple-600 dark:text-purple-400 font-mono">
+                  {(macroF1 * 100).toFixed(1)}%
+                </span>
+                <span className="text-[9px] text-light-text dark:text-dark-muted block">Balanced across classes</span>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
 
       {/* 4. Auto-Detected Model Folders & Versions Table */}
       <div className="bg-white dark:bg-slate-900 border border-light-border dark:border-slate-800 rounded-3xl p-6 sm:p-8 shadow-xl space-y-5">

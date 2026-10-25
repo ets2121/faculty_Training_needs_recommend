@@ -57,6 +57,7 @@ def get_training_status(request: Request):
         "metadata_path": res.get("metadata_path"),
         "metrics": res.get("metrics", {}),
         "topics": res.get("topics", []),
+        "feature_importances": res.get("feature_importances", []),
         "error": res.get("error"),
     }
 

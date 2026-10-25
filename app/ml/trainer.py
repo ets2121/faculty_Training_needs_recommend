@@ -52,6 +52,10 @@ def train_from_dataframe(df: pd.DataFrame, model_dir: str) -> dict:
     pipeline.fit(X_train, y_train)
 
     pred = pipeline.predict(X_test)
+
+    from app.ml.registry import extract_feature_importances
+    feature_importances = extract_feature_importances(pipeline, top_k=6)
+
     metrics = {
         "micro_f1": float(f1_score(y_test, pred, average="micro", zero_division=0)),
         "macro_f1": float(f1_score(y_test, pred, average="macro", zero_division=0)),
@@ -60,6 +64,7 @@ def train_from_dataframe(df: pd.DataFrame, model_dir: str) -> dict:
         "test_records": int(len(X_test)),
         "training_records": int(len(X_train)),
         "topics": all_topics,
+        "feature_importances": feature_importances,
     }
 
     version = datetime.now(timezone.utc).strftime("v%Y%m%d%H%M%S")

@@ -206,6 +206,61 @@ def get_active_pointer(models_dir: str | Path) -> dict[str, Any] | None:
         return None
 
 
+def extract_feature_importances(pipeline_or_path: Any, top_k: int = 6) -> list[dict[str, Any]]:
+    """
+    Extract and rank real feature importances from a fitted Random Forest Multi-Label Pipeline.
+    Returns normalized percentage ratings and friendly cleaned labels.
+    """
+    try:
+        import joblib
+        import numpy as np
+
+        if isinstance(pipeline_or_path, (str, Path)):
+            pipeline = joblib.load(pipeline_or_path)
+        else:
+            pipeline = pipeline_or_path
+
+        pre = getattr(pipeline, "named_steps", {}).get("preprocessor")
+        clf = getattr(pipeline, "named_steps", {}).get("classifier")
+
+        if not pre or not clf or not hasattr(clf, "estimators_"):
+            return []
+
+        feature_names = pre.get_feature_names_out()
+        importances = np.mean([est.feature_importances_ for est in clf.estimators_], axis=0)
+        top_idx = np.argsort(importances)[::-1][:top_k]
+
+        max_val = float(importances[top_idx[0]]) if len(top_idx) > 0 and importances[top_idx[0]] > 0 else 1.0
+        colors = ["#10b981", "#0284c7", "#f59e0b", "#e11d48", "#8b5cf6", "#64748b"]
+
+        def _clean_label(name: str) -> str:
+            name = name.replace("num__", "").replace("cat__", "")
+            parts = name.split("_")
+            label = " ".join(parts).title()
+            label = (
+                label.replace("Obe", "Outcomes-Based Education (OBE)")
+                .replace("Ict", "ICT")
+                .replace("Ai", "Artificial Intelligence")
+                .replace("Lms", "LMS")
+            )
+            return label
+
+        results = []
+        for i, idx in enumerate(top_idx):
+            val = float(importances[idx])
+            norm_val = max(10, min(100, round((val / max_val) * 100)))
+            results.append({
+                "label": _clean_label(feature_names[idx]),
+                "value": norm_val,
+                "raw_importance": round(val, 4),
+                "color": colors[i % len(colors)],
+            })
+        return results
+    except Exception as exc:
+        print(f"DEBUG: Could not extract feature importances: {exc}")
+        return []
+
+
 def resolve_active_model(models_dir: str | Path) -> dict[str, Any]:
     """
     Strict resolution of the active model specified in active.json.
@@ -224,6 +279,7 @@ def resolve_active_model(models_dir: str | Path) -> dict[str, Any]:
             "artifact_path": None,
             "labels_path": None,
             "metrics": {},
+            "feature_importances": [],
         }
 
     try:
@@ -238,6 +294,7 @@ def resolve_active_model(models_dir: str | Path) -> dict[str, Any]:
             "artifact_path": None,
             "labels_path": None,
             "metrics": {},
+            "feature_importances": [],
         }
 
     target_folder = data.get("folder")
@@ -262,6 +319,7 @@ def resolve_active_model(models_dir: str | Path) -> dict[str, Any]:
                 "artifact_path": None,
                 "labels_path": None,
                 "metrics": {},
+                "feature_importances": [],
             }
         # Look for artifacts within target_folder
         if target_artifact:
@@ -299,6 +357,7 @@ def resolve_active_model(models_dir: str | Path) -> dict[str, Any]:
             "artifact_path": None,
             "labels_path": _normalize_path(labels_file) if labels_file else None,
             "metrics": {},
+            "feature_importances": [],
         }
 
     if not labels_file or not labels_file.is_file():
@@ -311,6 +370,7 @@ def resolve_active_model(models_dir: str | Path) -> dict[str, Any]:
             "artifact_path": _normalize_path(artifact_file),
             "labels_path": None,
             "metrics": {},
+            "feature_importances": [],
         }
 
     # Load metrics from metadata if available
@@ -326,6 +386,11 @@ def resolve_active_model(models_dir: str | Path) -> dict[str, Any]:
         except Exception:
             pass
 
+    # Extract real feature importances from metadata or directly from model artifact
+    feature_importances = metrics.get("feature_importances")
+    if not feature_importances and artifact_file:
+        feature_importances = extract_feature_importances(artifact_file, top_k=6)
+
     return {
         "ready": True,
         "error": None,
@@ -336,6 +401,7 @@ def resolve_active_model(models_dir: str | Path) -> dict[str, Any]:
         "metadata_path": _normalize_path(metadata_file) if metadata_file else None,
         "metrics": metrics,
         "topics": topics,
+        "feature_importances": feature_importances or [],
     }
 
 

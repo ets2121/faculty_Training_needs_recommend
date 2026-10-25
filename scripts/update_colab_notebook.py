@@ -493,6 +493,29 @@ macro_f1        = f1_score(y_test, y_pred, average="macro", zero_division=0)
 micro_precision = precision_score(y_test, y_pred, average="micro", zero_division=0)
 micro_recall    = recall_score(y_test, y_pred, average="micro", zero_division=0)
 
+# 4. Extract Top Feature Importances from Random Forest
+pre_step = pipeline.named_steps["preprocessor"]
+clf_step = pipeline.named_steps["classifier"]
+f_names  = pre_step.get_feature_names_out()
+imp_mean = np.mean([est.feature_importances_ for est in clf_step.estimators_], axis=0)
+top_imp_idx = np.argsort(imp_mean)[::-1][:6]
+max_imp = float(imp_mean[top_imp_idx[0]]) if len(top_imp_idx) > 0 and imp_mean[top_imp_idx[0]] > 0 else 1.0
+palette = ["#10b981", "#0284c7", "#f59e0b", "#e11d48", "#8b5cf6", "#64748b"]
+
+def _clean_feature_name(n):
+    n = n.replace("num__", "").replace("cat__", "")
+    return " ".join(n.split("_")).title().replace("Obe", "Outcomes-Based Education (OBE)").replace("Ict", "ICT").replace("Ai", "Artificial Intelligence").replace("Lms", "LMS")
+
+feature_importances = []
+for i, idx in enumerate(top_imp_idx):
+    v = float(imp_mean[idx])
+    feature_importances.append({
+        "label": _clean_feature_name(f_names[idx]),
+        "value": max(10, min(100, round((v / max_imp) * 100))),
+        "raw_importance": round(v, 4),
+        "color": palette[i % len(palette)],
+    })
+
 metrics = {
     "exact_match_accuracy": round(float(exact_match_acc), 4),
     "hamming_accuracy":     round(float(hamming_acc), 4),
@@ -508,6 +531,7 @@ metrics = {
     "test_records":         int(len(X_test)),
     "train_ratio":          0.80,
     "test_ratio":           0.20,
+    "feature_importances":  feature_importances,
 }
 
 print("=" * 65)
