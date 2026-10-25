@@ -368,37 +368,11 @@ def seed_database(db: Session) -> None:
     base_dir = Path(__file__).resolve().parent.parent.parent
     json_path = base_dir / "data" / "raw" / "training_catalog.json"
     
-    if not json_path.exists():
-        # Auto-generate from scripts.seed_catalog if json is missing
-        try:
-            from scripts.seed_catalog import seed_training_catalog
-            seed_training_catalog(db)
-        except Exception as e:
-            print(f"Warning running seed_training_catalog: {e}")
-    else:
-        try:
-            with open(json_path, "r", encoding="utf-8") as f:
-                items = json.load(f)
-            for item in items:
-                tid = item.get("training_id")
-                if not tid:
-                    continue
-                existing = db.query(TrainingCatalog).filter(TrainingCatalog.training_id == tid).first()
-                cat_list = item.get("categories", [item.get("category", "")]) if item.get("categories") else [item.get("category", "")]
-                if not existing:
-                    db.add(TrainingCatalog(
-                        training_id=tid,
-                        title=item.get("title", ""),
-                        description=item.get("description", ""),
-                        categories_json=json.dumps(cat_list),
-                        target_competencies_json=json.dumps(item.get("target_competencies", [])),
-                        modalities_json=json.dumps(item.get("modalities", [])),
-                        durations_json=json.dumps(item.get("durations", [])),
-                        schedules_json=json.dumps(item.get("schedules", [])),
-                        status=item.get("status", "active"),
-                    ))
-        except Exception as e:
-            print(f"Warning seeding catalog: {e}")
+    try:
+        from scripts.seed_catalog import seed_training_catalog
+        seed_training_catalog(db, force_reset=True)
+    except Exception as e:
+        print(f"Warning running seed_training_catalog: {e}")
 
     db.commit()
     print("Database seeding completed successfully.")

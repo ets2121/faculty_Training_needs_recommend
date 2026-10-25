@@ -166,14 +166,20 @@ def request_my_recommendation(
     except Exception as exc:
         raise HTTPException(
             status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
-            detail=f"Active model error: {exc}",
+            detail=f"The AI recommendation model is temporarily unavailable: {exc}. Please contact the system administrator.",
         )
 
     record = build_faculty_record(faculty.id, faculty, db)
     from datetime import datetime
     import zoneinfo
     generated_at = datetime.now(zoneinfo.ZoneInfo("Asia/Manila")).isoformat()
-    result = individual(model, record, db=db, generated_at=generated_at)
+    try:
+        result = individual(model, record, db=db, generated_at=generated_at)
+    except Exception as exc:
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail=f"Failed to generate your personalized recommendations: {exc}. Please try again later or contact your system administrator.",
+        )
 
     # Store result in recommendation requests log
     rec_request = TrainingRecommendationRequest(

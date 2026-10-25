@@ -121,14 +121,39 @@ class CatalogService:
             try:
                 existing = db.query(TrainingCatalog).filter(TrainingCatalog.training_id == training_id).first()
                 if existing:
-                    existing.title = new_item["title"]
-                    existing.description = new_item["description"]
-                    existing.categories_json = json.dumps(new_item["categories"])
-                    existing.target_competencies_json = json.dumps(new_item["target_competencies"])
-                    existing.modalities_json = json.dumps(new_item["modalities"])
-                    existing.durations_json = json.dumps(new_item["durations"])
-                    existing.schedules_json = json.dumps(new_item["schedules"])
-                    existing.status = new_item["status"]
+                    if "title" in item_data and item_data["title"]:
+                        existing.title = item_data["title"]
+                    if "description" in item_data and item_data["description"] is not None:
+                        existing.description = item_data["description"]
+                    if "categories" in item_data and item_data["categories"]:
+                        existing.categories_json = json.dumps(new_item["categories"])
+                    elif not new_item["categories"] and existing.categories_json:
+                        new_item["categories"] = json.loads(existing.categories_json)
+
+                    if "target_competencies" in item_data and item_data["target_competencies"] is not None:
+                        existing.target_competencies_json = json.dumps(item_data["target_competencies"])
+                    elif existing.target_competencies_json:
+                        new_item["target_competencies"] = json.loads(existing.target_competencies_json)
+
+                    if "modalities" in item_data and item_data["modalities"] is not None:
+                        existing.modalities_json = json.dumps(item_data["modalities"])
+                    elif existing.modalities_json:
+                        new_item["modalities"] = json.loads(existing.modalities_json)
+
+                    if "durations" in item_data and item_data["durations"] is not None:
+                        existing.durations_json = json.dumps(item_data["durations"])
+                    elif existing.durations_json:
+                        new_item["durations"] = json.loads(existing.durations_json)
+
+                    if "schedules" in item_data and item_data["schedules"] is not None:
+                        existing.schedules_json = json.dumps(item_data["schedules"])
+                    elif existing.schedules_json:
+                        new_item["schedules"] = json.loads(existing.schedules_json)
+
+                    if "status" in item_data and item_data["status"]:
+                        existing.status = item_data["status"]
+                    else:
+                        new_item["status"] = existing.status
                 else:
                     db.add(TrainingCatalog(
                         training_id=training_id,

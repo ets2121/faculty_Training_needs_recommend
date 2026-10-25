@@ -132,3 +132,26 @@ def delete_catalog_item(
         "status": "success",
         "message": f"Catalog item '{training_id}' permanently deleted.",
     }
+
+
+@router.post("/sync")
+def sync_canonical_catalog(
+    request: Request,
+    db: Session = Depends(get_db),
+    admin_user: User | None = Depends(require_admin),
+):
+    """Sync MySQL training_catalog table with canonical 17 items from training_catalog.json."""
+    from scripts.seed_catalog import seed_training_catalog
+    count = seed_training_catalog(db, force_reset=True)
+
+    service = get_catalog_service()
+    service.reload()
+
+    log_audit(db, admin_user, "sync_canonical_catalog", entity_type="catalog", entity_id="all",
+              new_values={"synced_count": count}, ip_address=request.client.host if request.client else None)
+
+    return {
+        "status": "success",
+        "message": f"Successfully synchronized database with {count} canonical training programs.",
+        "count": count,
+    }

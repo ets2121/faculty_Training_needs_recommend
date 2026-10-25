@@ -16,6 +16,7 @@ export default function MyRecommendationPage() {
   const [loading, setLoading] = useState(true);
   const [requesting, setRequesting] = useState(false);
   const [timestamp, setTimestamp] = useState<string | null>(null);
+  const [runError, setRunError] = useState<string | null>(null);
   const { showToast } = useToast();
 
   const loadData = useCallback(async () => {
@@ -44,9 +45,10 @@ export default function MyRecommendationPage() {
   }, [loadData]);
 
   const handleRequest = async () => {
-    // Clear stale result immediately so skeleton shows cleanly
+    // Clear stale result and prior errors so skeleton shows cleanly
     setRecommendation(null);
     setTimestamp(null);
+    setRunError(null);
     setRequesting(true);
     showToast('info', 'Recommendation Model Running', 'Analyzing your needs assessment and matching catalog programs...');
 
@@ -56,12 +58,16 @@ export default function MyRecommendationPage() {
       const freshTimestamp = res.data.generated_at || new Date().toISOString();
       setRecommendation(res.data);
       setTimestamp(freshTimestamp);
+      setRunError(null);
       showToast('success', 'Recommendation Generated!', 'Your fresh training needs recommendations are ready.');
 
       const progRes = await api.get('/questionnaire/progress');
       setProgress(progRes.data);
     } catch (err: any) {
-      const msg = err.response?.data?.detail || 'Failed to generate recommendation.';
+      const msg =
+        err.response?.data?.detail ||
+        'Unable to generate recommendation at this time. Please ensure the AI recommendation model is ready or contact the administrator.';
+      setRunError(msg);
       showToast('error', 'Request Failed', msg);
     } finally {
       setRequesting(false);
@@ -115,6 +121,27 @@ export default function MyRecommendationPage() {
           </button>
         )}
       </div>
+
+      {/* Friendly Error Banner */}
+      {runError && (
+        <div className="p-4 rounded-2xl border border-rose-500/30 bg-rose-500/10 flex items-start justify-between gap-3 text-xs text-rose-700 dark:text-rose-300 animate-fadeIn">
+          <div className="flex items-start gap-2.5">
+            <AlertCircle className="w-5 h-5 shrink-0 text-rose-500 mt-0.5" />
+            <div className="space-y-1">
+              <p className="font-bold text-sm text-rose-800 dark:text-rose-200">
+                Personalized Recommendation Notice
+              </p>
+              <p className="leading-relaxed">{runError}</p>
+            </div>
+          </div>
+          <button
+            onClick={() => setRunError(null)}
+            className="text-rose-500 hover:text-rose-700 dark:hover:text-rose-200 p-1 rounded-lg"
+          >
+            <span className="text-sm font-bold">×</span>
+          </button>
+        </div>
+      )}
 
       {/* When requesting (re-running or generating), hide previous result and show skeleton */}
       {requesting ? (

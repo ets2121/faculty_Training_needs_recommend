@@ -42,14 +42,14 @@ def _get_model_or_503(request: Request):
     if model is None:
         raise HTTPException(
             status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
-            detail="No trained model is initialized. Contact your system administrator.",
+            detail="The AI recommendation model is not currently initialized. Please verify the active model in the ML Pipeline.",
         )
     try:
         model.ensure_active()
     except Exception as exc:
         raise HTTPException(
             status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
-            detail=f"Active model error: {exc}",
+            detail=f"Active recommendation model error: {exc}. Please verify the active model version in the ML Pipeline.",
         )
     return model
 
@@ -122,7 +122,13 @@ def individual_recommendation(
     model = _get_model_or_503(request)
     record = build_faculty_record(faculty_id, target_faculty, db)
     generated_at = datetime.now(zoneinfo.ZoneInfo("Asia/Manila")).isoformat()
-    result = individual(model, record, db=db, generated_at=generated_at)
+    try:
+        result = individual(model, record, db=db, generated_at=generated_at)
+    except Exception as exc:
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail=f"Inference error generating individual recommendation: {exc}. Please verify the active model is trained properly and the catalog has active programs.",
+        )
 
     _store_individual_result(target_faculty, result, current_user.id, db)
     db.commit()
@@ -215,7 +221,13 @@ def department_recommendation(
     records = [build_faculty_record(f.id, f, db) for f in eligible_faculty]
     model = _get_model_or_503(request)
     generated_at = datetime.now(zoneinfo.ZoneInfo("Asia/Manila")).isoformat()
-    result = dept_recommendation(model, records, dept_name=dept.code, db=db, generated_at=generated_at)
+    try:
+        result = dept_recommendation(model, records, dept_name=dept.code, db=db, generated_at=generated_at)
+    except Exception as exc:
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail=f"Inference error generating department recommendation for '{dept.name}' ({dept.code}): {exc}. Please verify the active model and training catalog.",
+        )
 
     # Store individual results for each eligible faculty
     individual_results_stored = 0
@@ -442,7 +454,13 @@ def campus_recommendation(
     records = [build_faculty_record(f.id, f, db) for f in eligible_faculty]
     model = _get_model_or_503(request)
     generated_at = datetime.now(zoneinfo.ZoneInfo("Asia/Manila")).isoformat()
-    result = dept_recommendation(model, records, dept_name=campus.code, db=db, generated_at=generated_at)
+    try:
+        result = dept_recommendation(model, records, dept_name=campus.code, db=db, generated_at=generated_at)
+    except Exception as exc:
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail=f"Inference error generating campus-wide recommendation for '{campus.name}' ({campus.code}): {exc}. Please verify the active model and training catalog.",
+        )
 
     result["campus_id"] = campus.id
     result["campus_code"] = campus.code

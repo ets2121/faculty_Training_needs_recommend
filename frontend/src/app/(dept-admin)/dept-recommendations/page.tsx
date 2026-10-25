@@ -19,6 +19,7 @@ import {
   BookOpen,
   Clock,
   AlertTriangle,
+  X,
 } from 'lucide-react';
 
 export default function DeptRecommendationsPage() {
@@ -32,6 +33,7 @@ export default function DeptRecommendationsPage() {
   const [deptResult, setDeptResult] = useState<DepartmentRecommendationResult | null>(null);
   const [loading, setLoading] = useState(true);
   const [runningRec, setRunningRec] = useState(false);
+  const [runError, setRunError] = useState<string | null>(null);
 
   const loadLatestRec = useCallback(async () => {
     try {
@@ -52,8 +54,9 @@ export default function DeptRecommendationsPage() {
   }, [loadLatestRec]);
 
   const handleRunDeptRecommendation = async () => {
-    // Clear previous result so skeleton shows cleanly
+    // Clear previous result and any prior errors so skeleton shows cleanly
     setDeptResult(null);
+    setRunError(null);
     setRunningRec(true);
     showToast('info', 'Model Synthesis Running', `Synthesizing faculty training assessments for ${deptName}...`);
 
@@ -64,17 +67,18 @@ export default function DeptRecommendationsPage() {
         generated_at: res.data.generated_at || new Date().toISOString(),
       };
       setDeptResult(freshResult);
+      setRunError(null);
       showToast(
         'success',
         'Recommendation Synthesis Complete',
         `Model aggregated needs across ${freshResult.eligible_faculty_count || freshResult.faculty_count || 0} eligible faculty.`
       );
     } catch (err: any) {
-      showToast(
-        'error',
-        'Inference Failed',
-        err.response?.data?.detail || 'Ensure department faculty have completed required assessments.'
-      );
+      const errorMsg =
+        err.response?.data?.detail ||
+        'Unable to synthesize department recommendations. Please ensure faculty have completed assessments and active AI model is available.';
+      setRunError(errorMsg);
+      showToast('error', 'Inference Failed', errorMsg);
       // reload history in case of error
       await loadLatestRec();
     } finally {
@@ -179,6 +183,27 @@ export default function DeptRecommendationsPage() {
           )}
         </button>
       </div>
+
+      {/* Friendly Error Banner */}
+      {runError && (
+        <div className="p-4 rounded-2xl border border-rose-500/30 bg-rose-500/10 flex items-start justify-between gap-3 text-xs text-rose-700 dark:text-rose-300 animate-fadeIn">
+          <div className="flex items-start gap-2.5">
+            <AlertCircle className="w-5 h-5 shrink-0 text-rose-500 mt-0.5" />
+            <div className="space-y-1">
+              <p className="font-bold text-sm text-rose-800 dark:text-rose-200">
+                Recommendation Generation Notice
+              </p>
+              <p className="leading-relaxed">{runError}</p>
+            </div>
+          </div>
+          <button
+            onClick={() => setRunError(null)}
+            className="text-rose-500 hover:text-rose-700 dark:hover:text-rose-200 p-1 rounded-lg"
+          >
+            <X className="w-4 h-4" />
+          </button>
+        </div>
+      )}
 
       {/* When requesting (re-running or generating), hide previous result and show skeleton */}
       {runningRec ? (

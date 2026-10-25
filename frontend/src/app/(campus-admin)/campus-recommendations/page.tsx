@@ -28,6 +28,7 @@ export default function CampusRecommendationsPage() {
   const [campusStats, setCampusStats] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [runningCampusRec, setRunningCampusRec] = useState(false);
+  const [runError, setRunError] = useState<string | null>(null);
 
   const campusId = authUser?.campus?.id || 1;
   const campusCode = authUser?.campus?.code || 'DIFFUN';
@@ -56,8 +57,9 @@ export default function CampusRecommendationsPage() {
   }, [loadData]);
 
   const handleRunCampusRecommendation = async () => {
-    // Clear previous result so skeleton shows cleanly
+    // Clear previous result and error so skeleton shows cleanly
     setCampusResult(null);
+    setRunError(null);
     setRunningCampusRec(true);
     showToast('info', 'Model Synthesis Running', `Synthesizing campus-wide faculty training assessments for ${campusName}...`);
 
@@ -68,17 +70,18 @@ export default function CampusRecommendationsPage() {
         generated_at: res.data.generated_at || new Date().toISOString(),
       };
       setCampusResult(freshResult);
+      setRunError(null);
       showToast(
         'success',
         'Campus Synthesis Complete',
         `Model aggregated needs across ${freshResult.total_departments || campusStats?.departments?.length || 0} academic departments in ${campusName}.`
       );
     } catch (err: any) {
-      showToast(
-        'error',
-        'Inference Failed',
-        err.response?.data?.detail || 'Ensure faculty across campus departments have completed their assessments.'
-      );
+      const errorMsg =
+        err.response?.data?.detail ||
+        'Unable to synthesize campus recommendations. Please ensure faculty have completed assessments and active AI model is available.';
+      setRunError(errorMsg);
+      showToast('error', 'Inference Failed', errorMsg);
       // reload history in case of error
       await loadData();
     } finally {
@@ -173,6 +176,27 @@ export default function CampusRecommendationsPage() {
           )}
         </button>
       </div>
+
+      {/* Friendly Error Banner */}
+      {runError && (
+        <div className="p-4 rounded-2xl border border-rose-500/30 bg-rose-500/10 flex items-start justify-between gap-3 text-xs text-rose-700 dark:text-rose-300 animate-fadeIn">
+          <div className="flex items-start gap-2.5">
+            <AlertCircle className="w-5 h-5 shrink-0 text-rose-500 mt-0.5" />
+            <div className="space-y-1">
+              <p className="font-bold text-sm text-rose-800 dark:text-rose-200">
+                Campus Recommendation Notice
+              </p>
+              <p className="leading-relaxed">{runError}</p>
+            </div>
+          </div>
+          <button
+            onClick={() => setRunError(null)}
+            className="text-rose-500 hover:text-rose-700 dark:hover:text-rose-200 p-1 rounded-lg"
+          >
+            <span className="text-sm font-bold">×</span>
+          </button>
+        </div>
+      )}
 
       {/* When requesting (re-running or generating), hide previous result and show skeleton */}
       {runningCampusRec ? (

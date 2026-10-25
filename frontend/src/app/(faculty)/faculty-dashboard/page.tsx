@@ -62,7 +62,9 @@ export default function FacultyDashboardPage() {
       showToast('success', 'Recommendation Ready!', 'Your fresh training recommendation has been generated and saved.');
       await loadProfile();
     } catch (err: any) {
-      const msg = err.response?.data?.detail || 'Failed to generate recommendation.';
+      const msg =
+        err.response?.data?.detail ||
+        'Unable to generate recommendation at this time. Please ensure the AI recommendation model is ready or contact the administrator.';
       showToast('error', 'Request Failed', msg);
     } finally {
       setRequesting(false);
