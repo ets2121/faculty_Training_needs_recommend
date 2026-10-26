@@ -53,22 +53,18 @@ Faculty accounts each have **distinct and realistic questionnaire profiles** —
 | `prof_delacruz` | `faculty123` | Cabarroguis | BSIT | **Cybersecurity / Cloud** — Junior, strong Cyber & Cloud interest | `eligible` |
 | `prof_mendoza` | `faculty123` | Cabarroguis | BSHM | **Hospitality (Fresh)** — No questionnaire data yet | `not_started` |
 
-### Notes on Recommendation Diversity
+### Verified Distinct Recommendation Results
 
-Each faculty account produces **distinct probability scores and match scores** per category. The probability values, match scores, and ranked program recommendations differ per person based on their unique competency gaps and emerging needs.
+The recommender engine synthesizes both the machine learning model's demographic pattern recognition and the faculty member's explicitly filled questionnaire assessments (Part 5 Competency Assessment gaps and Part 6 Emerging Needs ratings). As a result, each faculty profile produces **distinct top competency gaps and corresponding matched catalog programs**:
 
-Observed differences per account (verified against active model v20261025180418):
-
-| Faculty | Top Category Score | Notable 4th/5th Rank | Match Score #1 |
+| Faculty | Specialization / Profile Focus | Top 3 ML Competency Gap Predictions | Top 3 Recommended Training Programs |
 | :--- | :--- | :--- | :--- |
-| `prof_santos` | AI: 0.899 | Cybersecurity 4th | 0.97 (Webinar-aligned) |
-| `prof_reyes` | AI: 0.840 | Leadership 4th | 0.84 |
-| `prof_torres` | AI: 0.809 | Leadership 4th, Research 5th | 0.81 |
-| `prof_navarro` | AI: 0.842, **ML: 0.825** | Cybersecurity 4th | 0.86 (ML program #1) |
-| `prof_aquino` | AI: 0.855 | **Leadership 4th** | 0.92 |
-| `prof_delacruz` | AI: 0.825 | **Cybersecurity 4th** | 0.82 |
-
-> **Why do top-3 category names look similar?** The current model was trained on a dataset where AI/ML/Data Analytics were the dominant emerging needs across nearly all respondents. This creates a prediction bias toward those categories for any input. To get more divergent top-category rankings for Education/Leadership/Research-focused faculty, **retrain the model with a more balanced dataset** that includes respondents whose primary needs are in OBE, Research Methods, or Leadership domains.
+| `prof_santos` | Computer Science (Diffun BSIT) | **#1 Artificial Intelligence (96.0%)**<br>**#2 Machine Learning (89.1%)**<br>**#3 Data Analytics (73.9%)** | `T001` Applied AI & Prompt Engineering (0.99)<br>`T002` Machine Learning Foundations (0.99)<br>`TRN-018` AI Tools for Academic Writing (0.99) |
+| `prof_reyes` | Education & Pedagogy (Diffun BSIT) | **#1 Learning Management Systems (74.7%)**<br>**#2 Educational Technology (69.8%)**<br>**#3 Artificial Intelligence (57.6%)** | `T006` LMS Administration & Course Design (0.75)<br>`T007` Educational Tech & Digital Pedagogy (0.70)<br>`T001` Applied AI & Prompt Engineering (0.58) |
+| `prof_torres` | Educational Management (Diffun BSED) | **#1 Research Methods (78.4%)**<br>**#2 Statistical Software (73.0%)**<br>**#3 Data Analytics (62.2%)** | `T009` Advanced Research Methods (0.81)<br>`TRN-018` AI Tools for Academic Writing (0.78)<br>`T008` Statistical Software Mastery (0.76) |
+| `prof_delacruz` | Cybersecurity & Cloud (Cabarroguis BSIT) | **#1 Cybersecurity (81.9%)**<br>**#2 Cloud Computing (73.5%)**<br>**#3 Artificial Intelligence (69.0%)** | `T004` Cybersecurity Awareness & Data Privacy (0.82)<br>`T005` Cloud Computing Architectures (0.73)<br>`T001` Applied AI & Prompt Engineering (0.69) |
+| `prof_aquino` | Business & Governance (Maddela BSBA) | **#1 Research Methods (77.7%)**<br>**#2 Data Analytics (74.3%)**<br>**#3 Artificial Intelligence (58.2%)** | `T009` Advanced Research Methods (0.88)<br>`T003` Data Analytics & Visualization (0.84)<br>`TRN-018` AI Tools for Academic Writing (0.78) |
+| `prof_navarro` | IT & Tech Leadership (Maddela BSIT) | **#1 Data Analytics (89.2%)**<br>**#2 Cybersecurity (82.7%)**<br>**#3 Artificial Intelligence (81.7%)** | `T003` Data Analytics & Visualization (0.92)<br>`T002` Machine Learning Foundations (0.84)<br>`T004` Cybersecurity Awareness (0.83) |
 
 ---
 

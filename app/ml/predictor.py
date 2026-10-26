@@ -596,6 +596,58 @@ class ModelService:
 
         return results
 
+    CATEGORY_SURVEY_MAPPING: dict[str, tuple[str, Any]] = {
+        "Artificial Intelligence": ("emerging", "artificial_intelligence"),
+        "Machine Learning": ("emerging", "machine_learning"),
+        "Data Analytics": ("emerging", "data_analytics"),
+        "Cybersecurity": ("emerging", "cybersecurity"),
+        "Cloud Computing": ("emerging", "cloud_computing"),
+        "Learning Management Systems": ("emerging", "learning_management_systems"),
+        "Educational Technology": ("emerging", "educational_technology"),
+        "Statistical Software": ("emerging", "statistical_software"),
+        "Research Methods": ("emerging", "research_methods"),
+        "Effective Teaching and Classroom Management": ("competency", "effective_teaching_classroom_management"),
+        "Innovative Instructional Material Development": ("competency", "innovative_instructional_material_development"),
+        "Outcomes-Based Education": ("competency", "outcomes_based_education"),
+        "Quality Assurance Management": ("competency", "quality_assurance_management"),
+        "Research and Publication Writing": ("competency", "publication_writing"),
+        "Leadership and Strategic Management": ("competency", ["strategic_thinking", "leading_change"]),
+        "Critical Thinking and Problem Solving": ("competency", "critical_thinking_problem_solving"),
+        "Technology Transfer and Innovation": ("competency", "technology_transfer_innovation"),
+    }
+
+    def _extract_survey_signal(self, record: dict[str, Any], category: str) -> float | None:
+        if not isinstance(record, dict):
+            return None
+        mapping = self.CATEGORY_SURVEY_MAPPING.get(category)
+        if not mapping:
+            return None
+        kind, keys = mapping
+        if kind == "emerging":
+            val = record.get("emerging_training_needs", {}).get(keys)
+            if val is not None:
+                try:
+                    return float(val) / 5.0
+                except (ValueError, TypeError):
+                    pass
+        elif kind == "competency":
+            key_list = [keys] if isinstance(keys, str) else keys
+            comp_dict = record.get("competency", {})
+            scores = []
+            for k in key_list:
+                c = comp_dict.get(k)
+                if isinstance(c, dict) and "proficiency" in c and "importance" in c:
+                    try:
+                        prof = float(c.get("proficiency", 3))
+                        imp = float(c.get("importance", 3))
+                        gap = max(0.0, imp - prof)
+                        scores.append(0.6 * (gap / 4.0) + 0.4 * (imp / 5.0))
+                    except (ValueError, TypeError):
+                        pass
+            if scores:
+                return sum(scores) / len(scores)
+        return None
+
     # ============================================================
     # TRANSPARENT CATEGORY PREDICTIONS
     # ============================================================
@@ -622,28 +674,44 @@ class ModelService:
                 classes = list(range(probabilities.shape[1]))
 
         results = []
-        for row_probabilities in probabilities:
-            ranked_indices = np.argsort(row_probabilities)[::-1]
+        for rec, row_probabilities in zip(records, probabilities):
+            scored_predictions = []
+
+            for index in range(len(classes)):
+                raw_prob = float(row_probabilities[index])
+                class_id = classes[index]
+                label = self._resolve_label(class_id)
+                survey_signal = self._extract_survey_signal(rec, label)
+
+                if survey_signal is not None:
+                    # 40% learned model demographic/profile probability + 60% faculty questionnaire stated assessment
+                    final_score = round(0.40 * raw_prob + 0.60 * survey_signal, 4)
+                else:
+                    final_score = round(raw_prob, 4)
+
+                scored_predictions.append({
+                    "training_category": label,
+                    "probability": final_score,
+                })
+
+            # Sort by personalized score descending
+            scored_predictions.sort(key=lambda x: x["probability"], reverse=True)
 
             top_predictions = []
             all_predictions = []
 
-            for rank, index in enumerate(ranked_indices, 1):
-                score = float(row_probabilities[index])
-                class_id = classes[index]
-                label = self._resolve_label(class_id)
-                prob_rounded = round(score, 4)
-
+            for rank, item in enumerate(scored_predictions, 1):
+                item_with_rank = {
+                    "training_category": item["training_category"],
+                    "probability": item["probability"],
+                    "rank": rank,
+                }
                 if rank <= top_k:
-                    top_predictions.append({
-                        "training_category": label,
-                        "probability": prob_rounded,
-                        "rank": rank,
-                    })
+                    top_predictions.append(item_with_rank)
 
                 all_predictions.append({
-                    "training_category": label,
-                    "probability": prob_rounded,
+                    "training_category": item["training_category"],
+                    "probability": item["probability"],
                 })
 
             results.append({
