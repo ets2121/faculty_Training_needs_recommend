@@ -12,7 +12,7 @@ def match_catalog_items(
     prediction_details: dict[str, Any],
     record: dict[str, Any],
     catalog_service: CatalogService | None = None,
-    top_k: int = 5,
+    top_k: int = 3,
 ) -> list[dict[str, Any]]:
     """
     Matches active catalog training programs to predicted categories and faculty preferences.
@@ -191,7 +191,7 @@ def department(model: ModelService, records: list[dict], dept_name: str = "BSED"
             "faculty_coverage": round(coverage[cat] / n, 4),
             "rank": rank,
         }
-        for rank, cat in enumerate(ranked_categories[:5], 1)
+        for rank, cat in enumerate(ranked_categories[:3], 1)
     ]
 
     dept_prediction_mock = {
@@ -200,7 +200,7 @@ def department(model: ModelService, records: list[dict], dept_name: str = "BSED"
             for cat in top_categories
         ]
     }
-    catalog_recs = match_catalog_items(dept_prediction_mock, record={}, top_k=5)
+    catalog_recs = match_catalog_items(dept_prediction_mock, record={}, top_k=3)
 
     response_payload = {
         "status": "success",

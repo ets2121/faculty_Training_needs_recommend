@@ -603,7 +603,7 @@ class ModelService:
     def predict_transparent(
         self,
         records: list[dict[str, Any]],
-        top_k: int = 5,
+        top_k: int = 3,
     ) -> list[dict[str, Any]]:
         self.ensure_active()
         if not records:

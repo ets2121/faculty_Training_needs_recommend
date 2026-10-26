@@ -8,7 +8,7 @@ from sqlalchemy.orm import Session
 from app.core.security import hash_password
 from app.db.models import (
     Campus, CampusAdmin, Department, DepartmentAdmin, Faculty,
-    Permission, QuestionnairePart, Role, RolePermission,
+    Permission, QuestionnairePart, RecommendationHistory, Role, RolePermission,
     TrainingCatalog, TrainingRecommendationRequest, User,
 )
 
@@ -216,93 +216,238 @@ def seed_database(db: Session) -> None:
         ("prof_mendoza", "mendoza@qsu.edu.ph", "Grace Mendoza", "CABARROGUIS", "BSHM", "CAB-HM-001", "not_started"),
     ]
 
-    # Pre-defined questionnaire part payloads for testing
-    part_payloads = {
-        1: {
-            "department": "BSIT",
-            "age": 35,
-            "sex": "Female",
-            "employment_status": "Permanent",
-        },
-        2: {
-            "highest_educational_attainment": "Master's Degree",
-            "field_of_specialization": "Computer Science",
-        },
-        3: {
-            "academic_rank": "Assistant Professor",
-            "years_teaching": "5-10 years",
-            "administrative_designation": "None",
-            "trainings_last_3_years": "3-5",
-        },
-        4: {
-            "training_areas": ["Instruction", "Research", "Technology Integration"],
-            "training_modalities_attended": ["Webinar", "Face-to-Face"],
-        },
-        5: {
-            "competency": {
-                "research_competency": {"proficiency": 2, "importance": 5},
-                "computer_literacy_digital_technologies": {"proficiency": 3, "importance": 5},
-                "outcomes_based_education": {"proficiency": 2, "importance": 4},
-                "student_development": {"proficiency": 3, "importance": 4},
-            }
-        },
-        6: {
-            "emerging_training_needs": {
+    # Per-faculty distinct questionnaire payloads — each faculty has unique competency
+    # ratings and emerging needs so the ML model produces meaningfully different outputs.
+    faculty_payloads = {
+        # --- prof_santos: IT/AI-focused, high AI & cybersecurity gaps, strong researcher ---
+        "prof_santos": {
+            1: {"department": "BSIT", "age": 38, "sex": "Female", "employment_status": "Permanent"},
+            2: {"highest_educational_attainment": "Master's Degree", "field_of_specialization": "Computer Science"},
+            3: {"academic_rank": "Assistant Professor", "years_teaching": "5-10 years",
+                "administrative_designation": "None", "trainings_last_3_years": "3-5"},
+            4: {"training_areas": ["Instruction", "Research", "Information Technology"],
+                "training_modalities_attended": ["Webinar", "Self-Paced Online Course"]},
+            5: {"competency": {
+                "research_competency": {"proficiency": 3, "importance": 5},
+                "computer_literacy_digital_technologies": {"proficiency": 4, "importance": 5},
+                "outcomes_based_education": {"proficiency": 3, "importance": 4},
+                "student_development": {"proficiency": 3, "importance": 3},
+                "instructional_design": {"proficiency": 2, "importance": 4},
+                "classroom_management": {"proficiency": 4, "importance": 3},
+            }},
+            6: {"emerging_training_needs": {
                 "artificial_intelligence": 5,
-                "machine_learning": 4,
+                "machine_learning": 5,
                 "data_analytics": 4,
+                "cybersecurity": 4,
+                "cloud_computing": 3,
+                "educational_technology": 3,
+                "research_methods": 2,
+                "learning_management_systems": 2,
+                "statistical_software": 2,
+            }},
+            7: {"preferred_learning_modality": ["Webinar", "Self-Paced Online Course"],
+                "preferred_schedule": ["Saturdays", "Anytime"],
+                "preferred_duration": ["Two days"]},
+            8: {"barriers": {"heavy_teaching_workload": 4, "time_constraints": 3,
+                             "internet_connectivity": 3, "lack_of_budget": 2}},
+        },
+
+        # --- prof_reyes: OBE/Pedagogy-focused, Education specialist, low tech proficiency ---
+        "prof_reyes": {
+            1: {"department": "BSIT", "age": 44, "sex": "Male", "employment_status": "Permanent"},
+            2: {"highest_educational_attainment": "Master's Degree", "field_of_specialization": "Education"},
+            3: {"academic_rank": "Associate Professor", "years_teaching": "11-20 years",
+                "administrative_designation": "Program Chair", "trainings_last_3_years": "1-2"},
+            4: {"training_areas": ["Instruction", "Outcomes-Based Education", "Quality Assurance"],
+                "training_modalities_attended": ["Face-to-Face Seminar", "Blended Learning"]},
+            5: {"competency": {
+                "research_competency": {"proficiency": 3, "importance": 3},
+                "computer_literacy_digital_technologies": {"proficiency": 2, "importance": 4},
+                "outcomes_based_education": {"proficiency": 2, "importance": 5},
+                "student_development": {"proficiency": 4, "importance": 5},
+                "instructional_design": {"proficiency": 3, "importance": 5},
+                "classroom_management": {"proficiency": 5, "importance": 4},
+                "leadership_and_governance": {"proficiency": 3, "importance": 4},
+            }},
+            6: {"emerging_training_needs": {
+                "artificial_intelligence": 2,
+                "machine_learning": 2,
+                "data_analytics": 2,
+                "cybersecurity": 1,
                 "educational_technology": 5,
-                "research_methods": 4,
-            }
+                "learning_management_systems": 5,
+                "research_methods": 3,
+                "statistical_software": 3,
+                "cloud_computing": 2,
+            }},
+            7: {"preferred_learning_modality": ["Face-to-Face Seminar", "Blended Learning"],
+                "preferred_schedule": ["Semester Break", "Summer"],
+                "preferred_duration": ["Three days"]},
+            8: {"barriers": {"administrative_responsibilities": 5, "heavy_teaching_workload": 4,
+                             "time_constraints": 4, "family_responsibilities": 2}},
         },
-        7: {
-            "preferred_learning_modality": ["Webinar", "Blended Learning"],
-            "preferred_schedule": ["Saturdays"],
-            "preferred_duration": ["Two days"],
+
+        # --- prof_cruz: in_progress — only parts 1 & 2 completed ---
+        "prof_cruz": {
+            1: {"department": "BSIT", "age": 29, "sex": "Female", "employment_status": "Contractual"},
+            2: {"highest_educational_attainment": "Bachelor's Degree", "field_of_specialization": "Information Technology"},
         },
-        8: {
-            "barriers": {
-                "heavy_teaching_workload": 4,
-                "time_constraints": 3,
-                "lack_of_budget": 2,
-            }
+
+        # --- prof_garcia: not_started — no parts ---
+        "prof_garcia": {},
+
+        # --- prof_torres: BSED — Education specialist, research-focused, Leadership gaps ---
+        "prof_torres": {
+            1: {"department": "BSED", "age": 41, "sex": "Female", "employment_status": "Permanent"},
+            2: {"highest_educational_attainment": "Master's Degree", "field_of_specialization": "Educational Management"},
+            3: {"academic_rank": "Assistant Professor", "years_teaching": "5-10 years",
+                "administrative_designation": "None", "trainings_last_3_years": "3-5"},
+            4: {"training_areas": ["Instruction", "Outcomes-Based Education", "Extension"],
+                "training_modalities_attended": ["Face-to-Face Seminar", "Blended Learning"]},
+            5: {"competency": {
+                "research_competency": {"proficiency": 2, "importance": 5},
+                "computer_literacy_digital_technologies": {"proficiency": 2, "importance": 3},
+                "outcomes_based_education": {"proficiency": 4, "importance": 5},
+                "student_development": {"proficiency": 5, "importance": 5},
+                "instructional_design": {"proficiency": 4, "importance": 4},
+                "classroom_management": {"proficiency": 5, "importance": 4},
+                "leadership_and_governance": {"proficiency": 2, "importance": 5},
+                "community_extension_services": {"proficiency": 3, "importance": 5},
+            }},
+            6: {"emerging_training_needs": {
+                "artificial_intelligence": 2,
+                "machine_learning": 1,
+                "data_analytics": 3,
+                "cybersecurity": 1,
+                "educational_technology": 4,
+                "learning_management_systems": 4,
+                "research_methods": 5,
+                "statistical_software": 5,
+                "cloud_computing": 2,
+            }},
+            7: {"preferred_learning_modality": ["Face-to-Face Seminar", "Coaching", "Mentoring"],
+                "preferred_schedule": ["Semester Break", "Summer"],
+                "preferred_duration": ["Three days", "One week"]},
+            8: {"barriers": {"travel_distance": 4, "family_responsibilities": 3,
+                             "heavy_teaching_workload": 3, "lack_of_budget": 3}},
         },
+
+        # --- prof_navarro: Maddela BSIT — strong in tech, needs leadership & quality assurance ---
+        "prof_navarro": {
+            1: {"department": "BSIT", "age": 33, "sex": "Male", "employment_status": "Permanent"},
+            2: {"highest_educational_attainment": "Master's Degree", "field_of_specialization": "Computer Science"},
+            3: {"academic_rank": "Instructor I", "years_teaching": "1-4 years",
+                "administrative_designation": "None", "trainings_last_3_years": "3-5"},
+            4: {"training_areas": ["Information Technology", "Research", "Leadership"],
+                "training_modalities_attended": ["Webinar", "Self-Paced Online Course"]},
+            5: {"competency": {
+                "research_competency": {"proficiency": 2, "importance": 4},
+                "computer_literacy_digital_technologies": {"proficiency": 5, "importance": 5},
+                "outcomes_based_education": {"proficiency": 3, "importance": 4},
+                "student_development": {"proficiency": 3, "importance": 4},
+                "instructional_design": {"proficiency": 2, "importance": 4},
+                "leadership_and_governance": {"proficiency": 1, "importance": 5},
+                "quality_assurance_and_accreditation": {"proficiency": 2, "importance": 5},
+            }},
+            6: {"emerging_training_needs": {
+                "artificial_intelligence": 4,
+                "machine_learning": 4,
+                "data_analytics": 5,
+                "cybersecurity": 5,
+                "cloud_computing": 5,
+                "educational_technology": 3,
+                "research_methods": 3,
+                "learning_management_systems": 3,
+                "statistical_software": 3,
+            }},
+            7: {"preferred_learning_modality": ["Webinar", "Self-Paced Online Course", "Blended Learning"],
+                "preferred_schedule": ["Saturdays", "Anytime"],
+                "preferred_duration": ["Two days", "One day"]},
+            8: {"barriers": {"internet_connectivity": 4, "travel_distance": 3,
+                             "lack_of_budget": 3, "time_constraints": 2}},
+        },
+
+        # --- prof_aquino: Maddela BSBA — Business/Entrepreneurship, weak in research & IT ---
+        "prof_aquino": {
+            1: {"department": "BSBA", "age": 47, "sex": "Female", "employment_status": "Permanent"},
+            2: {"highest_educational_attainment": "Master's Degree", "field_of_specialization": "Business Administration"},
+            3: {"academic_rank": "Associate Professor", "years_teaching": "11-20 years",
+                "administrative_designation": "Program Chair", "trainings_last_3_years": "1-2"},
+            4: {"training_areas": ["Instruction", "Extension", "Quality Assurance"],
+                "training_modalities_attended": ["Face-to-Face Seminar", "Benchmarking"]},
+            5: {"competency": {
+                "research_competency": {"proficiency": 2, "importance": 5},
+                "computer_literacy_digital_technologies": {"proficiency": 2, "importance": 4},
+                "outcomes_based_education": {"proficiency": 3, "importance": 4},
+                "student_development": {"proficiency": 4, "importance": 4},
+                "instructional_design": {"proficiency": 3, "importance": 3},
+                "leadership_and_governance": {"proficiency": 4, "importance": 5},
+                "quality_assurance_and_accreditation": {"proficiency": 2, "importance": 5},
+                "community_extension_services": {"proficiency": 4, "importance": 5},
+            }},
+            6: {"emerging_training_needs": {
+                "artificial_intelligence": 2,
+                "machine_learning": 1,
+                "data_analytics": 4,
+                "cybersecurity": 2,
+                "cloud_computing": 2,
+                "educational_technology": 3,
+                "learning_management_systems": 3,
+                "research_methods": 5,
+                "statistical_software": 4,
+            }},
+            7: {"preferred_learning_modality": ["Face-to-Face Seminar", "Benchmarking"],
+                "preferred_schedule": ["Semester Break"],
+                "preferred_duration": ["Three days", "One week"]},
+            8: {"barriers": {"administrative_responsibilities": 5, "travel_distance": 4,
+                             "family_responsibilities": 3, "lack_of_budget": 2}},
+        },
+
+        # --- prof_delacruz: Cabarroguis BSIT — junior, cybersecurity & cloud enthusiast ---
+        "prof_delacruz": {
+            1: {"department": "BSIT", "age": 27, "sex": "Male", "employment_status": "Contractual"},
+            2: {"highest_educational_attainment": "Bachelor's Degree", "field_of_specialization": "Information Technology"},
+            3: {"academic_rank": "Instructor I", "years_teaching": "1-4 years",
+                "administrative_designation": "None", "trainings_last_3_years": "1-2"},
+            4: {"training_areas": ["Information Technology", "Instruction"],
+                "training_modalities_attended": ["Webinar", "Self-Paced Online Course"]},
+            5: {"competency": {
+                "research_competency": {"proficiency": 1, "importance": 4},
+                "computer_literacy_digital_technologies": {"proficiency": 4, "importance": 5},
+                "outcomes_based_education": {"proficiency": 2, "importance": 4},
+                "student_development": {"proficiency": 2, "importance": 4},
+                "instructional_design": {"proficiency": 1, "importance": 5},
+                "classroom_management": {"proficiency": 3, "importance": 4},
+            }},
+            6: {"emerging_training_needs": {
+                "artificial_intelligence": 3,
+                "machine_learning": 3,
+                "data_analytics": 3,
+                "cybersecurity": 5,
+                "cloud_computing": 5,
+                "educational_technology": 4,
+                "learning_management_systems": 4,
+                "research_methods": 2,
+                "statistical_software": 2,
+            }},
+            7: {"preferred_learning_modality": ["Webinar", "Self-Paced Online Course"],
+                "preferred_schedule": ["Saturdays", "Anytime"],
+                "preferred_duration": ["Half-day", "One day"]},
+            8: {"barriers": {"internet_connectivity": 5, "travel_distance": 4,
+                             "lack_of_budget": 4, "heavy_teaching_workload": 2}},
+        },
+
+        # --- prof_mendoza: not_started — no parts ---
+        "prof_mendoza": {},
     }
 
-    demo_recommendation_result = {
-        "status": "success",
-        "model": {"status": "ready", "version": "20260812055414"},
-        "prediction": {
-            "top_predictions": [
-                {"rank": 1, "training_category": "Artificial Intelligence", "probability": 0.87},
-                {"rank": 2, "training_category": "Educational Technology", "probability": 0.82},
-                {"rank": 3, "training_category": "Research Methods", "probability": 0.74},
-            ],
-            "all_predictions": [
-                {"training_category": "Artificial Intelligence", "probability": 0.87},
-                {"training_category": "Educational Technology", "probability": 0.82},
-                {"training_category": "Research Methods", "probability": 0.74},
-            ]
-        },
-        "recommendations": [
-            {
-                "training_id": "TRN-001",
-                "title": "AI in Higher Education: Tools and Applications",
-                "category": "Artificial Intelligence",
-                "match_score": 0.92,
-                "reason": "Matches predicted Artificial Intelligence need. Aligns with preferred modality (Webinar).",
-                "description": "An introductory workshop on integrating generative AI tools into higher ed instruction."
-            },
-            {
-                "training_id": "TRN-002",
-                "title": "Educational Technology Integration & LMS Optimization",
-                "category": "Educational Technology",
-                "match_score": 0.85,
-                "reason": "Matches predicted Educational Technology need.",
-                "description": "Practical guide to designing interactive online courses using modern LMS platforms."
-            }
-        ]
-    }
+    # 9. Seed Training Catalog from training_catalog.json first so recommendations can match real programs
+    try:
+        from scripts.seed_catalog import seed_training_catalog
+        seed_training_catalog(db, force_reset=True)
+    except Exception as e:
+        print(f"Warning running seed_training_catalog: {e}")
 
     for username, email, full_name, c_code, d_code, fac_code, target_status in faculty_seed_data:
         user = db.query(User).filter(User.username == username).first()
@@ -319,35 +464,41 @@ def seed_database(db: Session) -> None:
             db.add(user)
             db.flush()
 
+            # Resolve this faculty's specific academic rank and specialization
+            fac_payloads = faculty_payloads.get(username, {})
+            p1 = fac_payloads.get(1, {})
+            p2 = fac_payloads.get(2, {})
+            p3 = fac_payloads.get(3, {})
+            academic_rank = p3.get("academic_rank", "Instructor I")
+            highest_degree = p2.get("highest_educational_attainment", "Bachelor's Degree")
+            specialization = p2.get("field_of_specialization",
+                "Computer Science" if d_code == "BSIT" else "Education" if d_code == "BSED" else "Business")
+
             fac = Faculty(
                 user_id=user.id,
                 department_id=dept_obj.id,
                 faculty_code=fac_code,
-                academic_rank="Assistant Professor" if "santos" in username or "reyes" in username else "Instructor I",
-                highest_degree="Master's Degree",
-                specialization="Computer Science" if d_code == "BSIT" else "Education" if d_code == "BSED" else "Business",
+                academic_rank=academic_rank,
+                highest_degree=highest_degree,
+                specialization=specialization,
                 questionnaire_status=target_status,
                 status="active",
             )
-            if target_status == "has_recommendation":
-                fac.last_recommendation_json = json.dumps(demo_recommendation_result)
-                from datetime import datetime, timezone
-                fac.last_recommendation_at = datetime.now(timezone.utc)
-
             db.add(fac)
             db.flush()
 
-            # Create questionnaire parts based on status level
-            parts_to_add = []
-            if target_status in ("has_recommendation", "eligible"):
-                parts_to_add = range(1, 9) if target_status == "has_recommendation" else [1, 2, 3, 5, 6]
+            # Determine which part numbers to seed based on status
+            if target_status == "has_recommendation":
+                parts_to_add = [p for p in range(1, 9) if p in fac_payloads]
+            elif target_status == "eligible":
+                parts_to_add = [p for p in [1, 2, 3, 5, 6] if p in fac_payloads]
             elif target_status == "in_progress":
-                parts_to_add = [1, 2]
+                parts_to_add = [p for p in [1, 2] if p in fac_payloads]
+            else:
+                parts_to_add = []
 
             for p_num in parts_to_add:
-                payload = dict(part_payloads[p_num])
-                if p_num == 1:
-                    payload["department"] = d_code
+                payload = dict(fac_payloads[p_num])
                 db.add(QuestionnairePart(
                     faculty_id=fac.id,
                     part_number=p_num,
@@ -355,24 +506,75 @@ def seed_database(db: Session) -> None:
                     data_json=json.dumps(payload),
                 ))
 
+    # 10. Generate live model recommendations for 'has_recommendation' faculty & departments
+    try:
+        from app.ml.predictor import ModelService
+        from app.core.config import get_settings
+        from app.services.recommendation import individual, department as dept_recommendation
+        from app.api.questionnaire import build_faculty_record
+        from datetime import datetime
+        import zoneinfo
+
+        settings = get_settings()
+        model = ModelService(settings.model_dir)
+        model.ensure_active()
+        manila_tz = zoneinfo.ZoneInfo("Asia/Manila")
+
+        # Generate accurate live individual recommendations for seeded 'has_recommendation' faculty
+        for username, _, _, _, _, _, target_status in faculty_seed_data:
             if target_status == "has_recommendation":
+                user = db.query(User).filter(User.username == username).first()
+                if not user:
+                    continue
+                fac = db.query(Faculty).filter(Faculty.user_id == user.id).first()
+                if not fac:
+                    continue
+
+                rec_record = build_faculty_record(fac.id, fac, db)
+                now_str = datetime.now(manila_tz).isoformat()
+                live_res = individual(model, rec_record, db=None, generated_at=now_str)
+
+                fac.last_recommendation_json = json.dumps(live_res)
+                fac.last_recommendation_at = datetime.fromisoformat(live_res["generated_at"]).replace(tzinfo=None)
+
                 db.add(TrainingRecommendationRequest(
                     faculty_id=fac.id,
                     requested_by_user_id=user.id,
                     recommendation_type="individual",
-                    model_version="20260812055414",
-                    recommendation_json=json.dumps(demo_recommendation_result),
+                    model_version=live_res.get("model", {}).get("version"),
+                    recommendation_json=json.dumps(live_res),
                 ))
 
-    # 10. Seed Training Catalog from training_catalog.json or CSV fallback
-    base_dir = Path(__file__).resolve().parent.parent.parent
-    json_path = base_dir / "data" / "raw" / "training_catalog.json"
-    
-    try:
-        from scripts.seed_catalog import seed_training_catalog
-        seed_training_catalog(db, force_reset=True)
-    except Exception as e:
-        print(f"Warning running seed_training_catalog: {e}")
+        # Also pre-generate initial department recommendations for key departments (BSIT, BSED)
+        for dept_code_seed in ["BSIT", "BSED"]:
+            dept_obj = db.query(Department).filter(Department.code == dept_code_seed).first()
+            if dept_obj:
+                dept_fac = db.query(Faculty).filter(
+                    Faculty.department_id == dept_obj.id,
+                    Faculty.questionnaire_status.in_(["eligible", "has_recommendation"])
+                ).all()
+                if dept_fac:
+                    records = [build_faculty_record(f.id, f, db) for f in dept_fac]
+                    now_str = datetime.now(manila_tz).isoformat()
+                    dept_res = dept_recommendation(model, records, dept_name=dept_obj.code, db=None, generated_at=now_str)
+                    dept_res["department_id"] = dept_obj.id
+                    dept_res["department_name"] = dept_obj.name
+                    dept_res["campus_id"] = dept_obj.campus_id
+                    dept_res["campus_code"] = dept_obj.campus.code if dept_obj.campus else None
+                    dept_res["campus_name"] = dept_obj.campus.name if dept_obj.campus else None
+                    dept_res["total_faculty_in_dept"] = len(dept_fac)
+                    dept_res["eligible_faculty_count"] = len(dept_fac)
+
+                    db.add(RecommendationHistory(
+                        campus_id=dept_obj.campus_id,
+                        department_id=dept_obj.id,
+                        recommendation_type="department",
+                        model_version=dept_res.get("model", {}).get("version"),
+                        response_json=json.dumps(dept_res),
+                    ))
+
+    except Exception as exc:
+        print(f"Warning generating live seeded recommendations: {exc}")
 
     db.commit()
     print("Database seeding completed successfully.")
