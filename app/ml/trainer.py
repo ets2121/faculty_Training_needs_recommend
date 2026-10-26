@@ -26,6 +26,91 @@ from app.ml.features import to_frame
 
 TARGETS = [f"priority_{i}" for i in range(1, 6)]
 
+
+# ---------------------------------------------------------------------------
+# Survey Data Cleaning — identical logic used in Colab notebook Cell 2.5
+# Normalizes free-text categorical fields before training
+# ---------------------------------------------------------------------------
+
+def clean_survey_dataset(df: pd.DataFrame) -> pd.DataFrame:
+    """
+    Standardize raw survey categorical fields to consistent canonical values.
+    Mirrors the Colab notebook Cell 2.5 cleaning logic exactly.
+
+    Fields cleaned:
+    - academic_rank          → 5 SUC rank categories
+    - highest_educational_attainment → 3 degree tiers
+    - field_of_specialization → 9 academic cluster labels
+    """
+    df = df.copy()
+
+    # ── Strip whitespace + normalise 'nan'/'None' strings ────────────────────
+    for col in df.select_dtypes(include=["object"]).columns:
+        df[col] = df[col].astype(str).str.strip()
+        df[col] = df[col].replace({"nan": "", "None": ""})
+
+    # ── Academic Rank ─────────────────────────────────────────────────────────
+    def _map_rank(r: str) -> str:
+        r_low = r.lower()
+        if "cos" in r_low or "contract" in r_low:
+            return "COS / Contractual Instructor"
+        if "assoc" in r_low:
+            return "Associate Professor"
+        if "assist" in r_low or "assit" in r_low or "ptofessor" in r_low:
+            return "Assistant Professor"
+        if "prof" in r_low:
+            return "Professor"
+        return "Instructor"  # default (covers 'inst', blanks, etc.)
+
+    if "academic_rank" in df.columns:
+        df["academic_rank"] = df["academic_rank"].apply(_map_rank)
+
+    # ── Highest Educational Attainment ────────────────────────────────────────
+    def _map_degree(d: str) -> str:
+        d_low = d.lower()
+        if any(k in d_low for k in ["doc", "phd", "edd"]):
+            return "Doctorate Degree"
+        if any(k in d_low for k in ["mast", "mater", "masrer", "maed", "ms ", "mba"]):
+            return "Master's Degree"
+        return "Bachelor's Degree"  # default
+
+    if "highest_educational_attainment" in df.columns:
+        df["highest_educational_attainment"] = df["highest_educational_attainment"].apply(_map_degree)
+
+    # ── Field of Specialization → 9 Academic Clusters ─────────────────────────
+    def _map_spec(s: str) -> str:
+        s_low = s.lower()
+        if any(w in s_low for w in ["it", "comput", "data", "web", "software",
+                                     "ai", "program", "network", "cyber", "tech"]):
+            if "livelihood" not in s_low and "home" not in s_low:
+                return "Information Technology & Computing"
+        if any(w in s_low for w in ["hotel", "hospitality", "tourism", "culinary",
+                                     "pastry", "hrm", "bstm", "bshm"]):
+            return "Hospitality & Tourism Management"
+        if any(w in s_low for w in ["crim", "forensic", "law", "justice",
+                                     "investigation", "cdi"]):
+            return "Criminology & Criminal Justice"
+        if any(w in s_low for w in ["educ", "teach", "maed", "pedagogy",
+                                     "btled", "beed", "bsed"]):
+            return "Education & Pedagogy"
+        if any(w in s_low for w in ["busin", "market", "account", "office",
+                                     "admin", "manage", "bsoa", "bsba"]):
+            return "Business & Management"
+        if any(w in s_low for w in ["agri", "crop", "soil", "animal",
+                                     "forest", "fisher", "vet"]):
+            return "Agriculture & Forestry"
+        if any(w in s_low for w in ["nutri", "diet", "midwi", "nurse",
+                                     "nurs", "health", "maternal", "clinic"]):
+            return "Health & Nutrition"
+        if any(w in s_low for w in ["engin", "civil", "electr"]):
+            return "Engineering"
+        return "General Education & Sciences"  # catch-all
+
+    if "field_of_specialization" in df.columns:
+        df["field_of_specialization"] = df["field_of_specialization"].apply(_map_spec)
+
+    return df
+
 # ---------------------------------------------------------------------------
 # Dataset loader — accepts CSV or Excel bytes, returns validated DataFrame
 # ---------------------------------------------------------------------------
@@ -106,6 +191,9 @@ def train_from_dataframe(
     """
     if len(df) < 50:
         raise ValueError("At least 50 records are required for a development training run.")
+
+    # ── Data Cleaning (mirrors Colab Cell 2.5) ────────────────────────────────
+    df = clean_survey_dataset(df)
 
     # ── Build multi-label targets ──────────────────────────────────────────────
     labels = [
