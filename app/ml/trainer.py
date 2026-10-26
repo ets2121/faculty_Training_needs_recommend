@@ -16,6 +16,7 @@ from sklearn.metrics import (
     jaccard_score,
     precision_score,
     recall_score,
+    classification_report,
 )
 from sklearn.model_selection import train_test_split
 from sklearn.multiclass import OneVsRestClassifier
@@ -279,7 +280,29 @@ def train_from_dataframe(
     micro_precision = float(precision_score(y_test, y_pred, average="micro", zero_division=0))
     micro_recall    = float(recall_score(y_test, y_pred, average="micro", zero_division=0))
 
-    # ── 4. Feature Importances — identical to Colab Cell 7 ───────────────────
+    # ── 4. Per-Class Metrics — identical to Colab Cell 7 per-category table ───
+    per_class_f1        = f1_score(y_test, y_pred, average=None, zero_division=0)
+    per_class_precision = precision_score(y_test, y_pred, average=None, zero_division=0)
+    per_class_recall    = recall_score(y_test, y_pred, average=None, zero_division=0)
+    per_class_accuracy  = [
+        round(float(accuracy_score(y_test[:, j], y_pred[:, j])), 4)
+        for j in range(len(all_topics))
+    ]
+
+    # Build list sorted by F1 (descending) — matches Colab Cell 7 output order
+    per_class_rows = [
+        {
+            "category":  all_topics[j],
+            "accuracy":  per_class_accuracy[j],
+            "f1":        round(float(per_class_f1[j]), 4),
+            "precision": round(float(per_class_precision[j]), 4),
+            "recall":    round(float(per_class_recall[j]), 4),
+        }
+        for j in range(len(all_topics))
+    ]
+    per_class_rows.sort(key=lambda r: r["f1"], reverse=True)
+
+    # ── 5. Feature Importances — identical to Colab Cell 7 ───────────────────
     pre_step = pipeline.named_steps["preprocessor"]
     clf_step = pipeline.named_steps["classifier"]
     f_names  = pre_step.get_feature_names_out()
@@ -309,7 +332,7 @@ def train_from_dataframe(
         for i, idx in enumerate(top_imp_idx)
     ]
 
-    # ── Full metrics dict — matches Colab metadata exactly ────────────────────
+    # ── Full metrics dict — matches Colab metadata + per-class table ──────────
     metrics = {
         "exact_match_accuracy": round(exact_match_acc, 4),
         "hamming_accuracy":     round(hamming_acc, 4),
@@ -326,6 +349,7 @@ def train_from_dataframe(
         "train_ratio":          0.80,
         "test_ratio":           0.20,
         "feature_importances":  feature_importances,
+        "per_class_metrics":    per_class_rows,   # Colab Cell 7 per-category breakdown
     }
 
     # ── Persist artifacts ─────────────────────────────────────────────────────

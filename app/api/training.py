@@ -58,6 +58,7 @@ def get_training_status(request: Request):
         "metrics": res.get("metrics", {}),
         "topics": res.get("topics", []),
         "feature_importances": res.get("feature_importances", []),
+        "per_class_metrics": res.get("per_class_metrics", []),
         "error": res.get("error"),
     }
 

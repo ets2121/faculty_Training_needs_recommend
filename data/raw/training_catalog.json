@@ -511,5 +511,27 @@
       "Saturdays"
     ],
     "status": "active"
+  },
+  {
+    "training_id": "TRN-019",
+    "title": "AI Tools for Academic Writing and Literature Review",
+    "description": "Practical session on utilizing generative AI tools for academic literature synthesis.",
+    "categories": [
+      "Artificial Intelligence",
+      "Research Methods"
+    ],
+    "target_competencies": [
+      "Research and Publication Writing"
+    ],
+    "modalities": [
+      "Webinar"
+    ],
+    "durations": [
+      "One day"
+    ],
+    "schedules": [
+      "Saturdays"
+    ],
+    "status": "active"
   }
 ]

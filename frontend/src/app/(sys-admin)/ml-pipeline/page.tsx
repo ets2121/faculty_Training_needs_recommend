@@ -42,6 +42,13 @@ interface ActiveModelStatus {
     raw_importance?: number;
     color: string;
   }>;
+  per_class_metrics?: Array<{
+    category: string;
+    accuracy: number;
+    f1: number;
+    precision: number;
+    recall: number;
+  }>;
   error?: string | null;
 }
 
@@ -231,7 +238,7 @@ export default function MLPipelinePage() {
 
     const timer1 = setTimeout(() => {
       setTrainingProgress(20);
-      setTrainingStep('Step 1/4: Loading and validating dataset...');
+      setTrainingStep('Step 1/5: Loading and validating dataset...');
       setExecutionLogs((prev) => [
         ...prev,
         `[${new Date().toLocaleTimeString()}] Parsing dataset — checking priority_1..priority_5 columns.`,
@@ -240,25 +247,36 @@ export default function MLPipelinePage() {
     }, 1000);
 
     const timer2 = setTimeout(() => {
-      setTrainingProgress(45);
-      setTrainingStep('Step 2/4: Feature engineering — scaling & encoding...');
+      setTrainingProgress(38);
+      setTrainingStep('Step 2/5: Data cleaning — normalizing academic rank, degree & specialization...');
+      setExecutionLogs((prev) => [
+        ...prev,
+        `[${new Date().toLocaleTimeString()}] clean_survey_dataset() — academic_rank: N→5 categories.`,
+        `[${new Date().toLocaleTimeString()}] clean_survey_dataset() — educational_attainment: N→3 tiers.`,
+        `[${new Date().toLocaleTimeString()}] clean_survey_dataset() — field_of_specialization: N→9 clusters.`,
+      ]);
+    }, 2000);
+
+    const timer3 = setTimeout(() => {
+      setTrainingProgress(55);
+      setTrainingStep('Step 3/5: Feature engineering — scaling & encoding...');
       setExecutionLogs((prev) => [
         ...prev,
         `[${new Date().toLocaleTimeString()}] StandardScaler applied to numeric features.`,
         `[${new Date().toLocaleTimeString()}] OneHotEncoder applied to categorical features.`,
         `[${new Date().toLocaleTimeString()}] 80/20 train-test split (random_state=42) applied.`,
       ]);
-    }, 2500);
+    }, 3500);
 
-    const timer3 = setTimeout(() => {
-      setTrainingProgress(75);
-      setTrainingStep('Step 3/4: Training Random Forest (400 estimators, OneVsRest)...');
+    const timer4 = setTimeout(() => {
+      setTrainingProgress(78);
+      setTrainingStep('Step 4/5: Training Random Forest (400 estimators, OneVsRest)...');
       setExecutionLogs((prev) => [
         ...prev,
         `[${new Date().toLocaleTimeString()}] OneVsRestClassifier(RandomForest, n_estimators=400) fitting...`,
         `[${new Date().toLocaleTimeString()}] Balanced class weights applied. This may take 1-2 minutes.`,
       ]);
-    }, 4000);
+    }, 5000);
 
     // Build form data
     const formData = new FormData();
@@ -274,14 +292,16 @@ export default function MLPipelinePage() {
         headers: { 'Content-Type': 'multipart/form-data' },
       });
 
-      clearTimeout(timer1); clearTimeout(timer2); clearTimeout(timer3);
+      clearTimeout(timer1); clearTimeout(timer2); clearTimeout(timer3); clearTimeout(timer4);
 
       setTrainingProgress(100);
-      setTrainingStep('Step 4/4: Pipeline Complete! Model deployed to active registry.');
+      setTrainingStep('Step 5/5: Pipeline Complete! Model deployed to active registry.');
       setExecutionLogs((prev) => [
         ...prev,
-        `[${new Date().toLocaleTimeString()}] Micro F1: ${res.data.metrics?.micro_f1?.toFixed(4) ?? 'N/A'} | Top-1 Hit: ${((res.data.metrics?.top1_hit_accuracy ?? 0) * 100).toFixed(1)}%`,
-        `[${new Date().toLocaleTimeString()}] Exact Match: ${((res.data.metrics?.exact_match_accuracy ?? 0) * 100).toFixed(1)}% | Hamming Acc: ${((res.data.metrics?.hamming_accuracy ?? 0) * 100).toFixed(1)}%`,
+        `[${new Date().toLocaleTimeString()}] ✅ Per-class metrics computed for ${res.data.topics?.length ?? '?'} categories.`,
+        `[${new Date().toLocaleTimeString()}] Top-1: ${((res.data.metrics?.top1_hit_accuracy ?? 0) * 100).toFixed(1)}% | Top-3: ${((res.data.metrics?.top3_hit_accuracy ?? 0) * 100).toFixed(1)}% | Top-5: ${((res.data.metrics?.top5_hit_accuracy ?? 0) * 100).toFixed(1)}%`,
+        `[${new Date().toLocaleTimeString()}] Micro F1: ${res.data.metrics?.micro_f1?.toFixed(4) ?? 'N/A'} | Macro F1: ${res.data.metrics?.macro_f1?.toFixed(4) ?? 'N/A'} | Exact Match: ${((res.data.metrics?.exact_match_accuracy ?? 0) * 100).toFixed(1)}%`,
+        `[${new Date().toLocaleTimeString()}] Hamming: ${((res.data.metrics?.hamming_accuracy ?? 0) * 100).toFixed(1)}% | Jaccard: ${((res.data.metrics?.jaccard_accuracy ?? 0) * 100).toFixed(1)}% | Precision: ${((res.data.metrics?.micro_precision ?? 0) * 100).toFixed(1)}% | Recall: ${((res.data.metrics?.micro_recall ?? 0) * 100).toFixed(1)}%`,
         `[${new Date().toLocaleTimeString()}] Artifacts saved to models/${res.data.folder}/`,
         `[${new Date().toLocaleTimeString()}] models/active.json updated. Model reloaded successfully.`,
       ]);
@@ -299,7 +319,7 @@ export default function MLPipelinePage() {
 
       await fetchModelData();
     } catch (err: any) {
-      clearTimeout(timer1); clearTimeout(timer2); clearTimeout(timer3);
+      clearTimeout(timer1); clearTimeout(timer2); clearTimeout(timer3); clearTimeout(timer4);
       const errMsg = err.response?.data?.detail || err.message || 'Unknown error';
       setExecutionLogs((prev) => [
         ...prev,
@@ -328,10 +348,23 @@ export default function MLPipelinePage() {
   const recall = activeModel?.metrics?.micro_recall ?? null;
   const top1Hit = activeModel?.metrics?.top1_hit_accuracy ?? null;
   const top3Hit = activeModel?.metrics?.top3_hit_accuracy ?? null;
+  const top5Hit = activeModel?.metrics?.top5_hit_accuracy ?? null;
   const exactMatch = activeModel?.metrics?.exact_match_accuracy ?? null;
   const hammingAcc = activeModel?.metrics?.hamming_accuracy ?? null;
+  const jaccard = activeModel?.metrics?.jaccard_accuracy ?? null;
   const trainRecords = activeModel?.metrics?.training_records ?? null;
   const testRecords = activeModel?.metrics?.test_records ?? null;
+  const perClassMetrics = activeModel?.per_class_metrics ?? [];
+
+  // Bar chart data — matches Colab Cell 7 accuracy visualization
+  const accuracyBars = [
+    { label: 'Exact Match\nRatio', value: exactMatch, color: '#e74c3c' },
+    { label: 'Jaccard\nAccuracy', value: jaccard, color: '#e67e22' },
+    { label: 'Top-1 Hit\nAccuracy', value: top1Hit, color: '#f39c12' },
+    { label: 'Hamming\nAccuracy', value: hammingAcc, color: '#3498db' },
+    { label: 'Top-3 Hit\nAccuracy', value: top3Hit, color: '#2ecc71' },
+    { label: 'Top-5 Hit\nAccuracy', value: top5Hit, color: '#27ae60' },
+  ].filter((b) => b.value !== null) as { label: string; value: number; color: string }[];
 
   return (
     <div className="space-y-8 max-w-6xl mx-auto">
@@ -480,12 +513,12 @@ export default function MLPipelinePage() {
 
       {/* 3b. Colab & Pipeline Evaluation Diagnostics (Hit Rates & Partition Breakdown) */}
       {(top1Hit !== null || exactMatch !== null || macroF1 !== null) && (
-        <div className="p-5 rounded-2xl bg-emerald-500/5 dark:bg-emerald-500/10 border border-emerald-500/20 shadow-sm space-y-3">
+        <div className="p-5 rounded-2xl bg-emerald-500/5 dark:bg-emerald-500/10 border border-emerald-500/20 shadow-sm space-y-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
               <Sparkles className="w-4 h-4 text-emerald-500" />
               <h4 className="text-xs font-extrabold uppercase tracking-wider text-emerald-700 dark:text-emerald-300">
-                Evaluation Test Accuracy (80/20 Split Diagnostics)
+                Evaluation Test Accuracy — 80/20 Split (Colab Cell 7 Metrics)
               </h4>
             </div>
             <span className="text-[10px] font-mono text-emerald-600 dark:text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded border border-emerald-500/20">
@@ -493,7 +526,34 @@ export default function MLPipelinePage() {
             </span>
           </div>
 
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs">
+          {/* All 6 accuracy metrics as colored bars — mirrors Colab Cell 7 bar chart */}
+          {accuracyBars.length > 0 && (
+            <div className="grid grid-cols-3 sm:grid-cols-6 gap-2">
+              {accuracyBars.map((bar) => (
+                <div key={bar.label} className="flex flex-col items-center gap-1.5">
+                  <div className="w-full bg-slate-100 dark:bg-slate-800 rounded-xl overflow-hidden h-20 flex items-end">
+                    <div
+                      className="w-full rounded-xl transition-all duration-700"
+                      style={{
+                        height: `${Math.max(6, Math.round(bar.value * 100))}%`,
+                        backgroundColor: bar.color,
+                        opacity: 0.9,
+                      }}
+                    />
+                  </div>
+                  <span className="text-[10px] font-extrabold font-mono" style={{ color: bar.color }}>
+                    {(bar.value * 100).toFixed(1)}%
+                  </span>
+                  <span className="text-[9px] text-light-text dark:text-dark-muted text-center leading-tight whitespace-pre-line">
+                    {bar.label}
+                  </span>
+                </div>
+              ))}
+            </div>
+          )}
+
+          {/* Numeric metric grid */}
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs pt-1 border-t border-emerald-500/10">
             {top1Hit !== null && (
               <div className="p-3 rounded-xl bg-white/70 dark:bg-slate-900/70 border border-light-border dark:border-slate-800">
                 <span className="text-[10px] text-light-text dark:text-dark-muted block">Top-1 Hit Accuracy</span>
@@ -503,7 +563,6 @@ export default function MLPipelinePage() {
                 <span className="text-[9px] text-light-text dark:text-dark-muted block">#1 priority matched</span>
               </div>
             )}
-
             {top3Hit !== null && (
               <div className="p-3 rounded-xl bg-white/70 dark:bg-slate-900/70 border border-light-border dark:border-slate-800">
                 <span className="text-[10px] text-light-text dark:text-dark-muted block">Top-3 Hit Accuracy</span>
@@ -513,7 +572,15 @@ export default function MLPipelinePage() {
                 <span className="text-[9px] text-light-text dark:text-dark-muted block">Top 3 priority matched</span>
               </div>
             )}
-
+            {top5Hit !== null && (
+              <div className="p-3 rounded-xl bg-white/70 dark:bg-slate-900/70 border border-light-border dark:border-slate-800">
+                <span className="text-[10px] text-light-text dark:text-dark-muted block">Top-5 Hit Accuracy</span>
+                <span className="text-base font-extrabold text-teal-600 dark:text-teal-400 font-mono">
+                  {(top5Hit * 100).toFixed(1)}%
+                </span>
+                <span className="text-[9px] text-light-text dark:text-dark-muted block">Top 5 priority matched</span>
+              </div>
+            )}
             {exactMatch !== null && (
               <div className="p-3 rounded-xl bg-white/70 dark:bg-slate-900/70 border border-light-border dark:border-slate-800">
                 <span className="text-[10px] text-light-text dark:text-dark-muted block">Exact Match Ratio</span>
@@ -523,7 +590,6 @@ export default function MLPipelinePage() {
                 <span className="text-[9px] text-light-text dark:text-dark-muted block">All labels exact match</span>
               </div>
             )}
-
             {macroF1 !== null && (
               <div className="p-3 rounded-xl bg-white/70 dark:bg-slate-900/70 border border-light-border dark:border-slate-800">
                 <span className="text-[10px] text-light-text dark:text-dark-muted block">Macro F1 Score</span>
@@ -531,6 +597,24 @@ export default function MLPipelinePage() {
                   {(macroF1 * 100).toFixed(1)}%
                 </span>
                 <span className="text-[9px] text-light-text dark:text-dark-muted block">Balanced across classes</span>
+              </div>
+            )}
+            {hammingAcc !== null && (
+              <div className="p-3 rounded-xl bg-white/70 dark:bg-slate-900/70 border border-light-border dark:border-slate-800">
+                <span className="text-[10px] text-light-text dark:text-dark-muted block">Hamming Accuracy</span>
+                <span className="text-base font-extrabold text-blue-600 dark:text-blue-400 font-mono">
+                  {(hammingAcc * 100).toFixed(1)}%
+                </span>
+                <span className="text-[9px] text-light-text dark:text-dark-muted block">Per-label accuracy</span>
+              </div>
+            )}
+            {jaccard !== null && (
+              <div className="p-3 rounded-xl bg-white/70 dark:bg-slate-900/70 border border-light-border dark:border-slate-800">
+                <span className="text-[10px] text-light-text dark:text-dark-muted block">Jaccard (IoU)</span>
+                <span className="text-base font-extrabold text-orange-600 dark:text-orange-400 font-mono">
+                  {(jaccard * 100).toFixed(1)}%
+                </span>
+                <span className="text-[9px] text-light-text dark:text-dark-muted block">Intersection over union</span>
               </div>
             )}
           </div>
@@ -674,6 +758,89 @@ export default function MLPipelinePage() {
         subtitle="Questionnaire domain weights driving faculty recommendation matching"
         data={featureImportances}
       />
+
+      {/* 5b. Per-Category Performance Breakdown — mirrors Colab Cell 7 table */}
+      {perClassMetrics.length > 0 && (
+        <div className="bg-white dark:bg-slate-900 border border-light-border dark:border-slate-800 rounded-3xl p-6 sm:p-8 shadow-xl space-y-5">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-light-border dark:border-slate-800 pb-4">
+            <div className="space-y-1">
+              <div className="flex items-center gap-2">
+                <Layers className="w-5 h-5 text-sky-500" />
+                <h3 className="text-base font-extrabold text-light-text dark:text-white">
+                  Per-Category Performance Breakdown
+                </h3>
+              </div>
+              <p className="text-xs text-light-text dark:text-dark-muted">
+                Accuracy / F1 / Precision / Recall per training category on the held-out 20% test set.
+                Sorted by F1 score descending — identical to Colab Cell 7 output.
+              </p>
+            </div>
+            <span className="text-xs font-bold text-light-text dark:text-dark-muted font-mono bg-slate-100 dark:bg-slate-800 px-3 py-1 rounded-full shrink-0">
+              {perClassMetrics.length} categories
+            </span>
+          </div>
+          <div className="overflow-x-auto">
+            <table className="w-full text-left text-xs">
+              <thead>
+                <tr className="border-b border-light-border dark:border-slate-800 text-light-text dark:text-dark-muted font-semibold">
+                  <th className="pb-3 pl-2">Category</th>
+                  <th className="pb-3 text-center">Accuracy</th>
+                  <th className="pb-3 text-center">F1 Score</th>
+                  <th className="pb-3 text-center">Precision</th>
+                  <th className="pb-3 text-center">Recall</th>
+                  <th className="pb-3 pr-2">F1 Bar</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-light-border/60 dark:divide-slate-800/60">
+                {perClassMetrics.map((row) => (
+                  <tr key={row.category} className="hover:bg-slate-50/50 dark:hover:bg-slate-800/30 transition-colors">
+                    <td className="py-3 pl-2">
+                      <span className="font-semibold text-light-text dark:text-white text-[11px]">{row.category}</span>
+                    </td>
+                    <td className="py-3 text-center font-mono text-[11px]">
+                      <span className={`font-bold ${
+                        row.accuracy >= 0.9 ? 'text-emerald-600 dark:text-emerald-400' :
+                        row.accuracy >= 0.75 ? 'text-sky-600 dark:text-sky-400' :
+                        'text-amber-600 dark:text-amber-400'
+                      }`}>
+                        {(row.accuracy * 100).toFixed(1)}%
+                      </span>
+                    </td>
+                    <td className="py-3 text-center font-mono text-[11px]">
+                      <span className={`font-bold ${
+                        row.f1 >= 0.6 ? 'text-emerald-600 dark:text-emerald-400' :
+                        row.f1 >= 0.3 ? 'text-sky-600 dark:text-sky-400' :
+                        'text-rose-600 dark:text-rose-400'
+                      }`}>
+                        {row.f1.toFixed(4)}
+                      </span>
+                    </td>
+                    <td className="py-3 text-center font-mono text-[11px] text-light-text dark:text-dark-muted">
+                      {row.precision.toFixed(4)}
+                    </td>
+                    <td className="py-3 text-center font-mono text-[11px] text-light-text dark:text-dark-muted">
+                      {row.recall.toFixed(4)}
+                    </td>
+                    <td className="py-3 pr-2">
+                      <div className="w-full bg-slate-100 dark:bg-slate-800 rounded-full h-2 min-w-[60px]">
+                        <div
+                          className="h-2 rounded-full transition-all duration-500"
+                          style={{
+                            width: `${Math.max(2, Math.round(row.f1 * 100))}%`,
+                            backgroundColor:
+                              row.f1 >= 0.6 ? '#10b981' :
+                              row.f1 >= 0.3 ? '#0284c7' : '#e11d48',
+                          }}
+                        />
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      )}
 
       {/* 6. Execution Logs Console */}
       <div className="bg-slate-950 border border-slate-800 rounded-3xl p-6 sm:p-8 shadow-2xl space-y-4 text-white">

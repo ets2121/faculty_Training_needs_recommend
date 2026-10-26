@@ -402,6 +402,7 @@ def resolve_active_model(models_dir: str | Path) -> dict[str, Any]:
         "metrics": metrics,
         "topics": topics,
         "feature_importances": feature_importances or [],
+        "per_class_metrics": metrics.get("per_class_metrics", []),
     }
 
 
