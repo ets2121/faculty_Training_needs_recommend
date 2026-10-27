@@ -74,17 +74,25 @@ Numeric inputs     → StandardScaler
 
 **Numeric features:** competency proficiency scores (10 areas), competency importance scores (10 areas), emerging training need ratings (9 areas), barrier ratings (4 areas), trainings_last_3_years
 
-### Target Labels (9 training-need categories)
+### Target Labels (17 Canonical Training Categories)
 
-1. Research Methods
-2. Educational Technology
-3. Artificial Intelligence
-4. Outcomes-Based Education (OBE)
-5. Data Analytics
-6. Leadership & Management
-7. Quality Assurance
-8. Cybersecurity
-9. Instructional Design
+1. Artificial Intelligence
+2. Cybersecurity
+3. Data Analytics
+4. Distance Learning & Online Pedagogy
+5. Educational Technology
+6. Extension & Community Development
+7. Health & Wellness in Academia
+8. Inclusive Education & Special Needs
+9. Industry 4.0 & Smart Technologies
+10. Instructional Design & Curriculum Development
+11. Intellectual Property & Patenting
+12. Leadership & Supervisory Management
+13. Outcomes-Based Education (OBE)
+14. Professional Development & Ethics
+15. Publication Writing
+16. Quality Assurance & Accreditation
+17. Research Methodology
 
 ### Critical Integrity Constraint
 
@@ -99,14 +107,15 @@ python train.py
 ```
 
 Steps:
-1. Load `data/raw/faculty_training.csv`
-2. Multi-label binarize the top_1…top_5 columns
-3. Apply ColumnTransformer feature pipeline
-4. Train `RandomForestClassifier(n_estimators=100)` via `OneVsRestClassifier`
-5. Evaluate on 20% held-out test set
-6. Report micro/macro F1, precision, recall, Recall@5
-7. Save versioned artifact to `models/`
-8. Update `models/active.json`
+1. Load dataset (`data/raw/Raws_Datas_named.csv` or `faculty_training.csv`)
+2. Execute 8-step data cleaning pipeline (`clean_training_dataframe`): trim whitespace, normalize canonical topics, drop low-information rows, and validate Likert bounds
+3. Multi-label binarize the top_1…top_5 columns across all 17 categories
+4. Apply ColumnTransformer feature pipeline (OneHotEncoder + StandardScaler)
+5. Train `OneVsRestClassifier(RandomForestClassifier(n_estimators=200, class_weight='balanced', random_state=42))`
+6. Evaluate on 20% held-out test set
+7. Report Top-1/3/5 hit accuracy, Exact Match, Hamming accuracy, Jaccard IoU, Micro/Macro F1, Precision, Recall, and Per-Category Performance Breakdown
+8. Save versioned artifact to `models/`
+9. Update `models/active.json`
 
 ---
 

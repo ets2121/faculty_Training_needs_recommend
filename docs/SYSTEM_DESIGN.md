@@ -73,10 +73,13 @@ The questionnaire is the system's primary data collection mechanism. It serves t
 
 ### Model Type
 
-**One-vs-Rest Random Forest** multi-label classifier
+**One-vs-Rest Random Forest** multi-label classifier:
 
 ```
 Input Features
+     │
+     ▼
+8-Step Data Cleaner (whitespace strip, canonical topic mapping, deduplication, Likert bounding)
      │
      ▼
 OneHotEncoder (categorical: department, sex, employment_status,
@@ -88,23 +91,31 @@ StandardScaler (numeric: competency scores, emerging needs ratings,
 ColumnTransformer → Feature Matrix (67 features)
      │
      ▼
-RandomForestClassifier (n_estimators=100) per label
+OneVsRestClassifier(RandomForestClassifier(n_estimators=200, class_weight="balanced", random_state=42))
      │
      ▼
-Predict probability per training-need category
+Predict probability distribution across 17 training categories
 ```
 
-### Target Labels (9 categories)
+### Target Labels (17 Canonical Categories)
 
-1. Research Methods
-2. Educational Technology
-3. Artificial Intelligence
-4. Outcomes-Based Education (OBE)
-5. Data Analytics
-6. Leadership & Management
-7. Quality Assurance
-8. Cybersecurity
-9. Instructional Design
+1. Artificial Intelligence
+2. Cybersecurity
+3. Data Analytics
+4. Distance Learning & Online Pedagogy
+5. Educational Technology
+6. Extension & Community Development
+7. Health & Wellness in Academia
+8. Inclusive Education & Special Needs
+9. Industry 4.0 & Smart Technologies
+10. Instructional Design & Curriculum Development
+11. Intellectual Property & Patenting
+12. Leadership & Supervisory Management
+13. Outcomes-Based Education (OBE)
+14. Professional Development & Ethics
+15. Publication Writing
+16. Quality Assurance & Accreditation
+17. Research Methodology
 
 ### Critical Research Constraint
 
@@ -115,6 +126,10 @@ Top Five = Importance - Proficiency   ← WRONG — creates target leakage
 ```
 
 The model must learn to predict actual human priority rankings, not a mathematical gap calculation.
+
+### Recommendation Output Sizing
+- Individual recommendations output the **Top 3 Recommended Training Programs** with match score breakdown.
+- Department recommendations output the **Top 3 Recommended Training Programs** based on aggregated priority scores and faculty coverage.
 
 ### Model Artifacts
 

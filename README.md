@@ -186,27 +186,58 @@ Every recommendation response includes a `model` block with full transparency me
 }
 ```
 
-### Individual Recommendation Response
+### Individual Recommendation Response (Top 3 Recommendations)
 
 ```json
 {
-  "model": { "version": "...", "algorithm": "...", "..." },
+  "model": {
+    "version": "v20261026184948",
+    "algorithm": "Random Forest (One-vs-Rest)",
+    "n_estimators": 200,
+    "training_samples": 132,
+    "test_samples": 34,
+    "features": 67,
+    "labels": 17,
+    "top1_hit_accuracy": 0.8235,
+    "top3_hit_accuracy": 0.9706,
+    "top5_hit_accuracy": 1.0,
+    "micro_f1": 0.6562
+  },
   "top_categories": [
-    { "category": "Research Methods", "score": 0.87 },
-    { "category": "Educational Technology", "score": 0.76 }
+    { "category": "Data Analytics", "score": 0.82 },
+    { "category": "Cybersecurity", "score": 0.80 },
+    { "category": "Artificial Intelligence", "score": 0.79 }
   ],
   "recommendations": [
     {
       "rank": 1,
-      "title": "Advanced Research Methods for Faculty",
-      "category": "Research Methods",
+      "title": "Data Analytics and Visualization for Academic Decision-Making",
+      "category": "Data Analytics",
       "match_score": 0.94,
       "modality": "Face-to-face",
       "duration": "3 days",
-      "provider": "QSU Graduate School"
+      "provider": "QSU Faculty Development Office"
+    },
+    {
+      "rank": 2,
+      "title": "Applied Cybersecurity and Digital Safety for Higher Education",
+      "category": "Cybersecurity",
+      "match_score": 0.90,
+      "modality": "Hybrid",
+      "duration": "2 days",
+      "provider": "QSU MIS Department"
+    },
+    {
+      "rank": 3,
+      "title": "Artificial Intelligence and Machine Learning for Educators",
+      "category": "Artificial Intelligence",
+      "match_score": 0.88,
+      "modality": "Webinar",
+      "duration": "2 days",
+      "provider": "QSU IT Department"
     }
   ],
-  "generated_at": "2026-08-20T18:02:25+08:00"
+  "generated_at": "2026-10-27T03:33:41+08:00"
 }
 ```
 
@@ -320,27 +351,37 @@ Frontend available at: **http://localhost:3000**
 python train.py
 ```
 
-The trainer performs:
-1. Reads `data/raw/faculty_training.csv`
-2. Treats Top-5 priority topics as multi-label targets (no derived labels)
-3. One-hot encodes categorical inputs
-4. Standard-scales numeric inputs
-5. Trains a One-vs-Rest Random Forest classifier
-6. Evaluates on a held-out test set (F1, Precision, Recall, Recall@5)
-7. Saves a versioned artifact: `models/training_recommender_v{timestamp}.joblib`
-8. Updates `models/active.json` to point to the new model
+### ML Training Pipeline (Colab & Backend Parity)
+
+```bash
+python train.py
+```
+
+The trainer executes a 5-step standardized pipeline with 100% parity to the Google Colab training notebook:
+1. **Data Cleaning & Normalization**: Executes an 8-step cleaning module (`app/ml/data_cleaner.py`) that strips whitespace, performs canonical topic mapping (normalizing 17 standardized categories), drops non-informative rows, and validates Likert bounds `[1, 5]`.
+2. **Multi-Label Target Binarization**: Multi-label binarizes the Top-5 priority topics from Part VIII across all 17 canonical categories.
+3. **Feature Engineering**: `ColumnTransformer` applying `OneHotEncoder` to categorical demographics and `StandardScaler` to competency scores, emerging needs, and barrier ratings.
+4. **Classifier Training**: Trains `OneVsRestClassifier(RandomForestClassifier(n_estimators=200, class_weight='balanced', random_state=42))` with an 80/20 train-test split.
+5. **Comprehensive Multi-Label Evaluation**: Generates Colab Cell 7-equivalent metrics:
+   - Top-1 Hit: **82.4%** · Top-3 Hit: **97.1%** · Top-5 Hit: **100.0%**
+   - Exact Match: **20.6%** · Hamming Accuracy: **81.1%** · Jaccard IoU: **53.5%**
+   - Micro F1: **65.6%** · Macro F1: **33.5%**
+   - Per-Category Performance Breakdown table (Accuracy, F1, Precision, Recall for all 17 categories)
+   - Normalized Feature Importance weights
+6. **Artifact Persistence & Versioning**: Saves `training_recommender_v*.joblib`, `labels_v*.joblib`, `metadata_v*.json`, and updates `models/active.json`.
 
 ### Model Versioning
 
 ```
 models/
-  active.json                        ← { "version": "v20260820180225" }
-  training_recommender_v*.joblib     ← Model pipeline
-  labels_v*.joblib                   ← Label encoder
-  metadata_v*.json                   ← Training stats
+  active.json                        ← { "version": "v20261026184948" }
+  final_clean_v1/
+    training_recommender_v*.joblib   ← Scikit-learn Pipeline
+    labels_v*.joblib                 ← Category Label Binarizer
+    metadata_v*.json                 ← Metrics, Per-Class Stats, & Feature Importances
 ```
 
-The System Admin can switch the active model version from the `/ml-pipeline` page without restarting the server.
+The System Admin can monitor real-time training progress (5-step stepper) and activate model versions directly from the `/ml-pipeline` dashboard without restarting the server.
 
 ---
 
@@ -349,6 +390,7 @@ The System Admin can switch the active model version from the `/ml-pipeline` pag
 | Document | Description |
 |---|---|
 | [README.md](README.md) | This file — full project overview |
+| [SYSTEM_QA_DEFENSE_GUIDE.md](SYSTEM_QA_DEFENSE_GUIDE.md) | Thesis defense & review guide with direct Q&A |
 | [TEST_ACCOUNTS.md](TEST_ACCOUNTS.md) | All seeded test account credentials |
 | [docs/API_REFERENCE.md](docs/API_REFERENCE.md) | Complete API endpoint reference |
 | [docs/SYSTEM_DESIGN.md](docs/SYSTEM_DESIGN.md) | Architecture & ML pipeline design |
