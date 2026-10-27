@@ -777,7 +777,7 @@ Authorization: Bearer {{TOKEN}}
 
 ### Test Account Reference
 
-See [TEST_ACCOUNTS.md](../TEST_ACCOUNTS.md) for all seeded credentials.
+See [TEST_ACCOUNTS.md](TEST_ACCOUNTS.md) for all seeded credentials.
 
 | Role | Username | Password |
 |---|---|---|

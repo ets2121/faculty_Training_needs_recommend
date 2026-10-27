@@ -1,6 +1,0 @@
-{
-  "version": "20260812055414",
-  "artifact": "exported_model/training_recommender_v20260812055414.joblib",
-  "labels": "exported_model/labels_v20260812055414.joblib",
-  "metadata": "exported_model/metadata_v20260812055414.json"
-}

@@ -1,4 +1,4 @@
-﻿from pathlib import Path
+from pathlib import Path
 
 content = """# QSU Training Needs Recommender System — Seeded Test Accounts Documentation
 
@@ -62,6 +62,6 @@ Faculty accounts represent instructors across different assessment stages and ca
 The system login page (`/login`) includes an interactive **"Quick-Fill Test Accounts"** drawer. Clicking any test account button automatically populates the username and password fields for rapid testing without manual typing.
 """
 
-file_path = Path("TEST_ACCOUNTS.md")
+file_path = Path(__file__).resolve().parent.parent / "docs" / "TEST_ACCOUNTS.md"
 file_path.write_text(content, encoding="utf-8")
-print("TEST_ACCOUNTS.md created successfully in root folder.")
+print("TEST_ACCOUNTS.md created successfully in docs/ folder.")

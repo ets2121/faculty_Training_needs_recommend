@@ -321,7 +321,7 @@ Swagger UI: **http://127.0.0.1:8000/docs**
 |---|---|---|
 | System Admin | `admin` | `admin123` |
 
-> See [TEST_ACCOUNTS.md](TEST_ACCOUNTS.md) and [docs/TEST_CREDENTIALS.md](docs/TEST_CREDENTIALS.md) for all seeded test accounts.
+> See [docs/TEST_ACCOUNTS.md](docs/TEST_ACCOUNTS.md) and [docs/TEST_CREDENTIALS.md](docs/TEST_CREDENTIALS.md) for all seeded test accounts.
 
 ---
 
@@ -390,8 +390,9 @@ The System Admin can monitor real-time training progress (5-step stepper) and ac
 | Document | Description |
 |---|---|
 | [README.md](README.md) | This file — full project overview |
-| [SYSTEM_QA_DEFENSE_GUIDE.md](SYSTEM_QA_DEFENSE_GUIDE.md) | Thesis defense & review guide with direct Q&A |
-| [TEST_ACCOUNTS.md](TEST_ACCOUNTS.md) | All seeded test account credentials |
+| [docs/SYSTEM_QA_DEFENSE_GUIDE.md](docs/SYSTEM_QA_DEFENSE_GUIDE.md) | Thesis defense & review guide with direct Q&A |
+| [docs/TEST_ACCOUNTS.md](docs/TEST_ACCOUNTS.md) | All seeded test account credentials |
+| [docs/DATASET_COLUMNS_EXPLANATION.md](docs/DATASET_COLUMNS_EXPLANATION.md) | Survey dataset columns and data dictionary |
 | [docs/API_REFERENCE.md](docs/API_REFERENCE.md) | Complete API endpoint reference |
 | [docs/SYSTEM_DESIGN.md](docs/SYSTEM_DESIGN.md) | Architecture & ML pipeline design |
 | [docs/THESIS_METHODOLOGY.md](docs/THESIS_METHODOLOGY.md) | Academic methodology narrative |
