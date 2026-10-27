@@ -436,45 +436,25 @@ class ModelService:
         )
 
         if expected:
-
             # ----------------------------------------------------
-            # Add missing columns
+            # Add missing columns (batch concatenated to prevent fragmentation)
             # ----------------------------------------------------
-
+            missing_cols: dict[str, Any] = {}
             for column in expected:
+                if column not in df.columns:
+                    missing_cols[column] = (
+                        "" if column in self.CATEGORICAL_COLUMNS else 0
+                    )
 
-                if column in df.columns:
-                    continue
-
-                if (
-                    column
-                    in self.CATEGORICAL_COLUMNS
-                ):
-
-                    df[column] = ""
-
-                else:
-
-                    df[column] = 0
+            if missing_cols:
+                missing_df = pd.DataFrame(missing_cols, index=df.index)
+                df = pd.concat([df, missing_df], axis=1)
 
             # ----------------------------------------------------
-            # Remove extra columns
+            # Ensure correct column order matching trained schema
             # ----------------------------------------------------
-
-            df = df[
-                [
-                    column
-                    for column in expected
-                ]
-            ]
-
-            # ----------------------------------------------------
-            # Correct order
-            # ----------------------------------------------------
-
-            df = df.reindex(
-                columns=expected
-            )
+            if isinstance(df, pd.DataFrame):
+                df = df.reindex(columns=expected)
 
         return df
 
