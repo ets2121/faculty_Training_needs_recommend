@@ -5,6 +5,7 @@ from sqlalchemy.orm import Session
 
 from app.ml.predictor import ModelService
 from app.services.catalog import get_catalog_service, CatalogService
+from app.services.profiler import evaluate_faculty_profile
 from app.db.models import RecommendationHistory, TrainingResponse
 
 
@@ -116,8 +117,13 @@ def individual(model: ModelService, record: dict, db: Session | None = None, gen
     """
     Generates transparent individual recommendation response adhering to
     QSU_Training_Catalog_and_Transparent_API.md format.
+    Includes Tier 1 Competency Profiling & Evaluation diagnostic report.
     Records history in MySQL if db session is provided.
     """
+    # ── Tier 1: Profiling & Competency Evaluation ────────────────────────────
+    competency_profile = evaluate_faculty_profile(record)
+
+    # ── Tier 2: Model Prediction & Catalog Matching ──────────────────────────
     prediction_details = model.predict_transparent([record])[0]
     recommendations = match_catalog_items(prediction_details, record)
 
@@ -132,6 +138,7 @@ def individual(model: ModelService, record: dict, db: Session | None = None, gen
             "status": "ready",
             "version": model.version or "active",
         },
+        "competency_profile": competency_profile,
         "prediction": prediction_details,
         "recommendations": recommendations,
         "generated_at": generated_at,

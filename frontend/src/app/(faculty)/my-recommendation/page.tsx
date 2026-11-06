@@ -5,6 +5,7 @@ import Link from 'next/link';
 import api from '@/lib/api';
 import { RecommendationResult, QuestionnaireProgress } from '@/types';
 import RecommendationCard from '@/components/RecommendationCard';
+import CompetencyProfilingCard from '@/components/CompetencyProfilingCard';
 import GeneratingProgressModal from '@/components/GeneratingProgressModal';
 import { RecommendationSkeleton } from '@/components/Skeletons';
 import { useToast } from '@/context/ToastContext';
@@ -141,6 +142,11 @@ export default function MyRecommendationPage() {
                 </Link>
               </div>
             </div>
+          )}
+
+          {/* Render Competency Profiling Card if available */}
+          {recommendation && recommendation.competency_profile && (
+            <CompetencyProfilingCard profile={recommendation.competency_profile} />
           )}
 
           {/* Render Recommendation Card if available */}

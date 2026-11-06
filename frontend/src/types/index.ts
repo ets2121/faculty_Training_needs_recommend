@@ -103,12 +103,48 @@ export interface CatalogRecommendationItem {
   description?: string;
 }
 
+export interface CompetencyProfile {
+  overall_level: 'Developing' | 'Proficient' | 'Advanced';
+  level_title: string;
+  overall_index: number;
+  average_proficiency: number;
+  average_importance: number;
+  total_gaps_count: number;
+  domains: {
+    core: { index: number; level: string; count: number; gaps_count: number };
+    functional: { index: number; level: string; count: number; gaps_count: number };
+    leadership: { index: number; level: string; count: number; gaps_count: number };
+  };
+  strengths: Array<{
+    key: string;
+    title: string;
+    domain: string;
+    proficiency: number;
+    importance: number;
+  }>;
+  growth_areas: Array<{
+    key: string;
+    title: string;
+    domain: string;
+    proficiency: number;
+    importance: number;
+    gap: number;
+    reason: string;
+  }>;
+  explanation: {
+    headline: string;
+    summary: string;
+    target_training_focus: string;
+  };
+}
+
 export interface RecommendationResult {
   status: string;
   model: {
     status: string;
     version: string;
   };
+  competency_profile?: CompetencyProfile;
   prediction: {
     top_predictions: CategoryPrediction[];
     all_predictions: Array<{ training_category: string; probability: number }>;
