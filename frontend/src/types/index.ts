@@ -98,6 +98,8 @@ export interface CatalogRecommendationItem {
   training_id: string;
   title: string;
   category: string;
+  target_level?: 'Developing' | 'Proficient' | 'Advanced' | string;
+  level_label?: string;
   match_score: number;
   reason: string;
   description?: string;

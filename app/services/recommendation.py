@@ -14,10 +14,12 @@ def match_catalog_items(
     record: dict[str, Any],
     catalog_service: CatalogService | None = None,
     top_k: int = 3,
+    competency_profile: dict[str, Any] | None = None,
 ) -> list[dict[str, Any]]:
     """
     Matches active catalog training programs to predicted categories and faculty preferences.
-    Calculates match_score distinct from prediction probability.
+    Calibrates match_score and program level suitability based on the faculty member's
+    evaluated Competency Level (Developing, Proficient, Advanced).
     """
     if catalog_service is None:
         catalog_service = get_catalog_service()
@@ -25,6 +27,9 @@ def match_catalog_items(
     active_items = catalog_service.get_all_items(include_inactive=False)
     if not active_items:
         return []
+
+    # Faculty competency level
+    faculty_level = competency_profile.get("overall_level", "Proficient") if competency_profile else "Proficient"
 
     # Map category to prediction probability
     category_probs: dict[str, float] = {}
@@ -97,12 +102,35 @@ def match_catalog_items(
             bonus += 0.03
             reasons.append("Addresses identified competency gap.")
 
-        final_match_score = min(0.99, round(base_score + bonus, 2))
+        # ── Competency Level Suitability Calibration ─────────────────────────
+        title_desc_lower = (item.get("title", "") + " " + item.get("description", "")).lower()
+        if any(w in title_desc_lower for w in ["advanced", "mastery", "governance", "commercialization", "expert", "executive"]):
+            suitable_level = "Advanced"
+            level_label = "Advanced / Masterclass"
+        elif any(w in title_desc_lower for w in ["foundations", "awareness", "introduction", "basic", "fundamental", "literacy"]):
+            suitable_level = "Developing"
+            level_label = "Foundational / Core"
+        else:
+            suitable_level = "Proficient"
+            level_label = "Intermediate / Applied"
+
+        # Calibration alignment bonus/penalty
+        if faculty_level == suitable_level:
+            bonus += 0.05
+            reasons.append(f"Calibrated directly for your assessed {faculty_level} competency level.")
+        elif (faculty_level == "Developing" and suitable_level == "Advanced"):
+            bonus -= 0.04
+        elif (faculty_level == "Advanced" and suitable_level == "Developing"):
+            bonus -= 0.02
+
+        final_match_score = min(0.99, max(0.05, round(base_score + bonus, 2)))
 
         matches.append({
             "training_id": item.get("training_id", ""),
             "title": item.get("title", ""),
             "category": matched_cat_name,
+            "target_level": suitable_level,
+            "level_label": level_label,
             "match_score": final_match_score,
             "reason": " ".join(reasons),
             "description": item.get("description", ""),
@@ -123,9 +151,14 @@ def individual(model: ModelService, record: dict, db: Session | None = None, gen
     # ── Tier 1: Profiling & Competency Evaluation ────────────────────────────
     competency_profile = evaluate_faculty_profile(record)
 
-    # ── Tier 2: Model Prediction & Catalog Matching ──────────────────────────
+    # ── Tier 2: Model Prediction & Catalog Matching (calibrated by profile) ──
     prediction_details = model.predict_transparent([record])[0]
-    recommendations = match_catalog_items(prediction_details, record)
+    recommendations = match_catalog_items(
+        prediction_details=prediction_details,
+        record=record,
+        top_k=3,
+        competency_profile=competency_profile,
+    )
 
     if generated_at is None:
         from datetime import datetime

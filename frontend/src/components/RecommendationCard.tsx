@@ -264,6 +264,17 @@ export default function RecommendationCard({
                       <span className="text-xs font-semibold text-brand-gold-dark bg-brand-gold/10 px-2.5 py-0.5 rounded border border-brand-gold/20">
                         {item.category}
                       </span>
+                      {item.level_label && (
+                        <span className={`text-[11px] font-mono font-bold px-2 py-0.5 rounded border ${
+                          item.target_level === 'Advanced'
+                            ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/25'
+                            : item.target_level === 'Developing'
+                            ? 'bg-rose-500/10 text-rose-400 border-rose-500/25'
+                            : 'bg-brand-gold/10 text-brand-gold border-brand-gold/25'
+                        }`}>
+                          Level: {item.level_label}
+                        </span>
+                      )}
                       {idx === 0 && (
                         <span className="text-[10px] font-bold text-brand-gold bg-brand-gold/10 px-2 py-0.5 rounded border border-brand-gold/20">
                           ★ Top Match
