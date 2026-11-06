@@ -106,18 +106,21 @@ def match_catalog_items(
         title_desc_lower = (item.get("title", "") + " " + item.get("description", "")).lower()
         if any(w in title_desc_lower for w in ["advanced", "mastery", "governance", "commercialization", "expert", "executive"]):
             suitable_level = "Advanced"
-            level_label = "Advanced / Masterclass"
+            level_tier = "High"
+            level_label = "High / Advanced"
         elif any(w in title_desc_lower for w in ["foundations", "awareness", "introduction", "basic", "fundamental", "literacy"]):
             suitable_level = "Developing"
-            level_label = "Foundational / Core"
+            level_tier = "Low"
+            level_label = "Low / Foundational"
         else:
             suitable_level = "Proficient"
-            level_label = "Intermediate / Applied"
+            level_tier = "Mid"
+            level_label = "Mid / Proficient"
 
         # Calibration alignment bonus/penalty
         if faculty_level == suitable_level:
             bonus += 0.05
-            reasons.append(f"Calibrated directly for your assessed {faculty_level} competency level.")
+            reasons.append(f"Calibrated directly for your assessed {level_tier} ({faculty_level}) competency level.")
         elif (faculty_level == "Developing" and suitable_level == "Advanced"):
             bonus -= 0.04
         elif (faculty_level == "Advanced" and suitable_level == "Developing"):
@@ -130,6 +133,7 @@ def match_catalog_items(
             "title": item.get("title", ""),
             "category": matched_cat_name,
             "target_level": suitable_level,
+            "level_tier": level_tier,
             "level_label": level_label,
             "match_score": final_match_score,
             "reason": " ".join(reasons),

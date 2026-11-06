@@ -81,14 +81,14 @@ export default function RecommendationCard({
     (result as any).prediction?.top_categories ||
     [];
 
-  const predictions = rawPredictions.map((p: any) => ({
+  const predictions = rawPredictions.slice(0, 3).map((p: any) => ({
     training_category: p.training_category,
     probability: typeof p.department_score === 'number' ? p.department_score : p.probability || 0,
     rank: p.rank || 1,
     coverage: typeof p.faculty_coverage === 'number' ? p.faculty_coverage : null,
   }));
 
-  const items: CatalogRecommendationItem[] = result.recommendations || [];
+  const items: CatalogRecommendationItem[] = (result.recommendations || []).slice(0, 3);
 
   const rawTimestamp = timestamp || result.generated_at || result.last_recommendation_at;
   const formattedTime = rawTimestamp
@@ -264,15 +264,25 @@ export default function RecommendationCard({
                       <span className="text-xs font-semibold text-brand-gold-dark bg-brand-gold/10 px-2.5 py-0.5 rounded border border-brand-gold/20">
                         {item.category}
                       </span>
-                      {item.level_label && (
-                        <span className={`text-[11px] font-mono font-bold px-2 py-0.5 rounded border ${
-                          item.target_level === 'Advanced'
-                            ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/25'
-                            : item.target_level === 'Developing'
-                            ? 'bg-rose-500/10 text-rose-400 border-rose-500/25'
-                            : 'bg-brand-gold/10 text-brand-gold border-brand-gold/25'
+                      {(item.level_label || item.target_level) && (
+                        <span className={`text-[11px] font-mono font-bold px-2.5 py-0.5 rounded-full border shadow-sm flex items-center gap-1.5 ${
+                          (item.target_level === 'Advanced' || item.level_tier === 'High')
+                            ? 'bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border-emerald-500/30'
+                            : (item.target_level === 'Developing' || item.level_tier === 'Low')
+                            ? 'bg-rose-500/15 text-rose-600 dark:text-rose-400 border-rose-500/30'
+                            : 'bg-brand-gold/15 text-brand-gold-dark dark:text-brand-gold border-brand-gold/30'
                         }`}>
-                          Level: {item.level_label}
+                          <span className={`w-1.5 h-1.5 rounded-full ${
+                            (item.target_level === 'Advanced' || item.level_tier === 'High')
+                              ? 'bg-emerald-500'
+                              : (item.target_level === 'Developing' || item.level_tier === 'Low')
+                              ? 'bg-rose-500'
+                              : 'bg-brand-gold'
+                          }`} />
+                          <span>
+                            LEVEL: <strong>{item.level_tier || (item.target_level === 'Advanced' ? 'HIGH' : item.target_level === 'Developing' ? 'LOW' : 'MID')}</strong>
+                            {item.target_level ? ` (${item.target_level})` : ''}
+                          </span>
                         </span>
                       )}
                       {idx === 0 && (

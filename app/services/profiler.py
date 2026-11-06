@@ -202,6 +202,7 @@ def evaluate_faculty_profile(record: dict[str, Any]) -> dict[str, Any]:
 
     return {
         "overall_level": overall_level,
+        "level_tier": _level_tier(overall_level),
         "level_title": _level_title(overall_level),
         "overall_index": overall_index,
         "average_proficiency": round(overall_prof, 2),
@@ -224,12 +225,21 @@ def _classify_level(score: float) -> str:
         return "Advanced"
 
 
+def _level_tier(level: str) -> str:
+    """Returns user-facing short tier descriptor (Low, Mid, High)."""
+    if level == "Developing":
+        return "Low"
+    elif level == "Proficient":
+        return "Mid"
+    return "High"
+
+
 def _level_title(level: str) -> str:
     if level == "Developing":
-        return "Developing / Needs Improvement"
+        return "Low / Developing"
     elif level == "Proficient":
-        return "Proficient / Capable"
-    return "Advanced / Expert"
+        return "Mid / Proficient"
+    return "High / Advanced"
 
 
 def _generate_explanation(

@@ -99,6 +99,7 @@ export interface CatalogRecommendationItem {
   title: string;
   category: string;
   target_level?: 'Developing' | 'Proficient' | 'Advanced' | string;
+  level_tier?: 'Low' | 'Mid' | 'High' | string;
   level_label?: string;
   match_score: number;
   reason: string;
@@ -107,6 +108,7 @@ export interface CatalogRecommendationItem {
 
 export interface CompetencyProfile {
   overall_level: 'Developing' | 'Proficient' | 'Advanced';
+  level_tier: 'Low' | 'Mid' | 'High';
   level_title: string;
   overall_index: number;
   average_proficiency: number;

@@ -67,7 +67,10 @@ export default function CompetencyProfilingCard({ profile }: CompetencyProfiling
           {/* Level Pill */}
           <div className={`inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full border text-xs font-bold ${badge.bg}`}>
             <span className={`w-2 h-2 rounded-full animate-ping ${badge.dot}`} />
-            <span>{profile.level_title}</span>
+            <span>
+              <strong className="uppercase mr-1 tracking-wider">Level: {profile.level_tier || (profile.overall_level === 'Developing' ? 'Low' : profile.overall_level === 'Proficient' ? 'Mid' : 'High')}</strong>
+              — {profile.overall_level}
+            </span>
             <span className="font-mono opacity-80">({profile.overall_index.toFixed(2)} / 5.0)</span>
           </div>
         </div>
