@@ -7,6 +7,7 @@ import { FullProfileResponse, RecommendationResult } from '@/types';
 import StatusBadge from '@/components/StatusBadge';
 import ProgressBar from '@/components/ProgressBar';
 import RecommendationCard from '@/components/RecommendationCard';
+import CompetencyProfilingCard from '@/components/CompetencyProfilingCard';
 import GeneratingProgressModal from '@/components/GeneratingProgressModal';
 import { RecommendationSkeleton, ProfileSkeleton } from '@/components/Skeletons';
 import { useToast } from '@/context/ToastContext';
@@ -178,13 +179,22 @@ export default function FacultyDashboardPage() {
         scope="Individual Faculty Synthesis"
       />
 
-      {/* 5. Active Recommendation Preview */}
+      {/* 5. Competency Evaluation & Active Recommendation Preview */}
       {!requesting && recommendation && (
-        <RecommendationCard
-          result={recommendation}
-          facultyName={data.user.full_name || data.user.username}
-          timestamp={timestamp}
-        />
+        <div className="space-y-6">
+          {recommendation.competency_profile && (
+            <CompetencyProfilingCard
+              profile={recommendation.competency_profile}
+              defaultExpanded={false}
+            />
+          )}
+
+          <RecommendationCard
+            result={recommendation}
+            facultyName={data.user.full_name || data.user.username}
+            timestamp={timestamp}
+          />
+        </div>
       )}
     </div>
   );
