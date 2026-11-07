@@ -411,8 +411,7 @@ export default function RecommendationCard({
         <div className="flex items-center gap-2.5 px-4 py-2.5 rounded-2xl bg-brand-gold/10 border border-brand-gold/20 shadow-xs">
           <Info className="w-4 h-4 text-brand-gold shrink-0" />
           <p className="text-xs text-brand-gold-dark font-medium leading-relaxed">
-            Programs feature a <strong>Priority Level</strong> (urgency based on ML gap probabilities) and a{' '}
-            <strong>Difficulty Level</strong> (aligned with your assessed competency stage). Begin with High Priority courses first.
+            Programs are ranked by <strong>Priority Level</strong> (urgency based on your ML competency gaps) and your profile match. Begin with High Priority courses first.
           </p>
         </div>
 
@@ -458,33 +457,6 @@ export default function RecommendationCard({
                         <span className="text-xs font-semibold text-brand-gold-dark bg-brand-gold/10 px-2.5 py-0.5 rounded-lg border border-brand-gold/20">
                           {item.category}
                         </span>
-
-                        {/* Competency Difficulty Level */}
-                        {(item.level_label || item.target_level) && (
-                          <span
-                            className={`text-[11px] font-mono font-bold px-2.5 py-0.5 rounded-full border shadow-xs flex items-center gap-1.5 ${
-                              item.target_level === 'Advanced' || item.level_tier === 'High'
-                                ? 'bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border-emerald-500/30'
-                                : item.target_level === 'Developing' || item.level_tier === 'Low'
-                                ? 'bg-rose-500/15 text-rose-600 dark:text-rose-400 border-rose-500/30'
-                                : 'bg-brand-gold/15 text-brand-gold-dark dark:text-brand-gold border-brand-gold/30'
-                            }`}
-                          >
-                            <span
-                              className={`w-1.5 h-1.5 rounded-full ${
-                                item.target_level === 'Advanced' || item.level_tier === 'High'
-                                  ? 'bg-emerald-500'
-                                  : item.target_level === 'Developing' || item.level_tier === 'Low'
-                                  ? 'bg-rose-500'
-                                  : 'bg-brand-gold'
-                              }`}
-                            />
-                            <span>
-                              Difficulty: <strong>{item.level_tier || (item.target_level === 'Advanced' ? 'High' : item.target_level === 'Developing' ? 'Low' : 'Mid')}</strong>
-                              {item.target_level ? ` (${item.target_level})` : ''}
-                            </span>
-                          </span>
-                        )}
 
                         {isTop && (
                           <span className="text-[10px] font-bold text-brand-gold bg-brand-gold/10 px-2 py-0.5 rounded border border-brand-gold/20 flex items-center gap-1">
