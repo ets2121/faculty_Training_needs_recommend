@@ -171,13 +171,13 @@ export default function MyRecommendationPage() {
             </div>
           )}
 
-          {/* Render Primary Recommendation Card First (Actionable Programs & ML Gaps) */}
-          {recommendation && <RecommendationCard result={recommendation} timestamp={timestamp} />}
-
-          {/* Render Competency Profiling & Diagnostic Card */}
+          {/* 1. Evaluation: Faculty Competency Profiling & Diagnostic Card */}
           {recommendation && recommendation.competency_profile && (
-            <CompetencyProfilingCard profile={recommendation.competency_profile} />
+            <CompetencyProfilingCard profile={recommendation.competency_profile} defaultExpanded={true} />
           )}
+
+          {/* 2 & 3. ML Model Competency Gap Predictions -> Recommended Training Programs */}
+          {recommendation && <RecommendationCard result={recommendation} timestamp={timestamp} />}
         </>
       )}
     </div>

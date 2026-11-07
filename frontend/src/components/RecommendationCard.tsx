@@ -268,7 +268,150 @@ export default function RecommendationCard({
         </div>
       </div>
 
-      {/* ── Section 1: Recommended Training Programs (Primary Action Items) ──── */}
+      {/* ── Section 1: ML Model Competency Gap Predictions (Evidence & Algorithm Deficits) ── */}
+      {(activeSection === 'all' || activeSection === 'predictions') && (
+        <div className="rounded-3xl border border-light-border dark:border-dark-border bg-white dark:bg-dark-card overflow-hidden shadow-md">
+          {/* Visible Header with Text Button */}
+          <div className="p-4 sm:p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-light-bg/50 dark:bg-dark-bg/40 border-b border-light-border/60 dark:border-dark-border/60">
+            <div className="flex items-center gap-2.5">
+              <div className="w-8 h-8 rounded-xl bg-brand-green/10 border border-brand-green/20 flex items-center justify-center shrink-0">
+                <Target className="w-4 h-4 text-brand-green" />
+              </div>
+              <div>
+                <div className="flex items-center gap-2">
+                  <h3 className="text-sm sm:text-base font-extrabold text-light-text dark:text-white">
+                    {isDeptMode ? 'Department Competency Gap Predictions' : 'ML Model Competency Gap Predictions'}
+                  </h3>
+                  <span className="text-[10px] font-mono font-bold px-2 py-0.5 rounded-full bg-brand-green/10 text-brand-green border border-brand-green/20">
+                    3 Priority Gaps
+                  </span>
+                </div>
+                <p className="text-xs text-light-text/70 dark:text-dark-muted mt-0.5">
+                  {isDeptMode
+                    ? 'Multi-faculty cohort probabilities synthesized by the multi-label Random Forest algorithm.'
+                    : 'Cohort probabilities calculated by the multi-label Random Forest algorithm.'}
+                </p>
+              </div>
+            </div>
+
+            {/* Explicit Expand / Collapse Text Button */}
+            <button
+              type="button"
+              onClick={() => setIsPredictionsOpen(!isPredictionsOpen)}
+              className="flex items-center gap-2 self-start sm:self-center px-4 py-2 rounded-xl bg-brand-green hover:bg-brand-green-dark text-white font-bold text-xs shadow-md transition-all shrink-0 group"
+            >
+              <span>
+                {isPredictionsOpen
+                  ? (isDeptMode ? 'Hide Department Deficits' : 'Hide Gap Predictions')
+                  : (isDeptMode ? 'Show Department Predictions (3 Gaps)' : 'Show ML Predictions (3 Gaps)')}
+              </span>
+              {isPredictionsOpen ? (
+                <ChevronUp className="w-4 h-4 transition-transform group-hover:-translate-y-0.5" />
+              ) : (
+                <ChevronDown className="w-4 h-4 transition-transform group-hover:translate-y-0.5" />
+              )}
+            </button>
+          </div>
+
+          {/* Collapsible Content */}
+          {isPredictionsOpen && (
+            <div className="p-4 sm:p-6 space-y-4 animate-fade-in">
+              {/* Informational Guidance Banner */}
+              <div className="flex items-start gap-2.5 p-3.5 rounded-2xl bg-brand-gold/10 border border-brand-gold/20 text-xs text-light-text dark:text-white">
+                <Info className="w-4 h-4 text-brand-gold shrink-0 mt-0.5" />
+                <div className="space-y-1 leading-relaxed">
+                  <p>
+                    <strong>How to read these scores:</strong> Each percentage represents the{' '}
+                    <strong className="text-brand-gold">
+                      {isDeptMode ? 'Department Deficit Probability' : 'Deficit Probability'}
+                    </strong>{' '}
+                    —{' '}
+                    {isDeptMode
+                      ? 'the collective likelihood that faculty members across the department have an urgent need for upskilling in that domain based on multi-faculty assessment modeling.'
+                      : 'the likelihood that a faculty member with your academic rank, department, tenure, and survey inputs has an urgent need for upskilling in that domain.'}
+                  </p>
+                  <p className="text-[11px] text-light-text/70 dark:text-dark-muted">
+                    {isDeptMode
+                      ? 'Higher percentages indicate primary targets for departmental faculty development planning and budget allocation.'
+                      : 'Higher percentages signal primary targets for institutional faculty development programs.'}
+                  </p>
+                </div>
+              </div>
+
+              {/* Prediction Cards Grid */}
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-3.5">
+                {predictions.map((pred) => {
+                  const color = rankColor(pred.rank);
+                  const desc = CATEGORY_DESCRIPTIONS[pred.training_category] ||
+                    'Specialized competencies identified through institutional survey modeling.';
+                  const urgency =
+                    pred.probability >= 0.75
+                      ? { text: 'High Deficit Risk', pill: 'bg-rose-500/10 text-rose-600 dark:text-rose-400 border-rose-500/20' }
+                      : pred.probability >= 0.50
+                      ? { text: 'Target Growth Area', pill: 'bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/20' }
+                      : { text: 'Emerging Need', pill: 'bg-blue-500/10 text-blue-600 dark:text-blue-400 border-blue-500/20' };
+
+                  return (
+                    <div
+                      key={pred.training_category}
+                      className="p-4 rounded-2xl border border-light-border dark:border-dark-border bg-light-bg/40 dark:bg-dark-bg/40 space-y-3.5 flex flex-col justify-between hover:border-brand-green/40 transition-all shadow-xs"
+                    >
+                      <div>
+                        {/* Top Rank & Urgency Badge */}
+                        <div className="flex items-center justify-between gap-2 mb-2.5">
+                          <span
+                            className="text-[10px] font-mono font-extrabold px-2 py-0.5 rounded-md"
+                            style={{
+                              color,
+                              backgroundColor: `${color}18`,
+                              border: `1px solid ${color}35`,
+                            }}
+                          >
+                            Rank #{pred.rank} Deficit
+                          </span>
+                          <span className={`text-[10px] font-mono font-bold px-2 py-0.5 rounded-md border ${urgency.pill}`}>
+                            {urgency.text}
+                          </span>
+                        </div>
+
+                        {/* Header with Donut & Title */}
+                        <div className="flex items-center gap-3">
+                          <DonutChart probability={pred.probability} color={color} size={54} />
+                          <div className="min-w-0 flex-1">
+                            <h4 className="text-sm font-extrabold text-light-text dark:text-white leading-snug">
+                              {pred.training_category}
+                            </h4>
+                            <span className="text-[10.5px] font-mono text-light-text/70 dark:text-dark-muted block mt-0.5">
+                              {formatPercent(pred.probability)} {isDeptMode ? 'Collective Deficit' : 'Deficit Prob.'}
+                            </span>
+                          </div>
+                        </div>
+
+                        {/* Useful Context Description */}
+                        <p className="text-[11px] text-light-text/80 dark:text-dark-muted leading-relaxed mt-2.5">
+                          {desc}
+                        </p>
+                      </div>
+
+                      {/* Footer Metric Chips */}
+                      <div className="pt-2.5 border-t border-light-border/60 dark:border-dark-border/60 flex items-center justify-between text-[10.5px] font-mono text-light-text/70 dark:text-dark-muted">
+                        <span>Score: {pred.probability.toFixed(3)}</span>
+                        {pred.coverage !== null && (
+                          <span className="font-semibold text-brand-green">
+                            {Math.round(pred.coverage * 100)}% {isDeptMode ? 'faculty demand' : 'cohort demand'}
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* ── Section 2: Recommended Training Programs (Matched Programs) ──── */}
       {(activeSection === 'all' || activeSection === 'recommendations') && (
         <div className="space-y-4">
           {/* Section header with guidance */}
@@ -439,149 +582,6 @@ export default function RecommendationCard({
                   </div>
                 );
               })}
-            </div>
-          )}
-        </div>
-      )}
-
-      {/* ── Section 2: ML Model Competency Gap Predictions (Collapsible with Visible Button) ── */}
-      {(activeSection === 'all' || activeSection === 'predictions') && (
-        <div className="rounded-3xl border border-light-border dark:border-dark-border bg-white dark:bg-dark-card overflow-hidden shadow-md">
-          {/* Visible Header with Text Button */}
-          <div className="p-4 sm:p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-light-bg/50 dark:bg-dark-bg/40 border-b border-light-border/60 dark:border-dark-border/60">
-            <div className="flex items-center gap-2.5">
-              <div className="w-8 h-8 rounded-xl bg-brand-green/10 border border-brand-green/20 flex items-center justify-center shrink-0">
-                <Target className="w-4 h-4 text-brand-green" />
-              </div>
-              <div>
-                <div className="flex items-center gap-2">
-                  <h3 className="text-sm sm:text-base font-extrabold text-light-text dark:text-white">
-                    {isDeptMode ? 'Department Competency Gap Predictions' : 'ML Model Competency Gap Predictions'}
-                  </h3>
-                  <span className="text-[10px] font-mono font-bold px-2 py-0.5 rounded-full bg-brand-green/10 text-brand-green border border-brand-green/20">
-                    3 Priority Gaps
-                  </span>
-                </div>
-                <p className="text-xs text-light-text/70 dark:text-dark-muted mt-0.5">
-                  {isDeptMode
-                    ? 'Multi-faculty cohort probabilities synthesized by the multi-label Random Forest algorithm.'
-                    : 'Cohort probabilities calculated by the multi-label Random Forest algorithm.'}
-                </p>
-              </div>
-            </div>
-
-            {/* Explicit Expand / Collapse Text Button */}
-            <button
-              type="button"
-              onClick={() => setIsPredictionsOpen(!isPredictionsOpen)}
-              className="flex items-center gap-2 self-start sm:self-center px-4 py-2 rounded-xl bg-brand-green hover:bg-brand-green-dark text-white font-bold text-xs shadow-md transition-all shrink-0 group"
-            >
-              <span>
-                {isPredictionsOpen
-                  ? (isDeptMode ? 'Hide Department Deficits' : 'Hide Gap Predictions')
-                  : (isDeptMode ? 'Show Department Predictions (3 Gaps)' : 'Show ML Predictions (3 Gaps)')}
-              </span>
-              {isPredictionsOpen ? (
-                <ChevronUp className="w-4 h-4 transition-transform group-hover:-translate-y-0.5" />
-              ) : (
-                <ChevronDown className="w-4 h-4 transition-transform group-hover:translate-y-0.5" />
-              )}
-            </button>
-          </div>
-
-          {/* Collapsible Content */}
-          {isPredictionsOpen && (
-            <div className="p-4 sm:p-6 space-y-4 animate-fade-in">
-              {/* Informational Guidance Banner */}
-              <div className="flex items-start gap-2.5 p-3.5 rounded-2xl bg-brand-gold/10 border border-brand-gold/20 text-xs text-light-text dark:text-white">
-                <Info className="w-4 h-4 text-brand-gold shrink-0 mt-0.5" />
-                <div className="space-y-1 leading-relaxed">
-                  <p>
-                    <strong>How to read these scores:</strong> Each percentage represents the{' '}
-                    <strong className="text-brand-gold">
-                      {isDeptMode ? 'Department Deficit Probability' : 'Deficit Probability'}
-                    </strong>{' '}
-                    —{' '}
-                    {isDeptMode
-                      ? 'the collective likelihood that faculty members across the department have an urgent need for upskilling in that domain based on multi-faculty assessment modeling.'
-                      : 'the likelihood that a faculty member with your academic rank, department, tenure, and survey inputs has an urgent need for upskilling in that domain.'}
-                  </p>
-                  <p className="text-[11px] text-light-text/70 dark:text-dark-muted">
-                    {isDeptMode
-                      ? 'Higher percentages indicate primary targets for departmental faculty development planning and budget allocation.'
-                      : 'Higher percentages signal primary targets for institutional faculty development programs.'}
-                  </p>
-                </div>
-              </div>
-
-              {/* Prediction Cards Grid */}
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-3.5">
-                {predictions.map((pred) => {
-                  const color = rankColor(pred.rank);
-                  const desc = CATEGORY_DESCRIPTIONS[pred.training_category] ||
-                    'Specialized competencies identified through institutional survey modeling.';
-                  const urgency =
-                    pred.probability >= 0.75
-                      ? { text: 'High Deficit Risk', pill: 'bg-rose-500/10 text-rose-600 dark:text-rose-400 border-rose-500/20' }
-                      : pred.probability >= 0.50
-                      ? { text: 'Target Growth Area', pill: 'bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/20' }
-                      : { text: 'Emerging Need', pill: 'bg-blue-500/10 text-blue-600 dark:text-blue-400 border-blue-500/20' };
-
-                  return (
-                    <div
-                      key={pred.training_category}
-                      className="p-4 rounded-2xl border border-light-border dark:border-dark-border bg-light-bg/40 dark:bg-dark-bg/40 space-y-3.5 flex flex-col justify-between hover:border-brand-green/40 transition-all shadow-xs"
-                    >
-                      <div>
-                        {/* Top Rank & Urgency Badge */}
-                        <div className="flex items-center justify-between gap-2 mb-2.5">
-                          <span
-                            className="text-[10px] font-mono font-extrabold px-2 py-0.5 rounded-md"
-                            style={{
-                              color,
-                              backgroundColor: `${color}18`,
-                              border: `1px solid ${color}35`,
-                            }}
-                          >
-                            Rank #{pred.rank} Deficit
-                          </span>
-                          <span className={`text-[10px] font-mono font-bold px-2 py-0.5 rounded-md border ${urgency.pill}`}>
-                            {urgency.text}
-                          </span>
-                        </div>
-
-                        {/* Header with Donut & Title */}
-                        <div className="flex items-center gap-3">
-                          <DonutChart probability={pred.probability} color={color} size={54} />
-                          <div className="min-w-0 flex-1">
-                            <h4 className="text-sm font-extrabold text-light-text dark:text-white leading-snug">
-                              {pred.training_category}
-                            </h4>
-                            <span className="text-[10.5px] font-mono text-light-text/70 dark:text-dark-muted block mt-0.5">
-                              {formatPercent(pred.probability)} {isDeptMode ? 'Collective Deficit' : 'Deficit Prob.'}
-                            </span>
-                          </div>
-                        </div>
-
-                        {/* Useful Context Description */}
-                        <p className="text-[11px] text-light-text/80 dark:text-dark-muted leading-relaxed mt-2.5">
-                          {desc}
-                        </p>
-                      </div>
-
-                      {/* Footer Metric Chips */}
-                      <div className="pt-2.5 border-t border-light-border/60 dark:border-dark-border/60 flex items-center justify-between text-[10.5px] font-mono text-light-text/70 dark:text-dark-muted">
-                        <span>Score: {pred.probability.toFixed(3)}</span>
-                        {pred.coverage !== null && (
-                          <span className="font-semibold text-brand-green">
-                            {Math.round(pred.coverage * 100)}% {isDeptMode ? 'faculty demand' : 'cohort demand'}
-                          </span>
-                        )}
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
             </div>
           )}
         </div>

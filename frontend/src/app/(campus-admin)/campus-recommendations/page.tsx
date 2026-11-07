@@ -237,7 +237,7 @@ export default function CampusRecommendationsPage() {
               {/* 1. Quick Stats Row at Top for Glanceable KPIs */}
               {statsRow}
 
-              {/* 2. Section Navigation Tabs */}
+              {/* 2. Section Navigation Tabs (Evaluation -> ML Gaps -> Recommended Programs) */}
               <div className="flex items-center gap-1.5 p-1.5 rounded-2xl bg-white dark:bg-dark-card border border-light-border dark:border-dark-border shadow-sm overflow-x-auto">
                 <button
                   type="button"
@@ -253,15 +253,15 @@ export default function CampusRecommendationsPage() {
                 </button>
                 <button
                   type="button"
-                  onClick={() => setActiveTab('recommendations')}
+                  onClick={() => setActiveTab('evaluation')}
                   className={`flex items-center gap-2 px-3.5 sm:px-4 py-2 rounded-xl text-xs font-bold transition-all shrink-0 ${
-                    activeTab === 'recommendations'
+                    activeTab === 'evaluation'
                       ? 'bg-brand-green text-white shadow-sm'
                       : 'text-light-text dark:text-dark-muted hover:bg-light-bg dark:hover:bg-dark-bg'
                   }`}
                 >
-                  <BookOpen className="w-3.5 h-3.5" />
-                  <span>Recommended Programs ({campusResult.recommendations?.length || 0})</span>
+                  <Award className="w-3.5 h-3.5" />
+                  <span>Campus Evaluation</span>
                 </button>
                 <button
                   type="button"
@@ -277,19 +277,30 @@ export default function CampusRecommendationsPage() {
                 </button>
                 <button
                   type="button"
-                  onClick={() => setActiveTab('evaluation')}
+                  onClick={() => setActiveTab('recommendations')}
                   className={`flex items-center gap-2 px-3.5 sm:px-4 py-2 rounded-xl text-xs font-bold transition-all shrink-0 ${
-                    activeTab === 'evaluation'
+                    activeTab === 'recommendations'
                       ? 'bg-brand-green text-white shadow-sm'
                       : 'text-light-text dark:text-dark-muted hover:bg-light-bg dark:hover:bg-dark-bg'
                   }`}
                 >
-                  <Award className="w-3.5 h-3.5" />
-                  <span>Campus Evaluation</span>
+                  <BookOpen className="w-3.5 h-3.5" />
+                  <span>Recommended Programs ({campusResult.recommendations?.length || 0})</span>
                 </button>
               </div>
 
-              {/* 3. Primary Content: Recommended Training Programs & Predictions */}
+              {/* 3. Step 1: Campus Competency Evaluation */}
+              {(activeTab === 'all' || activeTab === 'evaluation') && campusResult.competency_profile && (
+                <CompetencyProfilingCard
+                  profile={campusResult.competency_profile}
+                  isDepartment={true}
+                  departmentName={campusName}
+                  facultyCount={campusResult.eligible_faculty_count}
+                  defaultExpanded={activeTab === 'evaluation' || activeTab === 'all'}
+                />
+              )}
+
+              {/* 4. Steps 2 & 3: ML Model Competency Gap Predictions -> Recommended Training Programs */}
               {(activeTab === 'all' || activeTab === 'recommendations' || activeTab === 'predictions') && (
                 <RecommendationCard
                   result={campusResult}
@@ -299,17 +310,6 @@ export default function CampusRecommendationsPage() {
                   scopeLabel="Campus Model Synthesis"
                   isDepartment={true}
                   activeSection={activeTab === 'all' ? 'all' : activeTab}
-                />
-              )}
-
-              {/* 4. Campus Competency Evaluation Card */}
-              {(activeTab === 'all' || activeTab === 'evaluation') && campusResult.competency_profile && (
-                <CompetencyProfilingCard
-                  profile={campusResult.competency_profile}
-                  isDepartment={true}
-                  departmentName={campusName}
-                  facultyCount={campusResult.eligible_faculty_count}
-                  defaultExpanded={activeTab === 'evaluation'}
                 />
               )}
             </div>
