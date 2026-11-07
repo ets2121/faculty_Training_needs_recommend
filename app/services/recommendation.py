@@ -96,37 +96,51 @@ def match_catalog_items(
         if pref_durations.intersection(item_durations):
             bonus += 0.02
 
-        # Competency gap match bonus
+        # Competency gap match bonus — prioritized over generic model probabilities
         item_target_comp = {c.lower().strip() for c in item.get("target_competencies", [])}
         matched_gaps = user_competency_gaps.intersection(item_target_comp)
         if matched_gaps:
-            bonus += 0.08
+            bonus += 0.14  # High priority boost to resolve actual faculty deficit
             gap_names = ", ".join(g.title() for g in list(matched_gaps)[:2])
             reasons.append(f"Directly resolves your identified competency gap in {gap_names}.")
 
         # ── Competency Level Suitability Calibration ─────────────────────────
-        title_desc_lower = (item.get("title", "") + " " + item.get("description", "")).lower()
-        if any(w in title_desc_lower for w in ["advanced", "mastery", "governance", "commercialization", "expert", "executive"]):
-            suitable_level = "Advanced"
-            level_tier = "High"
-            level_label = "High / Advanced"
-        elif any(w in title_desc_lower for w in ["foundations", "awareness", "introduction", "basic", "fundamental", "literacy"]):
-            suitable_level = "Developing"
-            level_tier = "Low"
-            level_label = "Low / Foundational"
+        # Check explicit item target_level from catalog first, with keyword fallback
+        explicit_level = item.get("target_level")
+        if explicit_level:
+            suitable_level = explicit_level
+            if suitable_level == "Advanced":
+                level_tier = "High"
+                level_label = "High / Advanced"
+            elif suitable_level == "Developing":
+                level_tier = "Low"
+                level_label = "Low / Foundational"
+            else:
+                level_tier = "Mid"
+                level_label = "Mid / Proficient"
         else:
-            suitable_level = "Proficient"
-            level_tier = "Mid"
-            level_label = "Mid / Proficient"
+            title_desc_lower = (item.get("title", "") + " " + item.get("description", "")).lower()
+            if any(w in title_desc_lower for w in ["advanced", "mastery", "governance", "commercialization", "expert", "executive"]):
+                suitable_level = "Advanced"
+                level_tier = "High"
+                level_label = "High / Advanced"
+            elif any(w in title_desc_lower for w in ["foundations", "awareness", "introduction", "basic", "fundamental", "literacy", "effective teaching", "innovative instructional"]):
+                suitable_level = "Developing"
+                level_tier = "Low"
+                level_label = "Low / Foundational"
+            else:
+                suitable_level = "Proficient"
+                level_tier = "Mid"
+                level_label = "Mid / Proficient"
 
         # Calibration alignment bonus/penalty
         if faculty_level == suitable_level:
-            bonus += 0.08
+            bonus += 0.10
             reasons.append(f"Calibrated directly for your assessed {level_tier} ({faculty_level}) competency level.")
         elif faculty_level == "Developing" and suitable_level == "Advanced":
-            bonus -= 0.12  # Strongly disfavor advanced masterclasses for low/developing faculty
+            bonus -= 0.15  # Strongly disfavor advanced masterclasses for low/developing faculty
         elif faculty_level == "Advanced" and suitable_level == "Developing":
-            bonus -= 0.08  # Disfavor basic intro courses for senior/advanced faculty
+            bonus -= 0.10  # Disfavor basic intro courses for senior/advanced faculty
 
         final_match_score = min(0.99, max(0.05, round(base_score + bonus, 2)))
 

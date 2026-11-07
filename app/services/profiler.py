@@ -53,21 +53,24 @@ def evaluate_part_levels(record: dict[str, Any]) -> list[dict[str, Any]]:
     # ── Part 1: Personal Profile (Career Stage & Demographics) ────────────────
     age = record.get("age")
     emp_status = str(record.get("employment_status", "")).strip().lower()
+    years = str(record.get("years_teaching", "")).strip().lower()
+
     if age is not None:
         try:
             age_int = int(age)
-            if age_int < 30 or "cos" in emp_status or "contractual" in emp_status:
+            # Combine age + actual years teaching to avoid penalizing older new entrants or young fast-track faculty
+            if "below 5" in years or "less" in years or "cos" in emp_status or "contractual" in emp_status:
                 p1_tier = "Low"
                 p1_level = "Early Career / Onboarding"
-                p1_desc = f"Age {age_int} with {emp_status.title() or 'Entry'} status, focusing on foundational institutional adaptation."
-            elif age_int <= 45:
-                p1_tier = "Mid"
-                p1_level = "Mid-Career Established"
-                p1_desc = f"Age {age_int} in core career progression phase with established academic service."
-            else:
+                p1_desc = f"Teaching tenure ({years or 'under 5 yrs'}) with {emp_status.title() or 'Entry'} status, focusing on instructional baseline foundation."
+            elif "more than 20" in years or "16-20" in years or age_int >= 50:
                 p1_tier = "High"
                 p1_level = "Senior Career Phase"
-                p1_desc = f"Age {age_int} senior institutional profile with extensive academic tenure."
+                p1_desc = f"Extensive teaching experience ({years or '15+ yrs'}) with mature academic tenure."
+            else:
+                p1_tier = "Mid"
+                p1_level = "Mid-Career Established"
+                p1_desc = f"Established academic career ({years or '5-15 yrs'}), progressing in pedagogical and departmental service."
         except Exception:
             p1_tier = "Mid"
             p1_level = "Mid-Career"
@@ -279,15 +282,24 @@ def evaluate_faculty_profile(record: dict[str, Any]) -> dict[str, Any]:
             "gaps_count": sum(1 for g in domain_gaps if g > 0),
         }
 
-    # ── Overall Calculations ──────────────────────────────────────────────────
+    # ── Overall Calculations: Balanced Composite Index ───────────────────────
+    # Mitigates self-report inflation by combining Self-Proficiency (70%) with Objective Credentials (30%)
     all_profs = [it["proficiency"] for it in all_items]
     all_imps = [it["importance"] for it in all_items]
     all_gaps = [it["gap"] for it in all_items]
 
-    overall_prof = sum(all_profs) / len(all_profs) if all_profs else 3.0
+    self_prof_avg = sum(all_profs) / len(all_profs) if all_profs else 3.0
     overall_imp = sum(all_imps) / len(all_imps) if all_imps else 3.0
 
-    overall_index = round(overall_prof, 2)
+    # Objective Credential Score (Degree + Rank)
+    degree_str = str(record.get("highest_educational_attainment", "")).lower()
+    rank_str = str(record.get("academic_rank", "")).lower()
+    deg_score = 4.8 if any(k in degree_str for k in ["doc", "phd", "edd"]) else 3.8 if any(k in degree_str for k in ["mast", "ms", "ma", "mba"]) else 2.8
+    rank_score = 4.8 if any(k in rank_str for k in ["prof", "assoc"]) else 3.8 if "assist" in rank_str else 2.8
+    credential_avg = (deg_score + rank_score) / 2.0
+
+    # Composite Index: 70% Self-Assessment + 30% Institutional Credential Baseline
+    overall_index = round((0.70 * self_prof_avg) + (0.30 * credential_avg), 2)
     overall_level = _classify_level(overall_index)
     overall_tier = _level_tier(overall_level)
 
@@ -347,7 +359,7 @@ def evaluate_faculty_profile(record: dict[str, Any]) -> dict[str, Any]:
         "level_tier": overall_tier,
         "level_title": _level_title(overall_level),
         "overall_index": overall_index,
-        "average_proficiency": round(overall_prof, 2),
+        "average_proficiency": round(self_prof_avg, 2),
         "average_importance": round(overall_imp, 2),
         "total_gaps_count": len(items_with_gap),
         "domains": domain_results,

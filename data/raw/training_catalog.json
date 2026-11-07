@@ -26,7 +26,8 @@
       "Semester break",
       "Anytime"
     ],
-    "status": "active"
+    "status": "active",
+    "target_level": "Proficient"
   },
   {
     "training_id": "T002",
@@ -55,7 +56,8 @@
       "Summer",
       "Saturdays"
     ],
-    "status": "active"
+    "status": "active",
+    "target_level": "Developing"
   },
   {
     "training_id": "T003",
@@ -85,7 +87,8 @@
       "Fridays",
       "Semester break"
     ],
-    "status": "active"
+    "status": "active",
+    "target_level": "Proficient"
   },
   {
     "training_id": "T004",
@@ -113,7 +116,8 @@
       "Saturdays",
       "Anytime"
     ],
-    "status": "active"
+    "status": "active",
+    "target_level": "Developing"
   },
   {
     "training_id": "T005",
@@ -139,7 +143,8 @@
       "Semester break",
       "Anytime"
     ],
-    "status": "active"
+    "status": "active",
+    "target_level": "Proficient"
   },
   {
     "training_id": "T006",
@@ -168,7 +173,8 @@
       "Summer",
       "Saturdays"
     ],
-    "status": "active"
+    "status": "active",
+    "target_level": "Developing"
   },
   {
     "training_id": "T007",
@@ -197,7 +203,8 @@
       "Anytime",
       "Semester break"
     ],
-    "status": "active"
+    "status": "active",
+    "target_level": "Proficient"
   },
   {
     "training_id": "T008",
@@ -226,7 +233,8 @@
       "Summer",
       "Saturdays"
     ],
-    "status": "active"
+    "status": "active",
+    "target_level": "Advanced"
   },
   {
     "training_id": "T009",
@@ -255,7 +263,8 @@
       "Semester break",
       "Saturdays"
     ],
-    "status": "active"
+    "status": "active",
+    "target_level": "Advanced"
   },
   {
     "training_id": "T010",
@@ -284,7 +293,8 @@
       "Summer",
       "Fridays"
     ],
-    "status": "active"
+    "status": "active",
+    "target_level": "Developing"
   },
   {
     "training_id": "T011",
@@ -313,7 +323,8 @@
       "Summer",
       "Saturdays"
     ],
-    "status": "active"
+    "status": "active",
+    "target_level": "Developing"
   },
   {
     "training_id": "T012",
@@ -342,7 +353,8 @@
       "Summer",
       "Anytime"
     ],
-    "status": "active"
+    "status": "active",
+    "target_level": "Proficient"
   },
   {
     "training_id": "T013",
@@ -371,7 +383,8 @@
       "Semester break",
       "Saturdays"
     ],
-    "status": "active"
+    "status": "active",
+    "target_level": "Proficient"
   },
   {
     "training_id": "T014",
@@ -400,7 +413,8 @@
       "Fridays",
       "Anytime"
     ],
-    "status": "active"
+    "status": "active",
+    "target_level": "Proficient"
   },
   {
     "training_id": "T015",
@@ -430,7 +444,8 @@
       "Summer",
       "Fridays"
     ],
-    "status": "active"
+    "status": "active",
+    "target_level": "Advanced"
   },
   {
     "training_id": "T016",
@@ -459,7 +474,8 @@
       "Fridays",
       "Anytime"
     ],
-    "status": "active"
+    "status": "active",
+    "target_level": "Proficient"
   },
   {
     "training_id": "T017",
@@ -488,6 +504,7 @@
       "Saturdays",
       "Fridays"
     ],
-    "status": "active"
+    "status": "active",
+    "target_level": "Advanced"
   }
 ]
