@@ -123,6 +123,12 @@ export interface CompetencyProfile {
   average_proficiency: number;
   average_importance: number;
   total_gaps_count: number;
+  ml_signal?: {
+    applied: boolean;
+    mastery_score: number;
+    top_predicted_deficit: string;
+    model_support_label: string;
+  };
   domains: {
     core: { index: number; level: string; level_tier?: string; count: number; gaps_count: number };
     functional: { index: number; level: string; level_tier?: string; count: number; gaps_count: number };

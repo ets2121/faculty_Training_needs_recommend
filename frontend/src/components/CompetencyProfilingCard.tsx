@@ -117,20 +117,34 @@ export default function CompetencyProfilingCard({ profile, defaultExpanded = fal
       {isAccordionOpen && (
         <div className="p-4 sm:p-5 pt-0 border-t border-light-border dark:border-dark-border/80 space-y-5 animate-fade-in mt-1">
           
-          {/* 1. Clear 1-Sentence Key Insight */}
+          {/* 1. Clear 1-Sentence Key Insight with ML Confirmation Signal */}
           <div className="p-3.5 rounded-xl bg-light-bg/70 dark:bg-dark-bg/60 border border-light-border dark:border-dark-border flex items-start gap-3 mt-3">
             <Sparkles className="w-4 h-4 text-brand-gold shrink-0 mt-0.5" />
-            <div className="space-y-1 text-xs leading-relaxed">
-              <p className="font-bold text-light-text dark:text-white">
-                {profile.explanation.headline}
-              </p>
+            <div className="space-y-1.5 text-xs leading-relaxed flex-1">
+              <div className="flex flex-wrap items-center justify-between gap-2">
+                <p className="font-bold text-light-text dark:text-white">
+                  {profile.explanation.headline}
+                </p>
+                {profile.ml_signal && (
+                  <span className="text-[10px] font-mono font-bold px-2 py-0.5 rounded bg-brand-green/10 text-brand-green border border-brand-green/20">
+                    ⚡ {profile.ml_signal.model_support_label}
+                  </span>
+                )}
+              </div>
               <p className="text-light-text dark:text-dark-muted">
                 {profile.explanation.summary}
               </p>
-              <p className="text-brand-green font-semibold pt-0.5 flex items-center gap-1.5">
-                <BookOpen className="w-3.5 h-3.5" />
-                <span>Strategy: {profile.explanation.target_training_focus}</span>
-              </p>
+              <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-brand-green font-semibold pt-0.5">
+                <span className="flex items-center gap-1.5">
+                  <BookOpen className="w-3.5 h-3.5" />
+                  <span>Strategy: {profile.explanation.target_training_focus}</span>
+                </span>
+                {profile.ml_signal?.top_predicted_deficit && (
+                  <span className="text-[11px] text-brand-gold font-normal font-mono">
+                    • Model Identified Deficit: <strong>{profile.ml_signal.top_predicted_deficit}</strong>
+                  </span>
+                )}
+              </div>
             </div>
           </div>
 

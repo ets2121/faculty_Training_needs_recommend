@@ -165,14 +165,20 @@ def individual(model: ModelService, record: dict, db: Session | None = None, gen
     """
     Generates transparent individual recommendation response adhering to
     QSU_Training_Catalog_and_Transparent_API.md format.
-    Includes Tier 1 Competency Profiling & Evaluation diagnostic report.
+    Fuses ML Model Predictions with Tier 1 Competency Profiling for Model-Augmented Evaluation.
     Records history in MySQL if db session is provided.
     """
-    # ── Tier 1: Profiling & Competency Evaluation ────────────────────────────
-    competency_profile = evaluate_faculty_profile(record)
-
-    # ── Tier 2: Model Prediction & Catalog Matching (calibrated by profile) ──
+    # ── Step 1: Run ML Random Forest Prediction ──────────────────────────────
     prediction_details = model.predict_transparent([record])[0]
+
+    # ── Step 2: Model-Augmented Profiling & Evaluation ───────────────────────
+    # The evaluation now incorporates both questionnaire data AND the ML prediction signal!
+    competency_profile = evaluate_faculty_profile(
+        record=record,
+        prediction_details=prediction_details,
+    )
+
+    # ── Step 3: Match & Calibrate Catalog Programs (Top 3) ───────────────────
     recommendations = match_catalog_items(
         prediction_details=prediction_details,
         record=record,

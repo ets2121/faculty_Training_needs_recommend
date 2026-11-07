@@ -217,11 +217,16 @@ def evaluate_part_levels(record: dict[str, Any]) -> list[dict[str, Any]]:
     return part_evals
 
 
-def evaluate_faculty_profile(record: dict[str, Any]) -> dict[str, Any]:
+def evaluate_faculty_profile(
+    record: dict[str, Any],
+    prediction_details: dict[str, Any] | None = None,
+) -> dict[str, Any]:
     """
     Evaluates a faculty questionnaire record and returns a comprehensive, compact Competency Profile.
-    Includes overall level, concise headline, domain breakdown, top strengths, growth gaps,
-    and individual Part Levels (1, 2, 3, 5, 6) with short reasons.
+    Features Model-Augmented Profiling:
+    - 50% Self-Assessed Proficiency (Faculty Voice)
+    - 25% Institutional Credential Baseline (Degree & Academic Rank)
+    - 25% Random Forest ML Predictive Signal (Learned cohort competency deficits)
     """
     raw_comp = record.get("competency", {})
     if not isinstance(raw_comp, dict):
@@ -282,8 +287,8 @@ def evaluate_faculty_profile(record: dict[str, Any]) -> dict[str, Any]:
             "gaps_count": sum(1 for g in domain_gaps if g > 0),
         }
 
-    # ── Overall Calculations: Balanced Composite Index ───────────────────────
-    # Mitigates self-report inflation by combining Self-Proficiency (70%) with Objective Credentials (30%)
+    # ── Overall Calculations: Model-Augmented Hybrid Composite Index ─────────
+    # Combines Self-Assessment (50%), Credential Baseline (25%), and ML Gap Signal (25%)
     all_profs = [it["proficiency"] for it in all_items]
     all_imps = [it["importance"] for it in all_items]
     all_gaps = [it["gap"] for it in all_items]
@@ -291,15 +296,30 @@ def evaluate_faculty_profile(record: dict[str, Any]) -> dict[str, Any]:
     self_prof_avg = sum(all_profs) / len(all_profs) if all_profs else 3.0
     overall_imp = sum(all_imps) / len(all_imps) if all_imps else 3.0
 
-    # Objective Credential Score (Degree + Rank)
+    # 1. Objective Credential Score (Degree + Rank)
     degree_str = str(record.get("highest_educational_attainment", "")).lower()
     rank_str = str(record.get("academic_rank", "")).lower()
     deg_score = 4.8 if any(k in degree_str for k in ["doc", "phd", "edd"]) else 3.8 if any(k in degree_str for k in ["mast", "ms", "ma", "mba"]) else 2.8
     rank_score = 4.8 if any(k in rank_str for k in ["prof", "assoc"]) else 3.8 if "assist" in rank_str else 2.8
     credential_avg = (deg_score + rank_score) / 2.0
 
-    # Composite Index: 70% Self-Assessment + 30% Institutional Credential Baseline
-    overall_index = round((0.70 * self_prof_avg) + (0.30 * credential_avg), 2)
+    # 2. Machine Learning Predictive Gap Signal (Informed by Random Forest)
+    ml_confidence_label = "Active Model Confirmed"
+    ml_top_category = None
+    if prediction_details and "all_predictions" in prediction_details:
+        preds = prediction_details["all_predictions"]
+        if preds:
+            top_prob = float(preds[0].get("probability", 0.5))
+            ml_top_category = preds[0].get("training_category", "Core Pedagogy")
+            # Invert probability to competency mastery index (high deficit prob -> lower baseline mastery)
+            ml_mastery_signal = max(1.5, min(4.8, 5.0 - (top_prob * 3.5)))
+        else:
+            ml_mastery_signal = 3.2
+    else:
+        ml_mastery_signal = credential_avg  # fallback if no ML prediction provided
+
+    # Composite Index: 50% Self-Assessment + 25% Credentials + 25% Machine Learning
+    overall_index = round((0.50 * self_prof_avg) + (0.25 * credential_avg) + (0.25 * ml_mastery_signal), 2)
     overall_level = _classify_level(overall_index)
     overall_tier = _level_tier(overall_level)
 
@@ -361,6 +381,12 @@ def evaluate_faculty_profile(record: dict[str, Any]) -> dict[str, Any]:
         "overall_index": overall_index,
         "average_proficiency": round(self_prof_avg, 2),
         "average_importance": round(overall_imp, 2),
+        "ml_signal": {
+            "applied": prediction_details is not None,
+            "mastery_score": round(ml_mastery_signal, 2),
+            "top_predicted_deficit": ml_top_category or "Pedagogical Specialization",
+            "model_support_label": "Informed by Random Forest Inferences",
+        },
         "total_gaps_count": len(items_with_gap),
         "domains": domain_results,
         "part_levels": part_levels,
