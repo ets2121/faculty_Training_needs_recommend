@@ -469,3 +469,280 @@ def _generate_explanation(
         "gaps_summary": gap_str,
         "tier_label": "Low Tier" if level == "Developing" else "Mid Tier" if level == "Proficient" else "High Tier",
     }
+
+
+def evaluate_department_profile(
+    records: list[dict[str, Any]],
+    dept_predictions: dict[str, Any] | None = None,
+    dept_name: str = "Department",
+) -> dict[str, Any]:
+    """
+    Evaluates aggregated faculty questionnaire records for a department/campus
+    and returns a department-level Competency Profile & Evaluation.
+    Synthesizes:
+    - Collective self-assessed competency proficiencies & importance
+    - Academic credentials & rank benchmark distributions across the department
+    - Aggregated Random Forest ML predictive deficit signals
+    """
+    n = len(records)
+    if n == 0:
+        # Fallback baseline when no records provided
+        return evaluate_faculty_profile(record={}, prediction_details=dept_predictions)
+
+    domain_definitions = {
+        "core": CORE,
+        "functional": FUNCTIONAL,
+        "leadership": LEADERSHIP,
+    }
+
+    all_items: list[dict[str, Any]] = []
+    domain_results: dict[str, dict[str, Any]] = {}
+
+    for domain_name, comp_keys in domain_definitions.items():
+        domain_profs = []
+        domain_imps = []
+        domain_gaps = []
+
+        for key in comp_keys:
+            key_profs = []
+            key_imps = []
+            for rec in records:
+                comp = rec.get("competency", {})
+                if isinstance(comp, dict):
+                    val = comp.get(key, {})
+                    if isinstance(val, dict):
+                        p = float(val.get("proficiency", 3))
+                        imp = float(val.get("importance", 3))
+                    elif isinstance(val, (int, float)):
+                        p = float(val)
+                        imp = 3.0
+                    else:
+                        p = 3.0
+                        imp = 3.0
+                else:
+                    p = 3.0
+                    imp = 3.0
+                key_profs.append(max(1.0, min(5.0, p)))
+                key_imps.append(max(1.0, min(5.0, imp)))
+
+            avg_p = sum(key_profs) / len(key_profs) if key_profs else 3.0
+            avg_imp = sum(key_imps) / len(key_imps) if key_imps else 3.0
+            gap = max(0.0, avg_imp - avg_p)
+
+            item = {
+                "key": key,
+                "title": COMPETENCY_TITLES.get(key, key.replace("_", " ").title()),
+                "domain": domain_name,
+                "proficiency": round(avg_p, 2),
+                "importance": round(avg_imp, 2),
+                "gap": round(gap, 2),
+            }
+            all_items.append(item)
+            domain_profs.append(avg_p)
+            domain_imps.append(avg_imp)
+            domain_gaps.append(gap)
+
+        domain_avg_p = sum(domain_profs) / len(domain_profs) if domain_profs else 3.0
+        domain_index = round(domain_avg_p, 2)
+        domain_level = _classify_level(domain_index)
+
+        domain_results[domain_name] = {
+            "index": domain_index,
+            "level": domain_level,
+            "level_tier": _level_tier(domain_level),
+            "count": len(comp_keys),
+            "gaps_count": sum(1 for g in domain_gaps if g > 0.15),
+        }
+
+    # ── Overall Index: 50% Department Competencies + 25% Credentials + 25% ML Signal ──
+    all_profs = [it["proficiency"] for it in all_items]
+    all_imps = [it["importance"] for it in all_items]
+    self_prof_avg = sum(all_profs) / len(all_profs) if all_profs else 3.0
+    overall_imp = sum(all_imps) / len(all_imps) if all_imps else 3.0
+
+    # 1. Department Credential & Rank Profile Benchmark
+    doc_count = sum(1 for r in records if any(k in str(r.get("highest_educational_attainment", "")).lower() for k in ["doc", "phd", "edd"]))
+    mast_count = sum(1 for r in records if any(k in str(r.get("highest_educational_attainment", "")).lower() for k in ["mast", "ms", "ma", "mba"]))
+    prof_count = sum(1 for r in records if any(k in str(r.get("academic_rank", "")).lower() for k in ["prof", "assoc"]))
+    asst_count = sum(1 for r in records if "assist" in str(r.get("academic_rank", "")).lower())
+    inst_count = n - (prof_count + asst_count)
+
+    cred_scores = []
+    for r in records:
+        deg_str = str(r.get("highest_educational_attainment", "")).lower()
+        rnk_str = str(r.get("academic_rank", "")).lower()
+        d_sc = 4.8 if any(k in deg_str for k in ["doc", "phd", "edd"]) else 3.8 if any(k in deg_str for k in ["mast", "ms", "ma", "mba"]) else 2.8
+        r_sc = 4.8 if any(k in rnk_str for k in ["prof", "assoc"]) else 3.8 if "assist" in rnk_str else 2.8
+        cred_scores.append((d_sc + r_sc) / 2.0)
+    dept_cred_avg = sum(cred_scores) / len(cred_scores) if cred_scores else 3.5
+
+    # 2. Machine Learning Predictive Gap Signal (Aggregated from department prediction)
+    ml_top_category = None
+    if dept_predictions and "all_predictions" in dept_predictions:
+        preds = dept_predictions["all_predictions"]
+        if preds:
+            top_prob = float(preds[0].get("probability", 0.5))
+            ml_top_category = preds[0].get("training_category", "Core Pedagogy")
+            ml_mastery_signal = max(1.5, min(4.8, 5.0 - (top_prob * 3.5)))
+        else:
+            ml_mastery_signal = 3.2
+    else:
+        ml_mastery_signal = dept_cred_avg
+
+    overall_index = round((0.50 * self_prof_avg) + (0.25 * dept_cred_avg) + (0.25 * ml_mastery_signal), 2)
+    overall_level = _classify_level(overall_index)
+    overall_tier = _level_tier(overall_level)
+
+    # ── Identify Department Strengths & Flagged Growth Gaps ──────────────────
+    sorted_by_prof = sorted(all_items, key=lambda x: (x["proficiency"], -x["gap"]), reverse=True)
+    strengths = [
+        {
+            "key": x["key"],
+            "title": x["title"],
+            "domain": x["domain"],
+            "proficiency": round(x["proficiency"], 2),
+            "importance": round(x["importance"], 2),
+        }
+        for x in sorted_by_prof[:3]
+    ]
+
+    items_with_gap = [x for x in all_items if x["gap"] > 0.05]
+    sorted_by_gap = sorted(items_with_gap, key=lambda x: (x["gap"], x["importance"]), reverse=True)
+    growth_areas = [
+        {
+            "key": x["key"],
+            "title": x["title"],
+            "domain": x["domain"],
+            "proficiency": round(x["proficiency"], 2),
+            "importance": round(x["importance"], 2),
+            "gap": round(x["gap"], 2),
+            "reason": f"Collective department priority: high importance ({x['importance']:.2f}/5) with average proficiency of {x['proficiency']:.2f}/5.",
+        }
+        for x in sorted_by_gap[:3]
+    ]
+
+    # ── Department Part Levels Breakdown ─────────────────────────────────────
+    senior_tenure = sum(1 for r in records if "more than 20" in str(r.get("years_teaching", "")).lower() or "16-20" in str(r.get("years_teaching", "")).lower() or int(r.get("age") or 35) >= 50)
+    early_tenure = sum(1 for r in records if "below 5" in str(r.get("years_teaching", "")).lower() or "cos" in str(r.get("employment_status", "")).lower())
+    mid_tenure = n - (senior_tenure + early_tenure)
+
+    doc_pct = round((doc_count / n) * 100) if n else 0
+    mast_pct = round((mast_count / n) * 100) if n else 0
+
+    # Emerging tech urgency across department
+    tech_vals = []
+    for r in records:
+        em = r.get("emerging_training_needs", {})
+        if isinstance(em, dict):
+            tech_vals.extend([float(v) for v in em.values() if isinstance(v, (int, float))])
+    avg_tech = sum(tech_vals) / len(tech_vals) if tech_vals else 3.2
+
+    part_levels = [
+        {
+            "part_number": 1,
+            "title": "Personal Profile",
+            "dimension": "Tenure & Career Distribution",
+            "level_tier": "High" if senior_tenure >= (n / 2) else "Mid",
+            "level_label": "Senior Academic Cohort" if senior_tenure >= (n / 2) else "Established Faculty Cohort",
+            "why": f"Department composition across {n} faculty: {round((senior_tenure/n)*100)}% Senior, {round((mid_tenure/n)*100)}% Mid-Career, {round((early_tenure/n)*100)}% Early Career.",
+        },
+        {
+            "part_number": 2,
+            "title": "Educational Background",
+            "dimension": "Academic Credentials",
+            "level_tier": "High" if doc_pct >= 40 else "Mid",
+            "level_label": f"{doc_pct}% Doctorate / {mast_pct}% Master's",
+            "why": f"Qualifications: {doc_count} Doctorate and {mast_count} Master's holders. Meets CHED institutional standards with postgraduate vertical articulation goals.",
+        },
+        {
+            "part_number": 3,
+            "title": "Professional Background",
+            "dimension": "Faculty Rank Structure",
+            "level_tier": "High" if prof_count >= 1 else "Mid",
+            "level_label": "Professorial & Mid-Level Rank",
+            "why": f"Faculty rank distribution: {prof_count} Professorial, {asst_count} Assistant Professor, and {inst_count} Instructor rank(s).",
+        },
+        {
+            "part_number": 5,
+            "title": "Competency Assessment",
+            "dimension": "Department Instructional Skills",
+            "level_tier": overall_tier,
+            "level_label": f"{overall_level} Standing ({self_prof_avg:.2f}/5.0)",
+            "why": f"Department instructional proficiency average of {self_prof_avg:.2f}/5.0 with {len(items_with_gap)} collective growth gap areas flagged.",
+        },
+        {
+            "part_number": 6,
+            "title": "Emerging Training Needs",
+            "dimension": "Collective Technology Demand",
+            "level_tier": "High" if avg_tech >= 4.0 else "Mid",
+            "level_label": "High Innovation Demand" if avg_tech >= 4.0 else "Targeted Technology Demand",
+            "why": f"Collective innovation demand score of {avg_tech:.2f}/5.0 across digital and modern pedagogical technologies.",
+        },
+    ]
+
+    # ── Department Strategic Explanation ─────────────────────────────────────
+    strength_names = [s["title"] for s in strengths[:2]]
+    strength_str = ", ".join(strength_names) if strength_names else "core educational competencies"
+    gap_names = [g["title"] for g in growth_areas[:2]]
+    gap_str = ", ".join(gap_names) if gap_names else "specialized development areas"
+
+    if overall_level == "Developing":
+        headline = "Department Capability Baseline — Targeted Institutional Support Recommended"
+        summary = (
+            f"Across {n} evaluated faculty members in {dept_name}, the department demonstrates instructional dedication in {strength_str}, "
+            f"while facing collective development needs in {gap_str}. "
+            "Foundational department workshops will establish solid instructional baselines."
+        )
+        focus = "Department-Wide Foundational Instructional Seminars & Mentorship"
+    elif overall_level == "Proficient":
+        headline = "Department Capability: Proficient & Established — Ready for Curricular Specialization"
+        summary = (
+            f"Across {n} evaluated faculty members in {dept_name}, the department shows solid collective capability in {strength_str}. "
+            f"Strategic departmental upskilling in {gap_str} will elevate program accreditation, research output, and learning outcomes."
+        )
+        focus = "Applied Pedagogical & Research Workshops (Specialized Hands-on Modules)"
+    else:
+        headline = "Department Capability: Exemplary & Advanced — Ready for Leadership & Research Innovation"
+        summary = (
+            f"Across {n} evaluated faculty members in {dept_name}, the department demonstrates exemplary academic capability in {strength_str}. "
+            "The faculty cohort is positioned for academic governance, research commercialization, and inter-institutional peer coaching."
+        )
+        focus = "Executive Masterclasses, Research Commercialization & Train-the-Trainer Programs"
+
+    explanation = {
+        "headline": headline,
+        "summary": summary,
+        "target_training_focus": focus,
+        "strengths_summary": strength_str,
+        "gaps_summary": gap_str,
+        "tier_label": f"{overall_tier} Tier ({overall_index:.2f}/5.0)",
+    }
+
+    return {
+        "overall_level": overall_level,
+        "level_tier": overall_tier,
+        "level_title": _level_title(overall_level),
+        "overall_index": overall_index,
+        "average_proficiency": round(self_prof_avg, 2),
+        "average_importance": round(overall_imp, 2),
+        "ml_signal": {
+            "applied": dept_predictions is not None,
+            "mastery_score": round(ml_mastery_signal, 2),
+            "top_predicted_deficit": ml_top_category or "Pedagogical Specialization",
+            "model_support_label": "Multi-Faculty Random Forest Synthesis",
+        },
+        "total_gaps_count": len(items_with_gap),
+        "domains": domain_results,
+        "part_levels": part_levels,
+        "strengths": strengths,
+        "growth_areas": growth_areas,
+        "explanation": explanation,
+        "department_metrics": {
+            "faculty_count": n,
+            "doctorate_count": doc_count,
+            "masters_count": mast_count,
+            "professorial_count": prof_count,
+            "assistant_count": asst_count,
+            "instructor_count": inst_count,
+        },
+    }

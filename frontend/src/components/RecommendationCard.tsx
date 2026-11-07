@@ -30,6 +30,7 @@ interface RecommendationCardProps {
   statsRow?: React.ReactNode;
   noticeBanner?: React.ReactNode;
   scopeLabel?: string;
+  isDepartment?: boolean;
 }
 
 // ── Category Knowledge Base (Explains what each category covers) ─────────────
@@ -162,9 +163,22 @@ export default function RecommendationCard({
   statsRow,
   noticeBanner,
   scopeLabel,
+  isDepartment,
 }: RecommendationCardProps) {
   // ML predictions collapsed by default to keep page clean
   const [isPredictionsOpen, setIsPredictionsOpen] = useState(false);
+
+  const isDeptMode =
+    isDepartment !== undefined
+      ? isDepartment
+      : Boolean(
+          (result as any).department ||
+          (result as any).department_name ||
+          (result as any).campus_name ||
+          (result as any).faculty_count !== undefined ||
+          scopeLabel?.toLowerCase().includes('department') ||
+          scopeLabel?.toLowerCase().includes('campus')
+        );
 
   const rawPredictions: any[] =
     (result as any).prediction?.top_predictions ||
@@ -225,7 +239,7 @@ export default function RecommendationCard({
             <div>
               <div className="flex items-center gap-2 mb-0.5 flex-wrap">
                 <span className="text-xs font-mono font-bold text-brand-green bg-brand-green/10 px-2.5 py-0.5 rounded border border-brand-green/20">
-                  {scopeLabel || 'Random Forest Recommendation Engine'}
+                  {scopeLabel || (isDeptMode ? 'Department Multi-Faculty Synthesis' : 'Random Forest Recommendation Engine')}
                 </span>
                 <span className="text-[10px] font-mono text-light-text/60 dark:text-dark-muted">
                   v{result.model?.version || '2026.10'}
@@ -263,14 +277,16 @@ export default function RecommendationCard({
             <div>
               <div className="flex items-center gap-2">
                 <h3 className="text-sm sm:text-base font-extrabold text-light-text dark:text-white">
-                  ML Model Competency Gap Predictions
+                  {isDeptMode ? 'Department Competency Gap Predictions' : 'ML Model Competency Gap Predictions'}
                 </h3>
                 <span className="text-[10px] font-mono font-bold px-2 py-0.5 rounded-full bg-brand-green/10 text-brand-green border border-brand-green/20">
                   3 Priority Gaps
                 </span>
               </div>
               <p className="text-xs text-light-text/70 dark:text-dark-muted mt-0.5">
-                Cohort probabilities calculated by the multi-label Random Forest algorithm.
+                {isDeptMode
+                  ? 'Multi-faculty cohort probabilities synthesized by the multi-label Random Forest algorithm.'
+                  : 'Cohort probabilities calculated by the multi-label Random Forest algorithm.'}
               </p>
             </div>
           </div>
@@ -281,7 +297,11 @@ export default function RecommendationCard({
             onClick={() => setIsPredictionsOpen(!isPredictionsOpen)}
             className="flex items-center gap-2 self-start sm:self-center px-4 py-2 rounded-xl bg-brand-green hover:bg-brand-green-dark text-white font-bold text-xs shadow-md transition-all shrink-0 group"
           >
-            <span>{isPredictionsOpen ? 'Hide Gap Predictions' : 'Show ML Predictions (3 Gaps)'}</span>
+            <span>
+              {isPredictionsOpen
+                ? (isDeptMode ? 'Hide Department Deficits' : 'Hide Gap Predictions')
+                : (isDeptMode ? 'Show Department Predictions (3 Gaps)' : 'Show ML Predictions (3 Gaps)')}
+            </span>
             {isPredictionsOpen ? (
               <ChevronUp className="w-4 h-4 transition-transform group-hover:-translate-y-0.5" />
             ) : (
@@ -298,11 +318,19 @@ export default function RecommendationCard({
               <Info className="w-4 h-4 text-brand-gold shrink-0 mt-0.5" />
               <div className="space-y-1 leading-relaxed">
                 <p>
-                  <strong>How to read these scores:</strong> Each percentage represents the model&apos;s{' '}
-                  <strong className="text-brand-gold">Deficit Probability</strong> — the likelihood that a faculty member with your academic rank, department, tenure, and survey inputs has an urgent need for upskilling in that domain.
+                  <strong>How to read these scores:</strong> Each percentage represents the{' '}
+                  <strong className="text-brand-gold">
+                    {isDeptMode ? 'Department Deficit Probability' : 'Deficit Probability'}
+                  </strong>{' '}
+                  —{' '}
+                  {isDeptMode
+                    ? 'the collective likelihood that faculty members across the department have an urgent need for upskilling in that domain based on multi-faculty assessment modeling.'
+                    : 'the likelihood that a faculty member with your academic rank, department, tenure, and survey inputs has an urgent need for upskilling in that domain.'}
                 </p>
                 <p className="text-[11px] text-light-text/70 dark:text-dark-muted">
-                  Higher percentages signal primary targets for institutional faculty development programs.
+                  {isDeptMode
+                    ? 'Higher percentages indicate primary targets for departmental faculty development planning and budget allocation.'
+                    : 'Higher percentages signal primary targets for institutional faculty development programs.'}
                 </p>
               </div>
             </div>
@@ -351,7 +379,7 @@ export default function RecommendationCard({
                             {pred.training_category}
                           </h4>
                           <span className="text-[10.5px] font-mono text-light-text/70 dark:text-dark-muted block mt-0.5">
-                            {formatPercent(pred.probability)} Deficit Prob.
+                            {formatPercent(pred.probability)} {isDeptMode ? 'Collective Deficit' : 'Deficit Prob.'}
                           </span>
                         </div>
                       </div>
@@ -364,10 +392,10 @@ export default function RecommendationCard({
 
                     {/* Footer Metric Chips */}
                     <div className="pt-2.5 border-t border-light-border/60 dark:border-dark-border/60 flex items-center justify-between text-[10.5px] font-mono text-light-text/70 dark:text-dark-muted">
-                      <span>Raw: {pred.probability.toFixed(3)}</span>
+                      <span>Score: {pred.probability.toFixed(3)}</span>
                       {pred.coverage !== null && (
                         <span className="font-semibold text-brand-green">
-                          {Math.round(pred.coverage * 100)}% cohort demand
+                          {Math.round(pred.coverage * 100)}% {isDeptMode ? 'faculty demand' : 'cohort demand'}
                         </span>
                       )}
                     </div>
@@ -390,14 +418,16 @@ export default function RecommendationCard({
             <div>
               <div className="flex items-center gap-2">
                 <h3 className="text-lg font-black text-light-text dark:text-white tracking-tight">
-                  Recommended Training Programs
+                  {isDeptMode ? 'Department Recommended Training Programs' : 'Recommended Training Programs'}
                 </h3>
                 <span className="text-[10px] font-mono font-bold px-2 py-0.5 rounded-full bg-brand-gold/10 text-brand-gold-dark border border-brand-gold/20">
                   Top 3 Curated
                 </span>
               </div>
               <p className="text-xs text-light-text/70 dark:text-dark-muted">
-                Institutional programs matched to your predicted gaps and calibrated by priority.
+                {isDeptMode
+                  ? 'Institutional programs synthesized from collective faculty assessments and calibrated by departmental priority.'
+                  : 'Institutional programs matched to your predicted gaps and calibrated by priority.'}
               </p>
             </div>
           </div>
@@ -411,7 +441,15 @@ export default function RecommendationCard({
         <div className="flex items-center gap-2.5 px-4 py-2.5 rounded-2xl bg-brand-gold/10 border border-brand-gold/20 shadow-xs">
           <Info className="w-4 h-4 text-brand-gold shrink-0" />
           <p className="text-xs text-brand-gold-dark font-medium leading-relaxed">
-            Programs are ranked by <strong>Priority Level</strong> (urgency based on your ML competency gaps) and your profile match. Begin with High Priority courses first.
+            {isDeptMode ? (
+              <>
+                Programs are ranked by <strong>Priority Level</strong> (urgency based on aggregated department competency gaps) and collective faculty profile. Prioritize High Priority courses in department development plans.
+              </>
+            ) : (
+              <>
+                Programs are ranked by <strong>Priority Level</strong> (urgency based on your ML competency gaps) and your profile match. Begin with High Priority courses first.
+              </>
+            )}
           </p>
         </div>
 
@@ -482,7 +520,7 @@ export default function RecommendationCard({
                         <CheckCircle2 className={`w-4 h-4 shrink-0 mt-0.5 ${priority.iconColor}`} />
                         <div className="space-y-0.5">
                           <span className="font-bold text-[11px] uppercase tracking-wider block">
-                            Recommendation Justification:
+                            {isDeptMode ? 'Department Recommendation Justification:' : 'Recommendation Justification:'}
                           </span>
                           <span className="leading-relaxed opacity-95">{item.reason}</span>
                         </div>
@@ -527,7 +565,11 @@ export default function RecommendationCard({
                           {item.match_score.toFixed(3)} Score
                         </span>
                         <span className="text-[10px] text-brand-green font-bold block mt-0.5">
-                          {idx === 0 ? 'Rank #1 Choice' : idx === 1 ? 'Rank #2 Choice' : 'Rank #3 Choice'}
+                          {idx === 0
+                            ? (isDeptMode ? 'Rank #1 Dept Priority' : 'Rank #1 Choice')
+                            : idx === 1
+                            ? (isDeptMode ? 'Rank #2 Dept Priority' : 'Rank #2 Choice')
+                            : (isDeptMode ? 'Rank #3 Dept Priority' : 'Rank #3 Choice')}
                         </span>
                       </div>
                     </div>

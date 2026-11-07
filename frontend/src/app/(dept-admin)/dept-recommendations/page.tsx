@@ -5,6 +5,7 @@ import Link from 'next/link';
 import api from '@/lib/api';
 import { DepartmentRecommendationResult } from '@/types';
 import RecommendationCard from '@/components/RecommendationCard';
+import CompetencyProfilingCard from '@/components/CompetencyProfilingCard';
 import GeneratingProgressModal from '@/components/GeneratingProgressModal';
 import { RecommendationSkeleton } from '@/components/Skeletons';
 import { useToast } from '@/context/ToastContext';
@@ -233,6 +234,17 @@ export default function DeptRecommendationsPage() {
             </div>
           )}
 
+          {/* Department Competency Evaluation Card (if available) */}
+          {deptResult?.competency_profile && (
+            <CompetencyProfilingCard
+              profile={deptResult.competency_profile}
+              isDepartment={true}
+              departmentName={`${deptName} (${deptCode})`}
+              facultyCount={eligibleCount}
+              defaultExpanded={true}
+            />
+          )}
+
           {/* Render Recommendation Card if available */}
           {deptResult && (
             <RecommendationCard
@@ -243,6 +255,7 @@ export default function DeptRecommendationsPage() {
               scopeLabel="Department Model Synthesis"
               statsRow={statsRow}
               noticeBanner={noticeBanner}
+              isDepartment={true}
             />
           )}
         </>

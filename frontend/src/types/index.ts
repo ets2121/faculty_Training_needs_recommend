@@ -208,6 +208,7 @@ export interface DepartmentRecommendationResult {
     version: string;
   };
   faculty_count: number;
+  competency_profile?: CompetencyProfile;
   prediction: {
     top_categories: DepartmentCategoryPrediction[];
   };

@@ -15,13 +15,19 @@ import {
 } from 'lucide-react';
 
 interface CompetencyProfilingCardProps {
-  profile: CompetencyProfile;
+  profile: CompetencyProfile & { department_metrics?: any };
   defaultExpanded?: boolean;
+  isDepartment?: boolean;
+  departmentName?: string;
+  facultyCount?: number;
 }
 
 export default function CompetencyProfilingCard({
   profile,
   defaultExpanded = false,
+  isDepartment = false,
+  departmentName,
+  facultyCount,
 }: CompetencyProfilingCardProps) {
   // Main accordion state (compact by default)
   const [isAccordionOpen, setIsAccordionOpen] = useState(defaultExpanded);
@@ -105,14 +111,26 @@ export default function CompetencyProfilingCard({
           <div className="min-w-0">
             <div className="flex items-center gap-2 flex-wrap">
               <span className="text-[10px] font-mono uppercase tracking-wider font-extrabold px-2 py-0.5 rounded bg-brand-green/15 text-brand-green border border-brand-green/25">
-                Competency Evaluation
+                {isDepartment ? 'Department Competency Evaluation' : 'Competency Evaluation'}
               </span>
               <span className="text-[11px] text-light-text dark:text-dark-muted font-medium truncate">
-                Based on Questionnaire Assessment
+                {isDepartment
+                  ? `Multi-Faculty Assessment Synthesis${
+                      facultyCount || profile.department_metrics?.faculty_count
+                        ? ` (${facultyCount || profile.department_metrics?.faculty_count} Faculty Evaluated)`
+                        : ''
+                    }`
+                  : 'Based on Questionnaire Assessment'}
               </span>
             </div>
             <h3 className="text-base sm:text-lg font-black text-light-text dark:text-white mt-0.5 tracking-tight flex items-center gap-2">
-              <span>Assessed Competency Level</span>
+              <span>
+                {isDepartment
+                  ? departmentName
+                    ? `Department Competency Level — ${departmentName}`
+                    : 'Department Competency Level'
+                  : 'Assessed Competency Level'}
+              </span>
             </h3>
           </div>
         </div>
@@ -123,7 +141,7 @@ export default function CompetencyProfilingCard({
             <span className={`w-2 h-2 rounded-full animate-ping ${badge.dot}`} />
             <div className="text-left">
               <div className="text-xs font-black uppercase tracking-wider">
-                LEVEL: {levelTier}
+                {isDepartment ? 'DEPT LEVEL' : 'LEVEL'}: {levelTier}
               </div>
               <p className="text-[10px] font-medium opacity-90 leading-tight">
                 {profile.overall_level} ({profile.overall_index.toFixed(2)}/5.0)
@@ -140,7 +158,15 @@ export default function CompetencyProfilingCard({
             }}
             className="flex items-center gap-2 px-3.5 py-2 rounded-xl bg-brand-green hover:bg-brand-green-dark text-white font-bold text-xs shadow-md transition-all group"
           >
-            <span>{isAccordionOpen ? 'Hide Assessment Details' : 'Show Assessment Details'}</span>
+            <span>
+              {isAccordionOpen
+                ? isDepartment
+                  ? 'Hide Department Details'
+                  : 'Hide Assessment Details'
+                : isDepartment
+                ? 'Show Department Assessment Details'
+                : 'Show Assessment Details'}
+            </span>
             {isAccordionOpen ? (
               <ChevronUp className="w-4 h-4 transition-transform group-hover:-translate-y-0.5" />
             ) : (
@@ -178,7 +204,7 @@ export default function CompetencyProfilingCard({
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
               <div className="p-2.5 rounded-xl bg-white dark:bg-dark-card border border-light-border dark:border-dark-border">
                 <span className="text-[10px] uppercase font-mono tracking-wider text-light-text/60 dark:text-dark-muted block">
-                  Demonstrated Strengths
+                  {isDepartment ? 'Department Strengths' : 'Demonstrated Strengths'}
                 </span>
                 <span className="text-xs font-bold text-emerald-700 dark:text-emerald-300 mt-0.5 block truncate">
                   {profile.explanation.strengths_summary ||
@@ -188,7 +214,7 @@ export default function CompetencyProfilingCard({
 
               <div className="p-2.5 rounded-xl bg-white dark:bg-dark-card border border-light-border dark:border-dark-border">
                 <span className="text-[10px] uppercase font-mono tracking-wider text-light-text/60 dark:text-dark-muted block">
-                  Priority Growth Gaps
+                  {isDepartment ? 'Department Priority Gaps' : 'Priority Growth Gaps'}
                 </span>
                 <span className="text-xs font-bold text-amber-700 dark:text-amber-300 mt-0.5 block truncate">
                   {profile.explanation.gaps_summary ||
@@ -198,10 +224,10 @@ export default function CompetencyProfilingCard({
 
               <div className="p-2.5 rounded-xl bg-white dark:bg-dark-card border border-light-border dark:border-dark-border">
                 <span className="text-[10px] uppercase font-mono tracking-wider text-light-text/60 dark:text-dark-muted block">
-                  Recommended Action
+                  {isDepartment ? 'Department Strategy' : 'Recommended Action'}
                 </span>
                 <span className="text-xs font-bold text-brand-green mt-0.5 block truncate">
-                  Applied Specialization
+                  {isDepartment ? 'Targeted Faculty Upskilling' : 'Applied Specialization'}
                 </span>
               </div>
             </div>
@@ -236,7 +262,7 @@ export default function CompetencyProfilingCard({
                 <div className="flex items-center gap-2">
                   <FileText className="w-4 h-4 text-brand-green" />
                   <span className="text-xs font-bold font-mono uppercase tracking-wider text-light-text dark:text-white">
-                    Questionnaire Required Parts Level Assessment
+                    {isDepartment ? 'Department Questionnaire Composition Breakdown' : 'Questionnaire Required Parts Level Assessment'}
                   </span>
                   <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-light-muted-surface dark:bg-dark-bg border border-light-border dark:border-dark-border text-light-text/60 dark:text-dark-muted hidden sm:inline-block">
                     5 Required Parts
@@ -293,10 +319,10 @@ export default function CompetencyProfilingCard({
               <div className="flex items-center gap-2">
                 <Award className="w-4 h-4 text-brand-gold" />
                 <span className="text-xs font-bold font-mono uppercase tracking-wider text-light-text dark:text-white">
-                  Competency Domain Scores
+                  {isDepartment ? 'Department Competency Domain Scores' : 'Competency Domain Scores'}
                 </span>
                 <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-light-muted-surface dark:bg-dark-bg border border-light-border dark:border-dark-border text-light-text/60 dark:text-dark-muted hidden sm:inline-block">
-                  Core, Functional, Leadership
+                  {isDepartment ? 'Core, Functional, Leadership collective averages' : 'Core, Functional, Leadership'}
                 </span>
               </div>
               <div className="flex items-center gap-1.5 px-3 py-1 rounded-xl bg-brand-gold/10 text-amber-800 dark:text-amber-200 text-xs font-bold hover:bg-brand-gold hover:text-white transition-all">
@@ -369,11 +395,11 @@ export default function CompetencyProfilingCard({
               <div className="flex items-center gap-2">
                 <Layers className="w-4 h-4 text-brand-green" />
                 <span className="font-mono uppercase tracking-wider">
-                  Top Strengths & Flagged Growth Gaps
+                  {isDepartment ? 'Department Strengths & Critical Growth Gaps' : 'Top Strengths & Flagged Growth Gaps'}
                 </span>
               </div>
               <div className="flex items-center gap-1.5 px-3 py-1 rounded-xl bg-brand-green/10 text-brand-green text-xs font-bold hover:bg-brand-green hover:text-white transition-all">
-                <span>{showDeepDiagnostic ? 'Hide Deep Dive' : 'Show Strengths & Gaps Deep Dive'}</span>
+                <span>{showDeepDiagnostic ? 'Hide Deep Dive' : isDepartment ? 'Show Department Deep Dive' : 'Show Strengths & Gaps Deep Dive'}</span>
                 {showDeepDiagnostic ? <ChevronUp className="w-3.5 h-3.5" /> : <ChevronDown className="w-3.5 h-3.5" />}
               </div>
             </button>
@@ -385,7 +411,7 @@ export default function CompetencyProfilingCard({
                   <div className="p-3.5 rounded-xl border border-emerald-500/20 bg-emerald-500/5 space-y-2">
                     <div className="flex items-center gap-1.5 text-emerald-600 dark:text-emerald-400 font-bold uppercase text-[11px]">
                       <CheckCircle className="w-3.5 h-3.5" />
-                      <span>Standout Strengths (Proficiency ≥ 4)</span>
+                      <span>{isDepartment ? 'Department Standout Strengths' : 'Standout Strengths (Proficiency ≥ 4)'}</span>
                     </div>
                     <ul className="space-y-1.5">
                       {profile.strengths.map((s) => (
@@ -406,7 +432,7 @@ export default function CompetencyProfilingCard({
                   <div className="p-3.5 rounded-xl border border-amber-500/20 bg-amber-500/5 space-y-2">
                     <div className="flex items-center gap-1.5 text-amber-600 dark:text-amber-400 font-bold uppercase text-[11px]">
                       <AlertTriangle className="w-3.5 h-3.5" />
-                      <span>Priority Growth Gaps (Need Upskilling)</span>
+                      <span>{isDepartment ? 'Department Priority Gaps (Target Upskilling)' : 'Priority Growth Gaps (Need Upskilling)'}</span>
                     </div>
                     <ul className="space-y-1.5">
                       {profile.growth_areas.map((g) => (

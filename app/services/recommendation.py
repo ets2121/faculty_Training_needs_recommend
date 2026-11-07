@@ -5,7 +5,7 @@ from sqlalchemy.orm import Session
 
 from app.ml.predictor import ModelService
 from app.services.catalog import get_catalog_service, CatalogService
-from app.services.profiler import evaluate_faculty_profile
+from app.services.profiler import evaluate_faculty_profile, evaluate_department_profile
 from app.db.models import RecommendationHistory, TrainingResponse
 
 
@@ -15,6 +15,7 @@ def match_catalog_items(
     catalog_service: CatalogService | None = None,
     top_k: int = 3,
     competency_profile: dict[str, Any] | None = None,
+    is_department: bool = False,
 ) -> list[dict[str, Any]]:
     """
     Matches active catalog training programs to predicted categories and faculty preferences.
@@ -76,7 +77,12 @@ def match_catalog_items(
 
         base_score = best_prob
         bonus = 0.0
-        reasons = [f"Matches the predicted {matched_cat_name} training need."]
+        reasons = []
+
+        if is_department:
+            reasons.append(f"Matches the department's top predicted training need in {matched_cat_name}.")
+        else:
+            reasons.append(f"Matches the predicted {matched_cat_name} training need.")
 
         # Modality match bonus
         item_modalities = {m.lower().strip() for m in item.get("modalities", [])}
@@ -84,7 +90,10 @@ def match_catalog_items(
         if matched_modalities:
             bonus += 0.03
             mod_str = ", ".join(m.title() for m in list(matched_modalities)[:2])
-            reasons.append(f"Aligns with preferred modality ({mod_str}).")
+            if is_department:
+                reasons.append(f"Aligns with dominant faculty preferred modality ({mod_str}).")
+            else:
+                reasons.append(f"Aligns with preferred modality ({mod_str}).")
 
         # Schedule match bonus
         item_schedules = {s.lower().strip() for s in item.get("schedules", [])}
@@ -100,9 +109,12 @@ def match_catalog_items(
         item_target_comp = {c.lower().strip() for c in item.get("target_competencies", [])}
         matched_gaps = user_competency_gaps.intersection(item_target_comp)
         if matched_gaps:
-            bonus += 0.14  # High priority boost to resolve actual faculty deficit
+            bonus += 0.14  # High priority boost to resolve actual deficit
             gap_names = ", ".join(g.title() for g in list(matched_gaps)[:2])
-            reasons.append(f"Directly resolves your identified competency gap in {gap_names}.")
+            if is_department:
+                reasons.append(f"Addresses collective department competency gaps in {gap_names}.")
+            else:
+                reasons.append(f"Directly resolves your identified competency gap in {gap_names}.")
 
         # ── Competency Level Suitability Calibration ─────────────────────────
         # Check explicit item target_level from catalog first, with keyword fallback
@@ -136,7 +148,10 @@ def match_catalog_items(
         # Calibration alignment bonus/penalty
         if faculty_level == suitable_level:
             bonus += 0.10
-            reasons.append(f"Calibrated directly for your assessed {level_tier} ({faculty_level}) competency level.")
+            if is_department:
+                reasons.append(f"Calibrated for the department faculty cohort ({level_tier} / {faculty_level} standing).")
+            else:
+                reasons.append(f"Calibrated directly for your assessed {level_tier} ({faculty_level}) competency level.")
         elif faculty_level == "Developing" and suitable_level == "Advanced":
             bonus -= 0.15  # Strongly disfavor advanced masterclasses for low/developing faculty
         elif faculty_level == "Advanced" and suitable_level == "Developing":
@@ -296,7 +311,65 @@ def department(model: ModelService, records: list[dict], dept_name: str = "BSED"
             for cat in top_categories
         ]
     }
-    catalog_recs = match_catalog_items(dept_prediction_mock, record={}, top_k=3)
+
+    # ── Synthesize Department-Wide Record & Preferences ───────────────────────
+    mod_counts = defaultdict(int)
+    sched_counts = defaultdict(int)
+    dur_counts = defaultdict(int)
+    for r in records:
+        for m in r.get("preferred_learning_modality", []):
+            mod_counts[m] += 1
+        for s in r.get("preferred_schedule", []):
+            sched_counts[s] += 1
+        for d in r.get("preferred_duration", []):
+            dur_counts[d] += 1
+
+    top_mods = [m for m, _ in sorted(mod_counts.items(), key=lambda x: x[1], reverse=True)[:2]]
+    top_scheds = [s for s, _ in sorted(sched_counts.items(), key=lambda x: x[1], reverse=True)[:2]]
+    top_durs = [d for d, _ in sorted(dur_counts.items(), key=lambda x: x[1], reverse=True)[:2]]
+
+    # Aggregate competency gaps across department
+    dept_competencies = {}
+    for r in records:
+        comps = r.get("competency", {})
+        if isinstance(comps, dict):
+            for c_name, c_data in comps.items():
+                if c_name not in dept_competencies:
+                    dept_competencies[c_name] = {"proficiency": [], "importance": []}
+                if isinstance(c_data, dict):
+                    dept_competencies[c_name]["proficiency"].append(float(c_data.get("proficiency", 3)))
+                    dept_competencies[c_name]["importance"].append(float(c_data.get("importance", 3)))
+
+    dept_competency_synth = {}
+    for c_name, data in dept_competencies.items():
+        avg_p = sum(data["proficiency"]) / len(data["proficiency"]) if data["proficiency"] else 3.0
+        avg_imp = sum(data["importance"]) / len(data["importance"]) if data["importance"] else 3.0
+        dept_competency_synth[c_name] = {
+            "proficiency": round(avg_p, 2),
+            "importance": round(avg_imp, 2),
+        }
+
+    dept_synthesized_record = {
+        "preferred_learning_modality": top_mods,
+        "preferred_schedule": top_scheds,
+        "preferred_duration": top_durs,
+        "competency": dept_competency_synth,
+    }
+
+    # ── Evaluate Department Competency Profile ────────────────────────────────
+    dept_competency_profile = evaluate_department_profile(
+        records=records,
+        dept_predictions=dept_prediction_mock,
+        dept_name=dept_name,
+    )
+
+    catalog_recs = match_catalog_items(
+        dept_prediction_mock,
+        record=dept_synthesized_record,
+        top_k=3,
+        competency_profile=dept_competency_profile,
+        is_department=True,
+    )
 
     response_payload = {
         "status": "success",
@@ -306,6 +379,7 @@ def department(model: ModelService, records: list[dict], dept_name: str = "BSED"
             "version": model.version or "active",
         },
         "faculty_count": n,
+        "competency_profile": dept_competency_profile,
         "prediction": {
             "top_categories": top_categories
         },
