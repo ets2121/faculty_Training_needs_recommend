@@ -144,6 +144,17 @@ def match_catalog_items(
 
         final_match_score = min(0.99, max(0.05, round(base_score + bonus, 2)))
 
+        # Determine initial prioritiveness tier based on calibrated match score
+        if final_match_score >= 0.80:
+            priority_tier = "High"
+            priority_label = "High Priority"
+        elif final_match_score >= 0.60:
+            priority_tier = "Medium"
+            priority_label = "Medium Priority"
+        else:
+            priority_tier = "Complementary"
+            priority_label = "Complementary Priority"
+
         matches.append({
             "training_id": item.get("training_id", ""),
             "title": item.get("title", ""),
@@ -151,6 +162,11 @@ def match_catalog_items(
             "target_level": suitable_level,
             "level_tier": level_tier,
             "level_label": level_label,
+            "priority_tier": priority_tier,
+            "priority_label": priority_label,
+            "modalities": item.get("modalities", []),
+            "durations": item.get("durations", []),
+            "schedules": item.get("schedules", []),
             "match_score": final_match_score,
             "reason": " ".join(reasons),
             "description": item.get("description", ""),
@@ -158,7 +174,21 @@ def match_catalog_items(
 
     # Sort matches by match_score descending
     matches.sort(key=lambda x: x["match_score"], reverse=True)
-    return matches[:top_k]
+
+    # Calibrate relative prioritiveness across the top results
+    top_matches = matches[:top_k]
+    for idx, m in enumerate(top_matches):
+        if idx == 0:
+            m["priority_tier"] = "High"
+            m["priority_label"] = "High Priority"
+        elif idx == 1 and m["match_score"] >= 0.55:
+            m["priority_tier"] = "Medium"
+            m["priority_label"] = "Medium Priority"
+        elif idx >= 2 and m["match_score"] < 0.65:
+            m["priority_tier"] = "Complementary"
+            m["priority_label"] = "Complementary Priority"
+
+    return top_matches
 
 
 def individual(model: ModelService, record: dict, db: Session | None = None, generated_at: str | None = None) -> dict[str, Any]:

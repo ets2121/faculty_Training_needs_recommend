@@ -101,6 +101,11 @@ export interface CatalogRecommendationItem {
   target_level?: 'Developing' | 'Proficient' | 'Advanced' | string;
   level_tier?: 'Low' | 'Mid' | 'High' | string;
   level_label?: string;
+  priority_tier?: 'High' | 'Medium' | 'Complementary' | string;
+  priority_label?: string;
+  modalities?: string[];
+  durations?: string[];
+  schedules?: string[];
   match_score: number;
   reason: string;
   description?: string;
