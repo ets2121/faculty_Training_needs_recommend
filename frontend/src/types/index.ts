@@ -106,6 +106,15 @@ export interface CatalogRecommendationItem {
   description?: string;
 }
 
+export interface PartLevelEvaluation {
+  part_number: number;
+  title: string;
+  dimension: string;
+  level_tier: 'Low' | 'Mid' | 'High' | string;
+  level_label: string;
+  why: string;
+}
+
 export interface CompetencyProfile {
   overall_level: 'Developing' | 'Proficient' | 'Advanced';
   level_tier: 'Low' | 'Mid' | 'High';
@@ -115,10 +124,11 @@ export interface CompetencyProfile {
   average_importance: number;
   total_gaps_count: number;
   domains: {
-    core: { index: number; level: string; count: number; gaps_count: number };
-    functional: { index: number; level: string; count: number; gaps_count: number };
-    leadership: { index: number; level: string; count: number; gaps_count: number };
+    core: { index: number; level: string; level_tier?: string; count: number; gaps_count: number };
+    functional: { index: number; level: string; level_tier?: string; count: number; gaps_count: number };
+    leadership: { index: number; level: string; level_tier?: string; count: number; gaps_count: number };
   };
+  part_levels?: PartLevelEvaluation[];
   strengths: Array<{
     key: string;
     title: string;

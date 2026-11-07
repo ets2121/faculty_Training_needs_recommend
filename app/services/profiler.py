@@ -1,10 +1,15 @@
 """
 Faculty Competency Profiling & Evaluation Engine.
 
-Analyzes faculty questionnaire responses (Part 5: Core, Functional, Leadership Competencies)
-to compute objective proficiency indices, identify competency gaps, assign a standard
-competency level (Developing, Proficient, Advanced), and generate human-readable,
-user-friendly justifications explaining the assigned level.
+Analyzes faculty questionnaire responses:
+- Part 1: Personal Profile (Career Stage)
+- Part 2: Educational Background (Academic Credential Tier)
+- Part 3: Professional Background (Academic Rank & Experience Tier)
+- Part 5: Competency Assessment (Core, Functional, Leadership Proficiency)
+- Part 6: Emerging Training Needs (Urgency / Demand Tier)
+
+Computes objective indices, maps transparent tier levels (Low, Mid, High),
+and generates concise, readable explanations without information overload.
 """
 from __future__ import annotations
 
@@ -38,42 +43,182 @@ COMPETENCY_TITLES: dict[str, str] = {
 }
 
 
+def evaluate_part_levels(record: dict[str, Any]) -> list[dict[str, Any]]:
+    """
+    Evaluates individual questionnaire required parts (1, 2, 3, 5, 6)
+    and produces clear, concise micro-level ratings with user-friendly 'Why' explanations.
+    """
+    part_evals = []
+
+    # ── Part 1: Personal Profile (Career Stage & Demographics) ────────────────
+    age = record.get("age")
+    emp_status = str(record.get("employment_status", "")).strip().lower()
+    if age is not None:
+        try:
+            age_int = int(age)
+            if age_int < 30 or "cos" in emp_status or "contractual" in emp_status:
+                p1_tier = "Low"
+                p1_level = "Early Career / Onboarding"
+                p1_desc = f"Age {age_int} with {emp_status.title() or 'Entry'} status, focusing on foundational institutional adaptation."
+            elif age_int <= 45:
+                p1_tier = "Mid"
+                p1_level = "Mid-Career Established"
+                p1_desc = f"Age {age_int} in core career progression phase with established academic service."
+            else:
+                p1_tier = "High"
+                p1_level = "Senior Career Phase"
+                p1_desc = f"Age {age_int} senior institutional profile with extensive academic tenure."
+        except Exception:
+            p1_tier = "Mid"
+            p1_level = "Mid-Career"
+            p1_desc = "Standard academic career stage."
+    else:
+        p1_tier = "Mid"
+        p1_level = "In Progress"
+        p1_desc = "Personal profile submitted."
+
+    part_evals.append({
+        "part_number": 1,
+        "title": "Personal Profile",
+        "dimension": "Career Stage",
+        "level_tier": p1_tier,
+        "level_label": p1_level,
+        "why": p1_desc,
+    })
+
+    # ── Part 2: Educational Background (Academic Qualification Tier) ──────────
+    degree = str(record.get("highest_educational_attainment", "")).strip().lower()
+    spec = str(record.get("field_of_specialization", "General")).strip()
+    if any(k in degree for k in ["doc", "phd", "edd"]):
+        p2_tier = "High"
+        p2_level = "Doctorate Level (Terminal)"
+        p2_desc = f"Holds terminal Doctorate in {spec}, meeting highest accreditation benchmark."
+    elif any(k in degree for k in ["mast", "ms", "ma", "mba"]):
+        p2_tier = "Mid"
+        p2_level = "Master's Degree Level"
+        p2_desc = f"Master's degree holder in {spec}, compliant with standard CHED faculty requirements."
+    else:
+        p2_tier = "Low"
+        p2_level = "Bachelor's Degree Level"
+        p2_desc = f"Baccalaureate qualification in {spec}; prioritized for postgraduate vertical articulation."
+
+    part_evals.append({
+        "part_number": 2,
+        "title": "Educational Background",
+        "dimension": "Academic Attainment",
+        "level_tier": p2_tier,
+        "level_label": p2_level,
+        "why": p2_desc,
+    })
+
+    # ── Part 3: Professional Background (Academic Rank & Experience) ───────────
+    rank = str(record.get("academic_rank", "")).strip().lower()
+    years = str(record.get("years_teaching", "")).strip().lower()
+    train_count = str(record.get("trainings_last_3_years", "0")).strip()
+
+    if any(k in rank for k in ["prof", "assoc"]):
+        p3_tier = "High"
+        p3_level = "Senior Academic Rank"
+        p3_desc = f"Attained higher professorial rank ({record.get('academic_rank', 'Senior')}) with {years or 'solid'} teaching track record."
+    elif "assist" in rank:
+        p3_tier = "Mid"
+        p3_level = "Intermediate Academic Rank"
+        p3_desc = f"Assistant Professor rank with progressive teaching service ({years or 'mid-level'})."
+    else:
+        p3_tier = "Low"
+        p3_level = "Entry Faculty Rank"
+        p3_desc = f"Instructor level ({record.get('academic_rank', 'Instructor')}), focused on tenure and rank promotion."
+
+    part_evals.append({
+        "part_number": 3,
+        "title": "Professional Background",
+        "dimension": "Faculty Rank & Experience",
+        "level_tier": p3_tier,
+        "level_label": p3_level,
+        "why": p3_desc,
+    })
+
+    # ── Part 5: Competency Assessment (Core Self-Assessed Skills) ──────────────
+    raw_comp = record.get("competency", {})
+    if isinstance(raw_comp, dict) and raw_comp:
+        all_p = []
+        all_g = []
+        for v in raw_comp.values():
+            if isinstance(v, dict):
+                p = float(v.get("proficiency", 3))
+                imp = float(v.get("importance", 3))
+                all_p.append(p)
+                all_g.append(max(0.0, imp - p))
+        avg_p = sum(all_p) / len(all_p) if all_p else 3.0
+        gaps_cnt = sum(1 for g in all_g if g > 0)
+        
+        if avg_p >= 4.25:
+            p5_tier = "High"
+            p5_level = "Advanced Competency"
+            p5_desc = f"High proficiency ({avg_p:.2f}/5.0) across competencies with {gaps_cnt} flagged development gaps."
+        elif avg_p >= 3.0:
+            p5_tier = "Mid"
+            p5_level = "Proficient Competency"
+            p5_desc = f"Solid operational proficiency ({avg_p:.2f}/5.0) with {gaps_cnt} specific growth gaps flagged for upskilling."
+        else:
+            p5_tier = "Low"
+            p5_level = "Developing Competency"
+            p5_desc = f"Proficiency index of {avg_p:.2f}/5.0 shows essential training needs across core teaching functions."
+    else:
+        p5_tier = "Mid"
+        p5_level = "Pending Assessment"
+        p5_desc = "Competency evaluation pending or baseline values used."
+
+    part_evals.append({
+        "part_number": 5,
+        "title": "Competency Assessment",
+        "dimension": "Instructional Skills",
+        "level_tier": p5_tier,
+        "level_label": p5_level,
+        "why": p5_desc,
+    })
+
+    # ── Part 6: Emerging Training Needs (Demand & Technology Urgency) ───────────
+    emerging = record.get("emerging_training_needs", {})
+    if isinstance(emerging, dict) and emerging:
+        needs_vals = [float(v) for v in emerging.values() if isinstance(v, (int, float))]
+        avg_need = sum(needs_vals) / len(needs_vals) if needs_vals else 3.0
+        high_urgency = sum(1 for v in needs_vals if v >= 4)
+
+        if avg_need >= 4.2 or high_urgency >= 5:
+            p6_tier = "High"
+            p6_level = "High Urgency / High Demand"
+            p6_desc = f"Expressed strong urgency ({avg_need:.2f}/5.0 avg) across emerging tech and modern pedagogy."
+        elif avg_need >= 3.0:
+            p6_tier = "Mid"
+            p6_level = "Moderate Urgency"
+            p6_desc = f"Balanced learning demand ({avg_need:.2f}/5.0 avg) for targeted institutional technologies."
+        else:
+            p6_tier = "Low"
+            p6_level = "Selective Need"
+            p6_desc = f"Lower urgency ratings ({avg_need:.2f}/5.0 avg); selective participation requested."
+    else:
+        p6_tier = "Mid"
+        p6_level = "Moderate Demand"
+        p6_desc = "Standard technology demand profile."
+
+    part_evals.append({
+        "part_number": 6,
+        "title": "Emerging Training Needs",
+        "dimension": "Technology Demand",
+        "level_tier": p6_tier,
+        "level_label": p6_level,
+        "why": p6_desc,
+    })
+
+    return part_evals
+
+
 def evaluate_faculty_profile(record: dict[str, Any]) -> dict[str, Any]:
     """
-    Evaluates a faculty questionnaire record and returns a structured Competency Profile.
-
-    Output format:
-    {
-        "overall_level": "Proficient",  # "Developing" | "Proficient" | "Advanced"
-        "level_title": "Proficient / Capable",
-        "overall_index": 3.75,          # 1.00 to 5.00
-        "average_proficiency": 3.85,
-        "average_importance": 4.10,
-        "total_gaps_count": 4,          # count of competencies where importance > proficiency
-        "domains": {
-            "core": {"index": 4.0, "level": "Proficient", "count": 4, "gaps": 0},
-            "functional": {"index": 3.5, "level": "Proficient", "count": 10, "gaps": 3},
-            "leadership": {"index": 3.8, "level": "Proficient", "count": 5, "gaps": 1},
-        },
-        "strengths": [
-            {"key": "professionalism", "title": "Professionalism & Ethics", "proficiency": 5, "importance": 5}
-        ],
-        "growth_areas": [
-            {
-                "key": "publication_writing",
-                "title": "Research & Publication Writing",
-                "proficiency": 2,
-                "importance": 5,
-                "gap": 3,
-                "reason": "Rated 5 (High Importance) but currently at 2 (Developing Proficiency)"
-            }
-        ],
-        "explanation": {
-            "headline": "Proficient with High Potential for Research Growth",
-            "summary": "...",
-            "target_training_focus": "Specialized & Applied Workshops"
-        }
-    }
+    Evaluates a faculty questionnaire record and returns a comprehensive, compact Competency Profile.
+    Includes overall level, concise headline, domain breakdown, top strengths, growth gaps,
+    and individual Part Levels (1, 2, 3, 5, 6) with short reasons.
     """
     raw_comp = record.get("competency", {})
     if not isinstance(raw_comp, dict):
@@ -105,7 +250,6 @@ def evaluate_faculty_profile(record: dict[str, Any]) -> dict[str, Any]:
                 p = 3.0
                 imp = 3.0
 
-            # Clamp between 1.0 and 5.0
             p = max(1.0, min(5.0, p))
             imp = max(1.0, min(5.0, imp))
             gap = max(0.0, imp - p)
@@ -124,13 +268,13 @@ def evaluate_faculty_profile(record: dict[str, Any]) -> dict[str, Any]:
             domain_gaps.append(gap)
 
         avg_p = sum(domain_profs) / len(domain_profs) if domain_profs else 3.0
-        avg_gap = sum(domain_gaps) / len(domain_gaps) if domain_gaps else 0.0
         domain_index = round(avg_p, 2)
         domain_level = _classify_level(domain_index)
 
         domain_results[domain_name] = {
             "index": domain_index,
             "level": domain_level,
+            "level_tier": _level_tier(domain_level),
             "count": len(comp_keys),
             "gaps_count": sum(1 for g in domain_gaps if g > 0),
         }
@@ -142,14 +286,12 @@ def evaluate_faculty_profile(record: dict[str, Any]) -> dict[str, Any]:
 
     overall_prof = sum(all_profs) / len(all_profs) if all_profs else 3.0
     overall_imp = sum(all_imps) / len(all_imps) if all_imps else 3.0
-    overall_gap = sum(all_gaps) / len(all_gaps) if all_gaps else 0.0
 
-    # Weighted index considers proficiency minus a gentle penalty for unaddressed high-importance gaps
     overall_index = round(overall_prof, 2)
     overall_level = _classify_level(overall_index)
+    overall_tier = _level_tier(overall_level)
 
     # ── Identify Top Strengths & Critical Growth Areas ─────────────────────────
-    # Strengths: highest proficiency, sorted descending
     sorted_by_prof = sorted(all_items, key=lambda x: (x["proficiency"], -x["gap"]), reverse=True)
     strengths = [
         {
@@ -160,9 +302,8 @@ def evaluate_faculty_profile(record: dict[str, Any]) -> dict[str, Any]:
             "importance": int(x["importance"]),
         }
         for x in sorted_by_prof if x["proficiency"] >= 4.0
-    ][:4]
+    ][:3]
 
-    # If no items >= 4.0, take top 3 highest anyway
     if not strengths and sorted_by_prof:
         strengths = [
             {
@@ -175,7 +316,6 @@ def evaluate_faculty_profile(record: dict[str, Any]) -> dict[str, Any]:
             for x in sorted_by_prof[:3]
         ]
 
-    # Growth areas: items with highest gap (importance > proficiency)
     items_with_gap = [x for x in all_items if x["gap"] > 0]
     sorted_by_gap = sorted(items_with_gap, key=lambda x: (x["gap"], x["importance"]), reverse=True)
     growth_areas = [
@@ -186,29 +326,32 @@ def evaluate_faculty_profile(record: dict[str, Any]) -> dict[str, Any]:
             "proficiency": int(x["proficiency"]),
             "importance": int(x["importance"]),
             "gap": round(x["gap"], 1),
-            "reason": f"Rated as high importance ({int(x['importance'])}/5) while current self-assessed proficiency is {int(x['proficiency'])}/5.",
+            "reason": f"Rated high importance ({int(x['importance'])}/5) vs current self-assessed proficiency of {int(x['proficiency'])}/5.",
         }
-        for x in sorted_by_gap[:5]
+        for x in sorted_by_gap[:3]
     ]
 
-    # ── Synthesize Human-Friendly Justification ("Why this level?") ───────────
+    # ── Part Levels Breakdown ─────────────────────────────────────────────────
+    part_levels = evaluate_part_levels(record)
+
+    # ── Concise Justification ─────────────────────────────────────────────────
     explanation = _generate_explanation(
         level=overall_level,
         index=overall_index,
         strengths=strengths,
         growth_areas=growth_areas,
-        domain_results=domain_results,
     )
 
     return {
         "overall_level": overall_level,
-        "level_tier": _level_tier(overall_level),
+        "level_tier": overall_tier,
         "level_title": _level_title(overall_level),
         "overall_index": overall_index,
         "average_proficiency": round(overall_prof, 2),
         "average_importance": round(overall_imp, 2),
         "total_gaps_count": len(items_with_gap),
         "domains": domain_results,
+        "part_levels": part_levels,
         "strengths": strengths,
         "growth_areas": growth_areas,
         "explanation": explanation,
@@ -247,46 +390,41 @@ def _generate_explanation(
     index: float,
     strengths: list[dict],
     growth_areas: list[dict],
-    domain_results: dict,
 ) -> dict[str, str]:
-    """Builds user-friendly diagnostic text and training recommendation orientation."""
+    """Builds concise, user-friendly diagnostic text without information overload."""
     strength_names = [s["title"] for s in strengths[:2]]
-    strength_str = ", ".join(strength_names) if strength_names else "consistent dedication across core duties"
+    strength_str = ", ".join(strength_names) if strength_names else "core educational values"
 
     gap_names = [g["title"] for g in growth_areas[:2]]
-    gap_str = ", ".join(gap_names) if gap_names else "specific specialized continuous improvement modules"
+    gap_str = ", ".join(gap_names) if gap_names else "specific specialized areas"
 
     if level == "Developing":
-        headline = "Developing Foundation — Immediate Training Support Recommended"
+        headline = "Developing Baseline — Foundational Support Recommended"
         summary = (
-            f"Your overall self-assessed competency index is {index:.2f}/5.00. "
-            f"While demonstrating positive baseline skills in {strength_str}, "
-            f"there are marked development opportunities in {gap_str}. "
-            "Prioritizing foundational workshops will rapidly strengthen day-to-day instructional effectiveness."
+            f"Your competency score is {index:.2f}/5.0 (Low Tier). "
+            f"You demonstrate dedication in {strength_str}, but have key development opportunities in {gap_str}. "
+            "Foundational workshops will accelerate your instructional growth."
         )
-        focus = "Foundational & Core Competency Enhancement (Workshops, Hands-on Mentoring)"
+        focus = "Foundational Skills (Introductory Seminars & Direct Coaching)"
 
     elif level == "Proficient":
-        headline = "Proficient & Competent — Ready for Specialized Upskilling"
+        headline = "Proficient & Competent — Ready for Applied Specialization"
         summary = (
-            f"Your overall self-assessed competency index is {index:.2f}/5.00, reflecting strong operational competence. "
-            f"You demonstrate notable expertise in {strength_str}. "
-            f"To advance towards exemplary standing, focused interventions are recommended in {gap_str}."
+            f"Your competency score is {index:.2f}/5.0 (Mid Tier), reflecting reliable performance in {strength_str}. "
+            f"Upskilling in {gap_str} will elevate your standing toward exemplary academic output."
         )
-        focus = "Intermediate to Specialized Skills (Applied Pedagogy, Technology Integration, Publication)"
+        focus = "Applied Pedagogical & Research Workshops (Specialized Hands-on Modules)"
 
     else:  # Advanced
-        headline = "Advanced & Exemplary — Leadership & Innovation Trajectory"
+        headline = "Advanced & Exemplary — Leadership & Innovation Phase"
         summary = (
-            f"Your overall self-assessed competency index is {index:.2f}/5.00, demonstrating high mastery across academic domains. "
-            f"You stand out strongly in {strength_str}. "
-            "You are well-positioned for leadership, mentorship, and high-level institutional innovation."
+            f"Your competency score is {index:.2f}/5.0 (High Tier) with standout mastery in {strength_str}. "
+            "You are ready for research commercialization, peer mentorship, and academic governance."
         )
-        focus = "Advanced Masterclasses, Train-the-Trainer, Research Commercialization & Institutional Leadership"
+        focus = "Masterclasses, Train-the-Trainer & Institutional Innovation"
 
     return {
         "headline": headline,
         "summary": summary,
         "target_training_focus": focus,
     }
-
