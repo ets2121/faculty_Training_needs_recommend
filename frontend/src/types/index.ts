@@ -155,6 +155,9 @@ export interface CompetencyProfile {
     headline: string;
     summary: string;
     target_training_focus: string;
+    strengths_summary?: string;
+    gaps_summary?: string;
+    tier_label?: string;
   };
 }
 

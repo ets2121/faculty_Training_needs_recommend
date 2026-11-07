@@ -465,4 +465,7 @@ def _generate_explanation(
         "headline": headline,
         "summary": summary,
         "target_training_focus": focus,
+        "strengths_summary": strength_str,
+        "gaps_summary": gap_str,
+        "tier_label": "Low Tier" if level == "Developing" else "Mid Tier" if level == "Proficient" else "High Tier",
     }
