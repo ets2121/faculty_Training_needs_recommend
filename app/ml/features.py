@@ -261,6 +261,12 @@ def flatten_record(record: dict[str, Any]) -> dict[str, Any]:
             normalized in selected_schedules
         )
 
+        # Compatibility with training dataset column format containing space
+        if normalized == "semester_break":
+            out["schedule_semester break"] = int(
+                normalized in selected_schedules
+            )
+
     # --------------------------------------------------------
     # DURATION
     # --------------------------------------------------------
