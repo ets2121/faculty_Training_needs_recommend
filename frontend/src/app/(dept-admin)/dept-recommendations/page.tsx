@@ -21,6 +21,9 @@ import {
   Clock,
   AlertTriangle,
   X,
+  Award,
+  Target,
+  Layers,
 } from 'lucide-react';
 
 export default function DeptRecommendationsPage() {
@@ -35,6 +38,7 @@ export default function DeptRecommendationsPage() {
   const [loading, setLoading] = useState(true);
   const [runningRec, setRunningRec] = useState(false);
   const [runError, setRunError] = useState<string | null>(null);
+  const [activeTab, setActiveTab] = useState<'all' | 'recommendations' | 'evaluation' | 'predictions'>('all');
 
   const loadLatestRec = useCallback(async () => {
     try {
@@ -234,29 +238,91 @@ export default function DeptRecommendationsPage() {
             </div>
           )}
 
-          {/* Department Competency Evaluation Card (if available) */}
-          {deptResult?.competency_profile && (
-            <CompetencyProfilingCard
-              profile={deptResult.competency_profile}
-              isDepartment={true}
-              departmentName={`${deptName} (${deptCode})`}
-              facultyCount={eligibleCount}
-              defaultExpanded={true}
-            />
-          )}
-
-          {/* Render Recommendation Card if available */}
+          {/* When results are available */}
           {deptResult && (
-            <RecommendationCard
-              result={deptResult}
-              title={`Department Training Recommendations — ${deptName} (${deptCode})`}
-              subtitle={`${campusName} • Multi-Faculty Assessment Synthesis`}
-              timestamp={deptResult.generated_at || deptResult.last_recommendation_at}
-              scopeLabel="Department Model Synthesis"
-              statsRow={statsRow}
-              noticeBanner={noticeBanner}
-              isDepartment={true}
-            />
+            <div className="space-y-6">
+              {/* 1. Quick Stats Row at Top for Glanceable KPIs */}
+              {statsRow}
+
+              {/* 2. Notice Banner if any incomplete assessments */}
+              {noticeBanner}
+
+              {/* 3. Section Navigation Tabs */}
+              <div className="flex items-center gap-1.5 p-1.5 rounded-2xl bg-white dark:bg-dark-card border border-light-border dark:border-dark-border shadow-sm overflow-x-auto">
+                <button
+                  type="button"
+                  onClick={() => setActiveTab('all')}
+                  className={`flex items-center gap-2 px-3.5 sm:px-4 py-2 rounded-xl text-xs font-bold transition-all shrink-0 ${
+                    activeTab === 'all'
+                      ? 'bg-brand-green text-white shadow-sm'
+                      : 'text-light-text dark:text-dark-muted hover:bg-light-bg dark:hover:bg-dark-bg'
+                  }`}
+                >
+                  <Layers className="w-3.5 h-3.5" />
+                  <span>Complete Overview</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setActiveTab('recommendations')}
+                  className={`flex items-center gap-2 px-3.5 sm:px-4 py-2 rounded-xl text-xs font-bold transition-all shrink-0 ${
+                    activeTab === 'recommendations'
+                      ? 'bg-brand-green text-white shadow-sm'
+                      : 'text-light-text dark:text-dark-muted hover:bg-light-bg dark:hover:bg-dark-bg'
+                  }`}
+                >
+                  <BookOpen className="w-3.5 h-3.5" />
+                  <span>Recommended Programs ({deptResult.recommendations?.length || 0})</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setActiveTab('predictions')}
+                  className={`flex items-center gap-2 px-3.5 sm:px-4 py-2 rounded-xl text-xs font-bold transition-all shrink-0 ${
+                    activeTab === 'predictions'
+                      ? 'bg-brand-green text-white shadow-sm'
+                      : 'text-light-text dark:text-dark-muted hover:bg-light-bg dark:hover:bg-dark-bg'
+                  }`}
+                >
+                  <Target className="w-3.5 h-3.5" />
+                  <span>ML Gap Predictions (3)</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setActiveTab('evaluation')}
+                  className={`flex items-center gap-2 px-3.5 sm:px-4 py-2 rounded-xl text-xs font-bold transition-all shrink-0 ${
+                    activeTab === 'evaluation'
+                      ? 'bg-brand-green text-white shadow-sm'
+                      : 'text-light-text dark:text-dark-muted hover:bg-light-bg dark:hover:bg-dark-bg'
+                  }`}
+                >
+                  <Award className="w-3.5 h-3.5" />
+                  <span>Department Evaluation</span>
+                </button>
+              </div>
+
+              {/* 4. Primary Content: Recommended Training Programs & Predictions */}
+              {(activeTab === 'all' || activeTab === 'recommendations' || activeTab === 'predictions') && (
+                <RecommendationCard
+                  result={deptResult}
+                  title={`Department Training Recommendations — ${deptName} (${deptCode})`}
+                  subtitle={`${campusName} • Multi-Faculty Assessment Synthesis`}
+                  timestamp={deptResult.generated_at || deptResult.last_recommendation_at}
+                  scopeLabel="Department Model Synthesis"
+                  isDepartment={true}
+                  activeSection={activeTab === 'all' ? 'all' : activeTab}
+                />
+              )}
+
+              {/* 5. Department Competency Evaluation Card */}
+              {(activeTab === 'all' || activeTab === 'evaluation') && deptResult.competency_profile && (
+                <CompetencyProfilingCard
+                  profile={deptResult.competency_profile}
+                  isDepartment={true}
+                  departmentName={`${deptName} (${deptCode})`}
+                  facultyCount={eligibleCount}
+                  defaultExpanded={activeTab === 'evaluation'}
+                />
+              )}
+            </div>
           )}
         </>
       )}

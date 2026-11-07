@@ -19,6 +19,9 @@ import {
   Users,
   CheckCircle2,
   BookOpen,
+  Award,
+  Target,
+  Layers,
 } from 'lucide-react';
 
 export default function CampusRecommendationsPage() {
@@ -30,6 +33,7 @@ export default function CampusRecommendationsPage() {
   const [loading, setLoading] = useState(true);
   const [runningCampusRec, setRunningCampusRec] = useState(false);
   const [runError, setRunError] = useState<string | null>(null);
+  const [activeTab, setActiveTab] = useState<'all' | 'recommendations' | 'evaluation' | 'predictions'>('all');
 
   const campusId = authUser?.campus?.id || 1;
   const campusCode = authUser?.campus?.code || 'DIFFUN';
@@ -227,28 +231,88 @@ export default function CampusRecommendationsPage() {
             </div>
           )}
 
-          {/* Campus Competency Evaluation Card (if available) */}
-          {campusResult?.competency_profile && (
-            <CompetencyProfilingCard
-              profile={campusResult.competency_profile}
-              isDepartment={true}
-              departmentName={campusName}
-              facultyCount={campusResult.eligible_faculty_count}
-              defaultExpanded={true}
-            />
-          )}
-
-          {/* Render Recommendation Card if available */}
+          {/* When results are available */}
           {campusResult && (
-            <RecommendationCard
-              result={campusResult}
-              title={`Campus Training Recommendations — ${campusName}`}
-              subtitle="Multi-Department Training Needs Analysis & Priority Synthesis"
-              timestamp={campusResult.generated_at || campusResult.last_recommendation_at}
-              scopeLabel="Campus Model Synthesis"
-              statsRow={statsRow}
-              isDepartment={true}
-            />
+            <div className="space-y-6">
+              {/* 1. Quick Stats Row at Top for Glanceable KPIs */}
+              {statsRow}
+
+              {/* 2. Section Navigation Tabs */}
+              <div className="flex items-center gap-1.5 p-1.5 rounded-2xl bg-white dark:bg-dark-card border border-light-border dark:border-dark-border shadow-sm overflow-x-auto">
+                <button
+                  type="button"
+                  onClick={() => setActiveTab('all')}
+                  className={`flex items-center gap-2 px-3.5 sm:px-4 py-2 rounded-xl text-xs font-bold transition-all shrink-0 ${
+                    activeTab === 'all'
+                      ? 'bg-brand-green text-white shadow-sm'
+                      : 'text-light-text dark:text-dark-muted hover:bg-light-bg dark:hover:bg-dark-bg'
+                  }`}
+                >
+                  <Layers className="w-3.5 h-3.5" />
+                  <span>Complete Overview</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setActiveTab('recommendations')}
+                  className={`flex items-center gap-2 px-3.5 sm:px-4 py-2 rounded-xl text-xs font-bold transition-all shrink-0 ${
+                    activeTab === 'recommendations'
+                      ? 'bg-brand-green text-white shadow-sm'
+                      : 'text-light-text dark:text-dark-muted hover:bg-light-bg dark:hover:bg-dark-bg'
+                  }`}
+                >
+                  <BookOpen className="w-3.5 h-3.5" />
+                  <span>Recommended Programs ({campusResult.recommendations?.length || 0})</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setActiveTab('predictions')}
+                  className={`flex items-center gap-2 px-3.5 sm:px-4 py-2 rounded-xl text-xs font-bold transition-all shrink-0 ${
+                    activeTab === 'predictions'
+                      ? 'bg-brand-green text-white shadow-sm'
+                      : 'text-light-text dark:text-dark-muted hover:bg-light-bg dark:hover:bg-dark-bg'
+                  }`}
+                >
+                  <Target className="w-3.5 h-3.5" />
+                  <span>ML Gap Predictions (3)</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setActiveTab('evaluation')}
+                  className={`flex items-center gap-2 px-3.5 sm:px-4 py-2 rounded-xl text-xs font-bold transition-all shrink-0 ${
+                    activeTab === 'evaluation'
+                      ? 'bg-brand-green text-white shadow-sm'
+                      : 'text-light-text dark:text-dark-muted hover:bg-light-bg dark:hover:bg-dark-bg'
+                  }`}
+                >
+                  <Award className="w-3.5 h-3.5" />
+                  <span>Campus Evaluation</span>
+                </button>
+              </div>
+
+              {/* 3. Primary Content: Recommended Training Programs & Predictions */}
+              {(activeTab === 'all' || activeTab === 'recommendations' || activeTab === 'predictions') && (
+                <RecommendationCard
+                  result={campusResult}
+                  title={`Campus Training Recommendations — ${campusName}`}
+                  subtitle="Multi-Department Training Needs Analysis & Priority Synthesis"
+                  timestamp={campusResult.generated_at || campusResult.last_recommendation_at}
+                  scopeLabel="Campus Model Synthesis"
+                  isDepartment={true}
+                  activeSection={activeTab === 'all' ? 'all' : activeTab}
+                />
+              )}
+
+              {/* 4. Campus Competency Evaluation Card */}
+              {(activeTab === 'all' || activeTab === 'evaluation') && campusResult.competency_profile && (
+                <CompetencyProfilingCard
+                  profile={campusResult.competency_profile}
+                  isDepartment={true}
+                  departmentName={campusName}
+                  facultyCount={campusResult.eligible_faculty_count}
+                  defaultExpanded={activeTab === 'evaluation'}
+                />
+              )}
+            </div>
           )}
         </>
       )}

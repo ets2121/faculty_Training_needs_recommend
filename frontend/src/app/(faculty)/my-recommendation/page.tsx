@@ -171,13 +171,13 @@ export default function MyRecommendationPage() {
             </div>
           )}
 
-          {/* Render Competency Profiling Card if available */}
+          {/* Render Primary Recommendation Card First (Actionable Programs & ML Gaps) */}
+          {recommendation && <RecommendationCard result={recommendation} timestamp={timestamp} />}
+
+          {/* Render Competency Profiling & Diagnostic Card */}
           {recommendation && recommendation.competency_profile && (
             <CompetencyProfilingCard profile={recommendation.competency_profile} />
           )}
-
-          {/* Render Recommendation Card if available */}
-          {recommendation && <RecommendationCard result={recommendation} timestamp={timestamp} />}
         </>
       )}
     </div>
