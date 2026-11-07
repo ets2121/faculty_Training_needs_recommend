@@ -2,22 +2,44 @@
 
 import React, { useState } from 'react';
 import { CompetencyProfile } from '@/types';
-import { Award, AlertTriangle, CheckCircle, ChevronDown, ChevronUp, Sparkles, BookOpen, Layers, ShieldCheck, FileText, ChevronRight } from 'lucide-react';
+import {
+  Award,
+  AlertTriangle,
+  CheckCircle,
+  ChevronDown,
+  ChevronUp,
+  Sparkles,
+  BookOpen,
+  Layers,
+  FileText,
+} from 'lucide-react';
 
 interface CompetencyProfilingCardProps {
   profile: CompetencyProfile;
   defaultExpanded?: boolean;
 }
 
-export default function CompetencyProfilingCard({ profile, defaultExpanded = false }: CompetencyProfilingCardProps) {
+export default function CompetencyProfilingCard({
+  profile,
+  defaultExpanded = false,
+}: CompetencyProfilingCardProps) {
   // Main accordion state (compact by default)
   const [isAccordionOpen, setIsAccordionOpen] = useState(defaultExpanded);
-  // Optional sub-details for deep inspection
+
+  // Sub-collapsible sections (compact by default to avoid visual overload)
+  const [showPartBreakdown, setShowPartBreakdown] = useState(false);
+  const [showDomainBreakdown, setShowDomainBreakdown] = useState(false);
   const [showDeepDiagnostic, setShowDeepDiagnostic] = useState(false);
 
   // Friendly Level Mapping (Low, Mid, High)
-  const levelTier = profile.level_tier || (profile.overall_level === 'Developing' ? 'Low' : profile.overall_level === 'Proficient' ? 'Mid' : 'High');
-  
+  const levelTier =
+    profile.level_tier ||
+    (profile.overall_level === 'Developing'
+      ? 'Low'
+      : profile.overall_level === 'Proficient'
+      ? 'Mid'
+      : 'High');
+
   // Custom Visual Themes per Level
   const getBadgeStyle = (tier: string) => {
     switch (tier) {
@@ -67,12 +89,14 @@ export default function CompetencyProfilingCard({ profile, defaultExpanded = fal
   return (
     <div className="relative overflow-hidden rounded-2xl bg-white dark:bg-dark-card border border-light-border dark:border-dark-border shadow-md transition-all">
       {/* Background Ambient Glow */}
-      <div className={`absolute top-0 right-0 w-80 h-80 bg-gradient-to-br ${badge.gradient} rounded-full blur-3xl pointer-events-none opacity-25`} />
+      <div
+        className={`absolute top-0 right-0 w-80 h-80 bg-gradient-to-br ${badge.gradient} rounded-full blur-3xl pointer-events-none opacity-25`}
+      />
 
       {/* ── COMPACT ACCORDION HEADER (Glanceable & Clickable) ──────────────── */}
-      <button
+      <div
         onClick={() => setIsAccordionOpen(!isAccordionOpen)}
-        className="w-full text-left p-4 sm:p-5 flex flex-col md:flex-row md:items-center justify-between gap-3.5 hover:bg-light-bg/40 dark:hover:bg-dark-bg/30 transition-all focus:outline-none"
+        className="w-full text-left p-4 sm:p-5 flex flex-col md:flex-row md:items-center justify-between gap-3.5 hover:bg-light-bg/40 dark:hover:bg-dark-bg/30 transition-all cursor-pointer select-none"
       >
         <div className="flex items-center gap-3 min-w-0">
           <div className="w-10 h-10 rounded-xl bg-brand-green/10 border border-brand-green/20 flex items-center justify-center shrink-0">
@@ -93,8 +117,8 @@ export default function CompetencyProfilingCard({ profile, defaultExpanded = fal
           </div>
         </div>
 
-        {/* Level Banner & Accordion Trigger */}
-        <div className="flex items-center justify-between md:justify-end gap-3 shrink-0">
+        {/* Level Banner & Prominent Text Action Button */}
+        <div className="flex items-center justify-between md:justify-end gap-3 shrink-0 flex-wrap">
           <div className={`flex items-center gap-2 px-3 py-1.5 rounded-xl border ${badge.bg} shadow-sm`}>
             <span className={`w-2 h-2 rounded-full animate-ping ${badge.dot}`} />
             <div className="text-left">
@@ -107,16 +131,28 @@ export default function CompetencyProfilingCard({ profile, defaultExpanded = fal
             </div>
           </div>
 
-          <div className="w-7 h-7 rounded-full bg-light-bg dark:bg-dark-bg border border-light-border dark:border-dark-border flex items-center justify-center text-brand-green">
-            {isAccordionOpen ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
-          </div>
+          {/* Explicit Expand / Collapse Text Button */}
+          <button
+            type="button"
+            onClick={(e) => {
+              e.stopPropagation();
+              setIsAccordionOpen(!isAccordionOpen);
+            }}
+            className="flex items-center gap-2 px-3.5 py-2 rounded-xl bg-brand-green hover:bg-brand-green-dark text-white font-bold text-xs shadow-md transition-all group"
+          >
+            <span>{isAccordionOpen ? 'Hide Assessment Details' : 'Show Assessment Details'}</span>
+            {isAccordionOpen ? (
+              <ChevronUp className="w-4 h-4 transition-transform group-hover:-translate-y-0.5" />
+            ) : (
+              <ChevronDown className="w-4 h-4 transition-transform group-hover:translate-y-0.5" />
+            )}
+          </button>
         </div>
-      </button>
+      </div>
 
       {/* ── EXPANDABLE EVALUATION DETAILS (Compact & Structured) ─────────── */}
       {isAccordionOpen && (
-        <div className="p-4 sm:p-5 pt-0 border-t border-light-border dark:border-dark-border/80 space-y-5 animate-fade-in mt-1">
-          
+        <div className="p-4 sm:p-5 pt-0 border-t border-light-border dark:border-dark-border/80 space-y-4 animate-fade-in mt-1">
           {/* 1. Clear Key Insight with Visual Highlights & ML Confirmation Signal */}
           <div className="p-4 sm:p-5 rounded-2xl bg-light-bg/80 dark:bg-dark-bg/60 border border-light-border dark:border-dark-border space-y-3.5 mt-3 shadow-sm">
             <div className="flex flex-wrap items-center justify-between gap-2 border-b border-light-border/60 dark:border-dark-border/60 pb-3">
@@ -145,7 +181,8 @@ export default function CompetencyProfilingCard({ profile, defaultExpanded = fal
                   Demonstrated Strengths
                 </span>
                 <span className="text-xs font-bold text-emerald-700 dark:text-emerald-300 mt-0.5 block truncate">
-                  {profile.explanation.strengths_summary || (profile.strengths?.[0]?.title ?? 'Core Pedagogy')}
+                  {profile.explanation.strengths_summary ||
+                    (profile.strengths?.[0]?.title ?? 'Core Pedagogy')}
                 </span>
               </div>
 
@@ -154,7 +191,8 @@ export default function CompetencyProfilingCard({ profile, defaultExpanded = fal
                   Priority Growth Gaps
                 </span>
                 <span className="text-xs font-bold text-amber-700 dark:text-amber-300 mt-0.5 block truncate">
-                  {profile.explanation.gaps_summary || (profile.growth_areas?.[0]?.title ?? 'Specialized Domains')}
+                  {profile.explanation.gaps_summary ||
+                    (profile.growth_areas?.[0]?.title ?? 'Specialized Domains')}
                 </span>
               </div>
 
@@ -187,141 +225,214 @@ export default function CompetencyProfilingCard({ profile, defaultExpanded = fal
             </div>
           </div>
 
-          {/* 2. Questionnaire Part Level Breakdown with 'Why' explanation */}
+          {/* 2. Questionnaire Part Level Breakdown (Collapsible Drawer with Explicit Button) */}
           {profile.part_levels && profile.part_levels.length > 0 && (
-            <div className="space-y-2">
-              <div className="flex items-center justify-between">
-                <h4 className="text-xs font-bold font-mono uppercase tracking-wider text-light-text dark:text-dark-muted flex items-center gap-1.5">
-                  <FileText className="w-3.5 h-3.5 text-brand-green" />
-                  <span>Questionnaire Required Parts Level Assessment</span>
-                </h4>
-                <span className="text-[10px] font-mono text-dark-muted">5 Required Parts</span>
-              </div>
+            <div className="rounded-2xl border border-light-border dark:border-dark-border bg-white dark:bg-dark-card overflow-hidden shadow-sm">
+              <button
+                type="button"
+                onClick={() => setShowPartBreakdown(!showPartBreakdown)}
+                className="w-full text-left p-3.5 sm:p-4 flex items-center justify-between gap-3 hover:bg-light-bg/50 dark:hover:bg-dark-bg/40 transition-colors focus:outline-none"
+              >
+                <div className="flex items-center gap-2">
+                  <FileText className="w-4 h-4 text-brand-green" />
+                  <span className="text-xs font-bold font-mono uppercase tracking-wider text-light-text dark:text-white">
+                    Questionnaire Required Parts Level Assessment
+                  </span>
+                  <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-light-muted-surface dark:bg-dark-bg border border-light-border dark:border-dark-border text-light-text/60 dark:text-dark-muted hidden sm:inline-block">
+                    5 Required Parts
+                  </span>
+                </div>
+                <div className="flex items-center gap-1.5 px-3 py-1 rounded-xl bg-brand-green/10 text-brand-green text-xs font-bold hover:bg-brand-green hover:text-white transition-all">
+                  <span>{showPartBreakdown ? 'Hide 5-Part Breakdown' : 'Show 5-Part Breakdown'}</span>
+                  {showPartBreakdown ? <ChevronUp className="w-3.5 h-3.5" /> : <ChevronDown className="w-3.5 h-3.5" />}
+                </div>
+              </button>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2.5">
-                {profile.part_levels.map((part) => (
-                  <div
-                    key={part.part_number}
-                    className="p-3 rounded-xl border border-light-border dark:border-dark-border bg-white dark:bg-dark-card flex flex-col justify-between gap-2 shadow-sm"
-                  >
-                    <div className="flex items-center justify-between gap-2">
-                      <span className="text-[11px] font-extrabold text-light-text dark:text-white truncate">
-                        Part {part.part_number}: {part.title}
-                      </span>
-                      <span className={`text-[10px] font-mono font-bold px-2 py-0.5 rounded-md border shrink-0 ${getTierPill(part.level_tier)}`}>
-                        {part.level_tier} Level
-                      </span>
-                    </div>
+              {showPartBreakdown && (
+                <div className="p-3.5 sm:p-4 pt-0 border-t border-light-border/60 dark:border-dark-border/60 animate-fade-in mt-3">
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2.5">
+                    {profile.part_levels.map((part) => (
+                      <div
+                        key={part.part_number}
+                        className="p-3 rounded-xl border border-light-border dark:border-dark-border bg-light-bg/50 dark:bg-dark-bg/40 flex flex-col justify-between gap-2 shadow-xs"
+                      >
+                        <div className="flex items-center justify-between gap-2">
+                          <span className="text-[11px] font-extrabold text-light-text dark:text-white truncate">
+                            Part {part.part_number}: {part.title}
+                          </span>
+                          <span
+                            className={`text-[10px] font-mono font-bold px-2 py-0.5 rounded-md border shrink-0 ${getTierPill(
+                              part.level_tier
+                            )}`}
+                          >
+                            {part.level_tier} Level
+                          </span>
+                        </div>
 
-                    <div className="text-[11px] text-light-text dark:text-dark-muted leading-snug">
-                      <strong className="text-light-text dark:text-dark-text block mb-0.5">{part.level_label}</strong>
-                      <span className="text-[10.5px] opacity-90">{part.why}</span>
-                    </div>
+                        <div className="text-[11px] text-light-text dark:text-dark-muted leading-snug">
+                          <strong className="text-light-text dark:text-dark-text block mb-0.5">
+                            {part.level_label}
+                          </strong>
+                          <span className="text-[10.5px] opacity-90">{part.why}</span>
+                        </div>
+                      </div>
+                    ))}
                   </div>
-                ))}
-              </div>
+                </div>
+              )}
             </div>
           )}
 
-          {/* 3. Skill Domain Breakdown (Core, Functional, Leadership) */}
-          <div className="space-y-2">
-            <h4 className="text-xs font-bold font-mono uppercase tracking-wider text-light-text dark:text-dark-muted">
-              Competency Domain Breakdown
-            </h4>
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
-              {Object.entries(profile.domains).map(([domainKey, d]) => {
-                const domainTier = d.level === 'Developing' ? 'Low' : d.level === 'Proficient' ? 'Mid' : 'High';
-                return (
-                  <div
-                    key={domainKey}
-                    className="p-3 rounded-xl border border-light-border dark:border-dark-border bg-white dark:bg-dark-card space-y-2 shadow-sm"
-                  >
-                    <div className="flex items-center justify-between text-xs">
-                      <span className="font-bold text-light-text dark:text-white capitalize">{domainKey} Domain</span>
-                      <span className={`text-[10px] font-mono font-bold px-1.5 py-0.5 rounded border ${getTierPill(domainTier)}`}>
-                        {domainTier} ({d.index.toFixed(2)})
-                      </span>
-                    </div>
-                    {/* Micro Progress Bar */}
-                    <div className="w-full h-1.5 rounded-full bg-light-border dark:bg-dark-border overflow-hidden">
-                      <div
-                        className={`h-full rounded-full ${
-                          domainTier === 'High' ? 'bg-emerald-500' : domainTier === 'Mid' ? 'bg-brand-gold' : 'bg-rose-500'
-                        }`}
-                        style={{ width: `${Math.min(100, Math.max(10, (d.index / 5.0) * 100))}%` }}
-                      />
-                    </div>
-                    <div className="flex items-center justify-between text-[10px] text-dark-muted pt-0.5">
-                      <span>{d.count} Skills</span>
-                      {d.gaps_count > 0 ? (
-                        <span className="text-amber-500 font-semibold">{d.gaps_count} gap{d.gaps_count > 1 ? 's' : ''} flagged</span>
-                      ) : (
-                        <span className="text-emerald-500 font-medium">No gaps</span>
-                      )}
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          </div>
-
-          {/* 4. Optional Toggle for Deep Diagnostic (Top 3 Strengths & Top 3 Gaps) */}
-          <div className="pt-1">
+          {/* 3. Skill Domain Breakdown (Collapsible Drawer with Explicit Button) */}
+          <div className="rounded-2xl border border-light-border dark:border-dark-border bg-white dark:bg-dark-card overflow-hidden shadow-sm">
             <button
-              onClick={() => setShowDeepDiagnostic(!showDeepDiagnostic)}
-              className="flex items-center justify-between w-full px-3.5 py-2.5 rounded-xl bg-light-bg/50 dark:bg-dark-bg/50 border border-light-border dark:border-dark-border text-xs font-semibold text-light-text dark:text-white hover:border-brand-green transition-all"
+              type="button"
+              onClick={() => setShowDomainBreakdown(!showDomainBreakdown)}
+              className="w-full text-left p-3.5 sm:p-4 flex items-center justify-between gap-3 hover:bg-light-bg/50 dark:hover:bg-dark-bg/40 transition-colors focus:outline-none"
             >
               <div className="flex items-center gap-2">
-                <Layers className="w-3.5 h-3.5 text-brand-green" />
-                <span>View Top Strengths & Flagged Growth Gaps</span>
+                <Award className="w-4 h-4 text-brand-gold" />
+                <span className="text-xs font-bold font-mono uppercase tracking-wider text-light-text dark:text-white">
+                  Competency Domain Scores
+                </span>
+                <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-light-muted-surface dark:bg-dark-bg border border-light-border dark:border-dark-border text-light-text/60 dark:text-dark-muted hidden sm:inline-block">
+                  Core, Functional, Leadership
+                </span>
               </div>
-              {showDeepDiagnostic ? <ChevronUp className="w-4 h-4 text-brand-green" /> : <ChevronDown className="w-4 h-4 text-brand-green" />}
+              <div className="flex items-center gap-1.5 px-3 py-1 rounded-xl bg-brand-gold/10 text-amber-800 dark:text-amber-200 text-xs font-bold hover:bg-brand-gold hover:text-white transition-all">
+                <span>{showDomainBreakdown ? 'Hide Domain Scores' : 'Show Domain Scores'}</span>
+                {showDomainBreakdown ? <ChevronUp className="w-3.5 h-3.5" /> : <ChevronDown className="w-3.5 h-3.5" />}
+              </div>
             </button>
 
-            {showDeepDiagnostic && (
-              <div className="mt-3 grid grid-cols-1 md:grid-cols-2 gap-3 animate-fade-in text-xs">
-                {/* Strengths */}
-                <div className="p-3.5 rounded-xl border border-emerald-500/20 bg-emerald-500/5 space-y-2">
-                  <div className="flex items-center gap-1.5 text-emerald-600 dark:text-emerald-400 font-bold uppercase text-[11px]">
-                    <CheckCircle className="w-3.5 h-3.5" />
-                    <span>Key Strengths (High Proficiency)</span>
-                  </div>
-                  <ul className="space-y-1.5">
-                    {profile.strengths.map((s) => (
-                      <li key={s.key} className="flex items-center justify-between p-2 rounded-lg bg-white/70 dark:bg-dark-card/70 border border-emerald-500/10">
-                        <span className="text-light-text dark:text-dark-text font-medium">{s.title}</span>
-                        <span className="text-[10px] font-mono font-bold text-emerald-600 dark:text-emerald-400 bg-emerald-500/10 px-1.5 py-0.5 rounded">
-                          {s.proficiency}/5
-                        </span>
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-
-                {/* Gaps */}
-                <div className="p-3.5 rounded-xl border border-rose-500/20 bg-rose-500/5 space-y-2">
-                  <div className="flex items-center gap-1.5 text-rose-600 dark:text-rose-400 font-bold uppercase text-[11px]">
-                    <AlertTriangle className="w-3.5 h-3.5" />
-                    <span>Identified Gaps (Calibrating Recommendations)</span>
-                  </div>
-                  <ul className="space-y-1.5">
-                    {profile.growth_areas.map((g) => (
-                      <li key={g.key} className="p-2 rounded-lg bg-white/70 dark:bg-dark-card/70 border border-rose-500/10 space-y-0.5">
-                        <div className="flex items-center justify-between">
-                          <span className="text-light-text dark:text-dark-text font-medium">{g.title}</span>
-                          <span className="text-[10px] font-mono font-bold text-rose-600 dark:text-rose-400 bg-rose-500/10 px-1.5 py-0.5 rounded">
-                            Gap: +{g.gap}
+            {showDomainBreakdown && (
+              <div className="p-3.5 sm:p-4 pt-0 border-t border-light-border/60 dark:border-dark-border/60 animate-fade-in mt-3">
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
+                  {Object.entries(profile.domains).map(([domainKey, d]) => {
+                    const domainTier =
+                      d.level === 'Developing' ? 'Low' : d.level === 'Proficient' ? 'Mid' : 'High';
+                    return (
+                      <div
+                        key={domainKey}
+                        className="p-3 rounded-xl border border-light-border dark:border-dark-border bg-light-bg/50 dark:bg-dark-bg/40 space-y-2 shadow-xs"
+                      >
+                        <div className="flex items-center justify-between text-xs">
+                          <span className="font-bold text-light-text dark:text-white capitalize">
+                            {domainKey} Domain
+                          </span>
+                          <span
+                            className={`text-[10px] font-mono font-bold px-1.5 py-0.5 rounded border ${getTierPill(
+                              domainTier
+                            )}`}
+                          >
+                            {domainTier} ({d.index.toFixed(2)})
                           </span>
                         </div>
-                        <p className="text-[10.5px] text-dark-muted">{g.reason}</p>
-                      </li>
-                    ))}
-                  </ul>
+                        {/* Micro Progress Bar */}
+                        <div className="w-full h-1.5 rounded-full bg-light-border dark:bg-dark-border overflow-hidden">
+                          <div
+                            className={`h-full rounded-full ${
+                              domainTier === 'High'
+                                ? 'bg-emerald-500'
+                                : domainTier === 'Mid'
+                                ? 'bg-brand-gold'
+                                : 'bg-rose-500'
+                            }`}
+                            style={{ width: `${Math.min(100, Math.max(10, (d.index / 5.0) * 100))}%` }}
+                          />
+                        </div>
+                        <div className="flex items-center justify-between text-[10px] text-dark-muted pt-0.5">
+                          <span>{d.count} Skills</span>
+                          {d.gaps_count > 0 ? (
+                            <span className="text-amber-500 font-semibold">
+                              {d.gaps_count} gap{d.gaps_count > 1 ? 's' : ''} flagged
+                            </span>
+                          ) : (
+                            <span className="text-emerald-500 font-medium">No gaps</span>
+                          )}
+                        </div>
+                      </div>
+                    );
+                  })}
                 </div>
               </div>
             )}
           </div>
 
+          {/* 4. Deep Diagnostic (Strengths & Gaps) with Explicit Button */}
+          <div className="rounded-2xl border border-light-border dark:border-dark-border bg-white dark:bg-dark-card overflow-hidden shadow-sm">
+            <button
+              type="button"
+              onClick={() => setShowDeepDiagnostic(!showDeepDiagnostic)}
+              className="flex items-center justify-between w-full p-3.5 sm:p-4 hover:bg-light-bg/50 dark:hover:bg-dark-bg/40 text-xs font-bold text-light-text dark:text-white transition-all focus:outline-none"
+            >
+              <div className="flex items-center gap-2">
+                <Layers className="w-4 h-4 text-brand-green" />
+                <span className="font-mono uppercase tracking-wider">
+                  Top Strengths & Flagged Growth Gaps
+                </span>
+              </div>
+              <div className="flex items-center gap-1.5 px-3 py-1 rounded-xl bg-brand-green/10 text-brand-green text-xs font-bold hover:bg-brand-green hover:text-white transition-all">
+                <span>{showDeepDiagnostic ? 'Hide Deep Dive' : 'Show Strengths & Gaps Deep Dive'}</span>
+                {showDeepDiagnostic ? <ChevronUp className="w-3.5 h-3.5" /> : <ChevronDown className="w-3.5 h-3.5" />}
+              </div>
+            </button>
+
+            {showDeepDiagnostic && (
+              <div className="p-3.5 sm:p-4 pt-0 border-t border-light-border/60 dark:border-dark-border/60 animate-fade-in mt-3">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-xs">
+                  {/* Strengths */}
+                  <div className="p-3.5 rounded-xl border border-emerald-500/20 bg-emerald-500/5 space-y-2">
+                    <div className="flex items-center gap-1.5 text-emerald-600 dark:text-emerald-400 font-bold uppercase text-[11px]">
+                      <CheckCircle className="w-3.5 h-3.5" />
+                      <span>Standout Strengths (Proficiency ≥ 4)</span>
+                    </div>
+                    <ul className="space-y-1.5">
+                      {profile.strengths.map((s) => (
+                        <li
+                          key={s.key}
+                          className="flex items-center justify-between py-1 border-b border-emerald-500/10 last:border-0"
+                        >
+                          <span className="text-light-text dark:text-white font-medium">{s.title}</span>
+                          <span className="text-[11px] font-mono font-bold text-emerald-600 dark:text-emerald-400">
+                            {s.proficiency}/5
+                          </span>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+
+                  {/* Growth Areas */}
+                  <div className="p-3.5 rounded-xl border border-amber-500/20 bg-amber-500/5 space-y-2">
+                    <div className="flex items-center gap-1.5 text-amber-600 dark:text-amber-400 font-bold uppercase text-[11px]">
+                      <AlertTriangle className="w-3.5 h-3.5" />
+                      <span>Priority Growth Gaps (Need Upskilling)</span>
+                    </div>
+                    <ul className="space-y-1.5">
+                      {profile.growth_areas.map((g) => (
+                        <li
+                          key={g.key}
+                          className="py-1 border-b border-amber-500/10 last:border-0 space-y-0.5"
+                        >
+                          <div className="flex items-center justify-between">
+                            <span className="text-light-text dark:text-white font-medium">
+                              {g.title}
+                            </span>
+                            <span className="text-[10px] font-mono font-bold px-1.5 py-0.5 rounded bg-amber-500/15 text-amber-500">
+                              Gap: +{g.gap}
+                            </span>
+                          </div>
+                          <p className="text-[10.5px] text-light-text/70 dark:text-dark-muted">
+                            {g.reason}
+                          </p>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
         </div>
       )}
     </div>

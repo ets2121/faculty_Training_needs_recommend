@@ -16,6 +16,8 @@ import {
   AlertTriangle,
   Info,
   CheckCircle2,
+  ChevronDown,
+  ChevronUp,
 } from 'lucide-react';
 import { useToast } from '@/context/ToastContext';
 
@@ -298,6 +300,11 @@ export default function QuestionnairePartForm({
   const [formData, setFormData] = useState<any>(initialData || {});
   const [saving, setSaving] = useState(false);
   const [activeCompetencyDomain, setActiveCompetencyDomain] = useState<string>('all');
+  const [expandedDomains, setExpandedDomains] = useState<Record<string, boolean>>({
+    core: true,
+    functional: false,
+    leadership: false,
+  });
   const { showToast } = useToast();
 
   useEffect(() => {
@@ -715,153 +722,208 @@ export default function QuestionnairePartForm({
             </p>
           </div>
 
-          {/* Domain Filter Tabs */}
-          <div className="flex flex-wrap items-center gap-2 border-b border-light-border dark:border-dark-border pb-3">
-            <span className="text-xs text-light-text dark:text-dark-muted font-medium mr-1">Filter Domain:</span>
-            {[
-              { id: 'all', label: 'All (19)' },
-              { id: 'core', label: 'Core (4)' },
-              { id: 'functional', label: 'Functional (10)' },
-              { id: 'leadership', label: 'Leadership (5)' },
-            ].map((tab) => (
-              <button
-                key={tab.id}
-                type="button"
-                onClick={() => setActiveCompetencyDomain(tab.id)}
-                className={`px-3 py-1.5 rounded-xl text-xs font-semibold transition-all ${
-                  activeCompetencyDomain === tab.id
-                    ? 'bg-brand-green text-white shadow-sm'
-                    : 'bg-light-muted-surface dark:bg-dark-bg text-light-text dark:text-dark-muted hover:text-white'
-                }`}
-              >
-                {tab.label}
-              </button>
-            ))}
+          {/* Domain Filter Tabs & Expand/Collapse All Actions */}
+          <div className="flex flex-wrap items-center justify-between gap-2 border-b border-light-border dark:border-dark-border pb-3">
+            <div className="flex flex-wrap items-center gap-2">
+              <span className="text-xs text-light-text dark:text-dark-muted font-medium mr-1">Filter Domain:</span>
+              {[
+                { id: 'all', label: 'All (19)' },
+                { id: 'core', label: 'Core (4)' },
+                { id: 'functional', label: 'Functional (10)' },
+                { id: 'leadership', label: 'Leadership (5)' },
+              ].map((tab) => (
+                <button
+                  key={tab.id}
+                  type="button"
+                  onClick={() => {
+                    setActiveCompetencyDomain(tab.id);
+                    if (tab.id !== 'all') {
+                      setExpandedDomains((prev) => ({ ...prev, [tab.id]: true }));
+                    }
+                  }}
+                  className={`px-3 py-1.5 rounded-xl text-xs font-semibold transition-all ${
+                    activeCompetencyDomain === tab.id
+                      ? 'bg-brand-green text-white shadow-sm'
+                      : 'bg-light-muted-surface dark:bg-dark-bg text-light-text dark:text-dark-muted hover:text-white'
+                  }`}
+                >
+                  {tab.label}
+                </button>
+              ))}
+            </div>
+
+            <button
+              type="button"
+              onClick={() => {
+                const allOpen = Object.values(expandedDomains).every(Boolean);
+                setExpandedDomains({
+                  core: !allOpen,
+                  functional: !allOpen,
+                  leadership: !allOpen,
+                });
+              }}
+              className="text-xs font-bold text-brand-green hover:underline flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-brand-green/10 hover:bg-brand-green hover:text-white transition-all"
+            >
+              <span>{Object.values(expandedDomains).every(Boolean) ? 'Collapse All Domains' : 'Expand All Domains'}</span>
+              {Object.values(expandedDomains).every(Boolean) ? (
+                <ChevronUp className="w-3.5 h-3.5" />
+              ) : (
+                <ChevronDown className="w-3.5 h-3.5" />
+              )}
+            </button>
           </div>
 
-          {/* Competency Cards by Domain */}
-          <div className="space-y-6">
+          {/* Competency Cards Grouped by Collapsible Domain Drawers */}
+          <div className="space-y-4">
             {COMPETENCY_DOMAINS.filter(
               (dom) => activeCompetencyDomain === 'all' || activeCompetencyDomain === dom.domain
-            ).map((dom) => (
-              <div key={dom.domain} className="space-y-3">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    <Award className="w-4 h-4 text-brand-gold" />
-                    <h3 className="text-sm font-bold text-light-text dark:text-white uppercase tracking-wider text-[11px]">
-                      {dom.label}
-                    </h3>
-                  </div>
-                  <span className="text-[11px] text-light-text/60 dark:text-dark-muted font-mono">
-                    {dom.items.length} items
-                  </span>
-                </div>
-                <p className="text-[11px] text-light-text/70 dark:text-dark-muted">
-                  {dom.description}
-                </p>
-
-                <div className="space-y-3.5">
-                  {dom.items.map((item) => {
-                    const compData = formData.competency?.[item.key] || {
-                      proficiency: 3,
-                      importance: 4,
-                    };
-                    const gap = Math.max(0, compData.importance - compData.proficiency);
-
-                    return (
-                      <div
-                        key={item.key}
-                        className="p-4 sm:p-5 rounded-2xl border border-light-border dark:border-dark-border bg-light-bg dark:bg-dark-bg/60 space-y-4 hover:border-brand-green/30 transition-all"
-                      >
-                        <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-2">
-                          <div>
-                            <h4 className="text-sm font-bold text-light-text dark:text-white">
-                              {item.label}
-                            </h4>
-                            <p className="text-xs text-light-text/70 dark:text-dark-muted mt-0.5">
-                              {item.desc}
-                            </p>
-                          </div>
-                          {gap > 0 && (
-                            <span className="inline-flex items-center gap-1 self-start shrink-0 px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-amber-500/10 text-amber-500 border border-amber-500/20 font-mono">
-                              Gap: +{gap}
-                            </span>
-                          )}
-                        </div>
-
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-5 pt-2">
-                          {/* Proficiency Slider */}
-                          <div className="space-y-1.5 p-3 rounded-xl bg-white dark:bg-dark-card border border-light-border dark:border-dark-border">
-                            <div className="flex items-center justify-between text-xs">
-                              <span className="font-semibold text-light-text dark:text-dark-text flex items-center gap-1.5">
-                                <span className="w-2 h-2 rounded-full bg-brand-green" />
-                                Current Proficiency:
-                              </span>
-                              <span className="font-bold text-brand-green font-mono text-xs">
-                                {PROFICIENCY_LABELS[compData.proficiency]?.text || `${compData.proficiency}/5`}
-                              </span>
-                            </div>
-                            <input
-                              type="range"
-                              min={1}
-                              max={5}
-                              value={compData.proficiency}
-                              onChange={(e) => {
-                                const val = parseInt(e.target.value);
-                                setFormData({
-                                  ...formData,
-                                  competency: {
-                                    ...formData.competency,
-                                    [item.key]: { ...compData, proficiency: val },
-                                  },
-                                });
-                              }}
-                              className="w-full accent-brand-green cursor-pointer"
-                            />
-                            <p className="text-[10px] text-light-text/60 dark:text-dark-muted italic">
-                              {PROFICIENCY_LABELS[compData.proficiency]?.desc}
-                            </p>
-                          </div>
-
-                          {/* Importance Slider */}
-                          <div className="space-y-1.5 p-3 rounded-xl bg-white dark:bg-dark-card border border-light-border dark:border-dark-border">
-                            <div className="flex items-center justify-between text-xs">
-                              <span className="font-semibold text-light-text dark:text-dark-text flex items-center gap-1.5">
-                                <span className="w-2 h-2 rounded-full bg-brand-gold" />
-                                Importance to Job:
-                              </span>
-                              <span className="font-bold text-brand-gold font-mono text-xs">
-                                {IMPORTANCE_LABELS[compData.importance]?.text || `${compData.importance}/5`}
-                              </span>
-                            </div>
-                            <input
-                              type="range"
-                              min={1}
-                              max={5}
-                              value={compData.importance}
-                              onChange={(e) => {
-                                const val = parseInt(e.target.value);
-                                setFormData({
-                                  ...formData,
-                                  competency: {
-                                    ...formData.competency,
-                                    [item.key]: { ...compData, importance: val },
-                                  },
-                                });
-                              }}
-                              className="w-full accent-brand-gold cursor-pointer"
-                            />
-                            <p className="text-[10px] text-light-text/60 dark:text-dark-muted italic">
-                              {IMPORTANCE_LABELS[compData.importance]?.desc}
-                            </p>
-                          </div>
-                        </div>
+            ).map((dom) => {
+              const isOpen = expandedDomains[dom.domain] ?? true;
+              return (
+                <div
+                  key={dom.domain}
+                  className="rounded-2xl border border-light-border dark:border-dark-border bg-white dark:bg-dark-card overflow-hidden shadow-sm"
+                >
+                  {/* Domain Header with Explicit Expand / Collapse Text Button */}
+                  <button
+                    type="button"
+                    onClick={() =>
+                      setExpandedDomains((prev) => ({
+                        ...prev,
+                        [dom.domain]: !isOpen,
+                      }))
+                    }
+                    className="w-full text-left p-4 sm:p-4.5 flex flex-col sm:flex-row sm:items-center justify-between gap-3 hover:bg-light-bg/50 dark:hover:bg-dark-bg/40 transition-colors focus:outline-none"
+                  >
+                    <div className="flex items-center gap-3">
+                      <div className="w-8 h-8 rounded-xl bg-brand-gold/10 border border-brand-gold/20 flex items-center justify-center shrink-0">
+                        <Award className="w-4 h-4 text-brand-gold" />
                       </div>
-                    );
-                  })}
+                      <div>
+                        <h3 className="text-sm font-bold text-light-text dark:text-white uppercase tracking-wider text-[11px] flex items-center gap-2">
+                          <span>{dom.label}</span>
+                          <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-light-muted-surface dark:bg-dark-bg border border-light-border dark:border-dark-border text-light-text/70 dark:text-dark-muted font-normal">
+                            {dom.items.length} competencies
+                          </span>
+                        </h3>
+                        <p className="text-[11px] text-light-text/70 dark:text-dark-muted mt-0.5">
+                          {dom.description}
+                        </p>
+                      </div>
+                    </div>
+
+                    <div className="flex items-center gap-1.5 self-end sm:self-center px-3 py-1.5 rounded-xl bg-brand-green/10 text-brand-green text-xs font-bold hover:bg-brand-green hover:text-white transition-all shrink-0">
+                      <span>{isOpen ? `Hide ${dom.label.split(' ')[0]}` : `Show ${dom.label.split(' ')[0]} (${dom.items.length})`}</span>
+                      {isOpen ? <ChevronUp className="w-3.5 h-3.5" /> : <ChevronDown className="w-3.5 h-3.5" />}
+                    </div>
+                  </button>
+
+                  {/* Competency Items in Drawer */}
+                  {isOpen && (
+                    <div className="p-4 sm:p-5 pt-0 border-t border-light-border/60 dark:border-dark-border/60 space-y-3.5 mt-3 animate-fade-in">
+                      {dom.items.map((item) => {
+                        const compData = formData.competency?.[item.key] || {
+                          proficiency: 3,
+                          importance: 4,
+                        };
+                        const gap = Math.max(0, compData.importance - compData.proficiency);
+
+                        return (
+                          <div
+                            key={item.key}
+                            className="p-4 rounded-xl border border-light-border dark:border-dark-border bg-light-bg/50 dark:bg-dark-bg/50 space-y-3.5 hover:border-brand-green/30 transition-all"
+                          >
+                            <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-2">
+                              <div>
+                                <h4 className="text-sm font-bold text-light-text dark:text-white">
+                                  {item.label}
+                                </h4>
+                                <p className="text-xs text-light-text/70 dark:text-dark-muted mt-0.5">
+                                  {item.desc}
+                                </p>
+                              </div>
+                              {gap > 0 && (
+                                <span className="inline-flex items-center gap-1 self-start shrink-0 px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-amber-500/10 text-amber-500 border border-amber-500/20 font-mono">
+                                  Gap: +{gap}
+                                </span>
+                              )}
+                            </div>
+
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-1">
+                              {/* Proficiency Slider */}
+                              <div className="space-y-1.5 p-3 rounded-xl bg-white dark:bg-dark-card border border-light-border dark:border-dark-border">
+                                <div className="flex items-center justify-between text-xs">
+                                  <span className="font-semibold text-light-text dark:text-dark-text flex items-center gap-1.5">
+                                    <span className="w-2 h-2 rounded-full bg-brand-green" />
+                                    Current Proficiency:
+                                  </span>
+                                  <span className="font-bold text-brand-green font-mono text-xs">
+                                    {PROFICIENCY_LABELS[compData.proficiency]?.text || `${compData.proficiency}/5`}
+                                  </span>
+                                </div>
+                                <input
+                                  type="range"
+                                  min={1}
+                                  max={5}
+                                  value={compData.proficiency}
+                                  onChange={(e) => {
+                                    const val = parseInt(e.target.value);
+                                    setFormData({
+                                      ...formData,
+                                      competency: {
+                                        ...formData.competency,
+                                        [item.key]: { ...compData, proficiency: val },
+                                      },
+                                    });
+                                  }}
+                                  className="w-full accent-brand-green cursor-pointer"
+                                />
+                                <p className="text-[10px] text-light-text/60 dark:text-dark-muted italic">
+                                  {PROFICIENCY_LABELS[compData.proficiency]?.desc}
+                                </p>
+                              </div>
+
+                              {/* Importance Slider */}
+                              <div className="space-y-1.5 p-3 rounded-xl bg-white dark:bg-dark-card border border-light-border dark:border-dark-border">
+                                <div className="flex items-center justify-between text-xs">
+                                  <span className="font-semibold text-light-text dark:text-dark-text flex items-center gap-1.5">
+                                    <span className="w-2 h-2 rounded-full bg-brand-gold" />
+                                    Importance to Job:
+                                  </span>
+                                  <span className="font-bold text-brand-gold font-mono text-xs">
+                                    {IMPORTANCE_LABELS[compData.importance]?.text || `${compData.importance}/5`}
+                                  </span>
+                                </div>
+                                <input
+                                  type="range"
+                                  min={1}
+                                  max={5}
+                                  value={compData.importance}
+                                  onChange={(e) => {
+                                    const val = parseInt(e.target.value);
+                                    setFormData({
+                                      ...formData,
+                                      competency: {
+                                        ...formData.competency,
+                                        [item.key]: { ...compData, importance: val },
+                                      },
+                                    });
+                                  }}
+                                  className="w-full accent-brand-gold cursor-pointer"
+                                />
+                                <p className="text-[10px] text-light-text/60 dark:text-dark-muted italic">
+                                  {IMPORTANCE_LABELS[compData.importance]?.desc}
+                                </p>
+                              </div>
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  )}
                 </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         </div>
       )}
