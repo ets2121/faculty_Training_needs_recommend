@@ -67,6 +67,7 @@ export default function MyRecommendationPage() {
     } catch (err: any) {
       const msg =
         err.response?.data?.detail ||
+        err.message ||
         'Unable to generate recommendation at this time. Please ensure the AI recommendation model is ready or contact the administrator.';
       setRunError(msg);
       showToast('error', 'Request Failed', msg);

@@ -145,8 +145,6 @@ def request_my_recommendation(
     - Updates faculty.last_recommendation_at with the timestamp
     - Sets faculty.questionnaire_status = 'has_recommendation'
     """
-    from app.ml.predictor import ModelService
-    from app.core.config import get_settings
     from app.services.recommendation import individual
 
     faculty = _get_faculty_or_403(current_user, db)
@@ -159,8 +157,14 @@ def request_my_recommendation(
             detail=f"Please complete the following questionnaire parts first: {missing}",
         )
 
-    settings = get_settings()
-    model = ModelService(settings.model_dir)
+    # Use the app-level shared model (already loaded at startup) instead of
+    # creating a new ModelService instance on every request (expensive + CWD-sensitive).
+    model = getattr(request.app.state, "model", None)
+    if model is None:
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail="The AI recommendation model is not currently initialized. Please verify the active model in the ML Pipeline or contact the system administrator.",
+        )
     try:
         model.ensure_active()
     except Exception as exc:

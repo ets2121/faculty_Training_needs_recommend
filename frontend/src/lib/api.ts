@@ -5,7 +5,7 @@ const api = axios.create({
   headers: {
     'Content-Type': 'application/json',
   },
-  timeout: 15000,
+  timeout: 60000, // 60s — ML inference can take several seconds
 });
 
 // Attach JWT token to requests if present in localStorage
