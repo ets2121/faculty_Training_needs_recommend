@@ -29,7 +29,8 @@ from app.core.security import (
 from app.db.models import Campus, Department, Faculty, RecommendationHistory, TrainingRecommendationRequest, User
 from app.db.session import get_db
 from app.api.questionnaire import build_faculty_record, is_eligible_for_recommendation
-from app.services.recommendation import individual, department as dept_recommendation
+from app.services.recommendation import individual, department as dept_recommendation, match_catalog_items
+from app.services.profiler import evaluate_faculty_profile
 
 router = APIRouter(prefix="/recommendations", tags=["Recommendations"])
 
@@ -177,6 +178,8 @@ def department_recommendation(
             dept = db.query(Department).filter(Department.id == department_id, Department.campus_id == my_campus_id).first()
         elif department_code:
             dept = db.query(Department).filter(Department.code == department_code.strip().upper(), Department.campus_id == my_campus_id).first()
+        else:
+            dept = db.query(Department).filter(Department.campus_id == my_campus_id).first()
         if not dept:
             raise HTTPException(status_code=404, detail="Department not found in your campus.")
 
@@ -188,6 +191,8 @@ def department_recommendation(
             if campus_id:
                 q = q.filter(Department.campus_id == campus_id)
             dept = q.first()
+        else:
+            dept = db.query(Department).first()
         if not dept:
             raise HTTPException(status_code=404, detail="Department not found.")
 
@@ -229,15 +234,36 @@ def department_recommendation(
             detail=f"Inference error generating department recommendation for '{dept.name}' ({dept.code}): {exc}. Please verify the active model and training catalog.",
         )
 
-    # Store individual results for each eligible faculty
+    # Store individual results for each eligible faculty in high-speed batch
     individual_results_stored = 0
-    for faculty_obj in eligible_faculty:
-        try:
-            ind_result = individual(model, build_faculty_record(faculty_obj.id, faculty_obj, db), db=None, generated_at=generated_at)
-            _store_individual_result(faculty_obj, ind_result, current_user.id, db)
-            individual_results_stored += 1
-        except Exception:
-            pass
+    try:
+        batch_predictions = model.predict_transparent(records)
+        for faculty_obj, record, pred_details in zip(eligible_faculty, records, batch_predictions):
+            try:
+                prof = evaluate_faculty_profile(record=record, prediction_details=pred_details)
+                recs = match_catalog_items(
+                    prediction_details=pred_details,
+                    record=record,
+                    top_k=3,
+                    competency_profile=prof,
+                )
+                ind_result = {
+                    "status": "success",
+                    "model": {
+                        "status": "ready",
+                        "version": model.version or "active",
+                    },
+                    "competency_profile": prof,
+                    "prediction": pred_details,
+                    "recommendations": recs,
+                    "generated_at": generated_at,
+                }
+                _store_individual_result(faculty_obj, ind_result, current_user.id, db)
+                individual_results_stored += 1
+            except Exception as e:
+                print(f"Warning storing individual result for faculty {faculty_obj.id}: {e}")
+    except Exception as exc:
+        print(f"Warning during batch individual result generation: {exc}")
 
     db.commit()
 

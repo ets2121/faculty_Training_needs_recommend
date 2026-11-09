@@ -79,7 +79,7 @@ export default function MyRecommendationPage() {
   if (loading) {
     return (
       <div className="space-y-6 max-w-6xl mx-auto">
-      <GeneratingProgressModal isOpen={requesting} title="Generating Personalized Recommendations" scope="Faculty ML Inference" />
+        <GeneratingProgressModal isOpen={requesting} title="Generating Personalized Recommendations" scope="Faculty ML Inference" />
         <RecommendationSkeleton message="Loading Your Training Recommendations..." />
       </div>
     );

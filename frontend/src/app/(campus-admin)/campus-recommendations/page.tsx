@@ -84,6 +84,7 @@ export default function CampusRecommendationsPage() {
     } catch (err: any) {
       const errorMsg =
         err.response?.data?.detail ||
+        err.message ||
         'Unable to synthesize campus recommendations. Please ensure faculty have completed assessments and active AI model is available.';
       setRunError(errorMsg);
       showToast('error', 'Inference Failed', errorMsg);

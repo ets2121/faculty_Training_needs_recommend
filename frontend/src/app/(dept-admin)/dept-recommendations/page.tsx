@@ -81,6 +81,7 @@ export default function DeptRecommendationsPage() {
     } catch (err: any) {
       const errorMsg =
         err.response?.data?.detail ||
+        err.message ||
         'Unable to synthesize department recommendations. Please ensure faculty have completed assessments and active AI model is available.';
       setRunError(errorMsg);
       showToast('error', 'Inference Failed', errorMsg);
