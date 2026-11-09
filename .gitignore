@@ -12,4 +12,5 @@ models/*.joblib
 models/*.json
 data/processed/
 data/raw/*.csv
+data/raw/*.json
 !data/raw/.gitkeep
