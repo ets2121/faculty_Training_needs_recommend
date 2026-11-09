@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Search, X, Loader2 } from 'lucide-react';
 
 interface SearchInputProps {
@@ -21,23 +21,52 @@ export default function SearchInput({
   const [searchTerm, setSearchTerm] = useState(initialValue);
   const [isDebouncing, setIsDebouncing] = useState(false);
 
+  // Store onChange in ref to prevent re-triggering debounce on every parent re-render
+  const onChangeRef = useRef(onChange);
   useEffect(() => {
-    setSearchTerm(initialValue);
+    onChangeRef.current = onChange;
+  }, [onChange]);
+
+  // Track the last value emitted to the parent to prevent duplicate triggers
+  const lastEmittedValueRef = useRef(initialValue);
+  const isInitialMount = useRef(true);
+
+  // Sync state if parent changes initialValue externally (e.g. clear filters)
+  useEffect(() => {
+    if (initialValue !== lastEmittedValueRef.current) {
+      setSearchTerm(initialValue);
+      lastEmittedValueRef.current = initialValue;
+    }
   }, [initialValue]);
 
+  // Debounced notification on actual user keystrokes
   useEffect(() => {
+    if (isInitialMount.current) {
+      isInitialMount.current = false;
+      return;
+    }
+
+    // Only debounce if the search term actually changed from what was already emitted
+    if (searchTerm === lastEmittedValueRef.current) {
+      setIsDebouncing(false);
+      return;
+    }
+
     setIsDebouncing(true);
     const timer = setTimeout(() => {
-      onChange(searchTerm);
+      lastEmittedValueRef.current = searchTerm;
+      onChangeRef.current(searchTerm);
       setIsDebouncing(false);
     }, debounceMs);
 
     return () => clearTimeout(timer);
-  }, [searchTerm, debounceMs, onChange]);
+  }, [searchTerm, debounceMs]);
 
   const handleClear = () => {
     setSearchTerm('');
-    onChange('');
+    lastEmittedValueRef.current = '';
+    setIsDebouncing(false);
+    onChangeRef.current('');
   };
 
   return (

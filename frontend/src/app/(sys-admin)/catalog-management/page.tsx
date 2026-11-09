@@ -249,6 +249,11 @@ export default function CatalogManagementPage() {
   const [catalogPage, setCatalogPage] = useState(1);
   const [catalogPageSize, setCatalogPageSize] = useState(10);
 
+  const handleSearchChange = useCallback((val: string) => {
+    setCatalogSearch(val);
+    setCatalogPage(1);
+  }, []);
+
   // Modal State
   const [showModal, setShowModal] = useState(false);
   const [modalMode, setModalMode] = useState<'create' | 'edit'>('create');
@@ -518,10 +523,8 @@ export default function CatalogManagementPage() {
             <div className="w-full sm:w-64">
               <SearchInput
                 placeholder="Search programs, tags, modalities..."
-                onChange={(val) => {
-                  setCatalogSearch(val);
-                  setCatalogPage(1);
-                }}
+                value={catalogSearch}
+                onChange={handleSearchChange}
               />
             </div>
           </div>
