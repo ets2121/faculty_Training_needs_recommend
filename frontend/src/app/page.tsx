@@ -48,10 +48,16 @@ export default function Home() {
           </div>
 
           <h1 className="text-4xl sm:text-5xl font-extrabold text-light-text dark:text-white tracking-tight leading-tight">
-            Model-Driven{' '}
-            <span className="text-brand-gold">
-              {systemConfig.subTagline}
-            </span>
+            {systemConfig.subTagline.includes('&') ? (
+              <>
+                {systemConfig.subTagline.split('&')[0]}& <br className="hidden sm:inline" />
+                <span className="text-brand-gold">
+                  {systemConfig.subTagline.split('&').slice(1).join('&').trim()}
+                </span>
+              </>
+            ) : (
+              <span className="text-brand-gold">{systemConfig.subTagline}</span>
+            )}
           </h1>
 
           <p className="text-sm sm:text-base text-light-text dark:text-dark-muted max-w-2xl mx-auto leading-relaxed">

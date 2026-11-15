@@ -118,14 +118,14 @@ export const systemConfig: SystemConfig = {
     heroPath: '/images/hero-2.png',
     logoAlt:
       process.env.NEXT_PUBLIC_SYSTEM_SHORT_NAME ||
-      'QSU Recommender',
+      'Angee Recommender',
     badgeText: 'AI-Driven Institutional Decision Support System',
   },
 
   meta: {
     title:
       process.env.NEXT_PUBLIC_SYSTEM_NAME ||
-      'QSU Faculty Training Needs Recommender System',
+      'Angee Training Needs Recommender System',
     description:
       'Production-ready recommendation portal with MySQL, RBAC, and scikit-learn ML engine.',
     copyrightText: 'Quirino State University. All rights reserved.',
