@@ -71,11 +71,11 @@ export interface SystemConfig {
 export const systemConfig: SystemConfig = {
   name:
     process.env.NEXT_PUBLIC_SYSTEM_NAME ||
-    'QSU Faculty Training Needs Recommender System',
+    'Angee Training Needs Recommender System',
 
   shortName:
     process.env.NEXT_PUBLIC_SYSTEM_SHORT_NAME ||
-    'QSU Recommender',
+    'Angee Recommender',
 
   abbreviation:
     process.env.NEXT_PUBLIC_SYSTEM_ABBREVIATION ||
