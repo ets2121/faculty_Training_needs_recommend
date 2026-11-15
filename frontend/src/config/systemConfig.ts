@@ -90,7 +90,7 @@ export const systemConfig: SystemConfig = {
     'Multi-Campus Training Needs Recommender',
 
   subTagline:
-    'Model-Driven Faculty Development & Training Program Recommendations',
+    'angee Faculty Development & Training Program Recommendations',
 
   description:
     'A research-backed system matching faculty competency assessments and emerging training needs to institutional catalog programs using machine learning.',
