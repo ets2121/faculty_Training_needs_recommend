@@ -25,6 +25,7 @@ import {
   Layers,
   BarChart3,
 } from 'lucide-react';
+import { systemConfig } from '@/config';
 
 export default function SystemAdminDashboardPage() {
   const { showToast } = useToast();
@@ -165,7 +166,7 @@ export default function SystemAdminDashboardPage() {
       {/* 1. Header Banner */}
       <div className="relative overflow-hidden rounded-2xl bg-white dark:bg-dark-card border border-light-border dark:border-dark-border p-5 sm:p-6 md:p-8 shadow-xl">
         <div className="absolute top-0 right-0 p-6 opacity-5 pointer-events-none">
-          <img src="/images/hero-2.png" alt="QSU Recommender" className="w-40 h-40 object-contain" />
+          <img src={systemConfig.branding.heroPath} alt={systemConfig.branding.logoAlt} className="w-40 h-40 object-contain" />
         </div>
         <div className="relative z-10 space-y-2">
           <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-semibold bg-rose-500/10 text-rose-600 dark:text-rose-400 border border-rose-500/20">
@@ -174,10 +175,10 @@ export default function SystemAdminDashboardPage() {
           </div>
 
           <h1 className="text-2xl sm:text-3xl font-extrabold text-light-text dark:text-white tracking-tight">
-            QSU Recommender Management Console
+            {systemConfig.shortName} Management Console
           </h1>
           <p className="text-xs text-light-text dark:text-dark-muted max-w-2xl leading-relaxed">
-            System-wide governance, user access control, institutional training catalog management, and ML pipeline maintenance across QSU campuses.
+            System-wide governance, user access control, institutional training catalog management, and ML pipeline maintenance across {systemConfig.institution.shortName} campuses.
           </p>
         </div>
       </div>
@@ -204,7 +205,7 @@ export default function SystemAdminDashboardPage() {
 
         <div className="p-4 sm:p-5 rounded-2xl bg-white dark:bg-dark-card border border-light-border dark:border-dark-border shadow-sm">
           <div className="flex items-center justify-between text-xs text-light-text dark:text-dark-muted mb-2">
-            <span className="font-semibold">QSU Campuses</span>
+            <span className="font-semibold">{systemConfig.institution.shortName} Campuses</span>
             <MapPin className="w-4 h-4 text-sky-500" />
           </div>
           <div className="text-2xl font-bold text-light-text dark:text-white">3</div>

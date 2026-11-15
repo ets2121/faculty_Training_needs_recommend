@@ -21,6 +21,7 @@ import api from '@/lib/api';
 import { useAuth } from '@/context/AuthContext';
 import { useToast } from '@/context/ToastContext';
 import { UserListItem, DepartmentRecommendationResult } from '@/types';
+import { systemConfig } from '@/config';
 import {
   ResponsiveDonutChart,
   ResponsiveBarAnalyticsChart,
@@ -191,7 +192,7 @@ export default function CampusDashboardPage() {
       {/* 1. Welcome Banner */}
       <div className="relative overflow-hidden rounded-2xl bg-white dark:bg-dark-card border border-light-border dark:border-dark-border p-5 sm:p-6 md:p-8 shadow-xl">
         <div className="absolute top-0 right-0 p-6 opacity-5 pointer-events-none">
-          <img src="/images/hero-2.png" alt="QSU Recommender" className="w-40 h-40 object-contain" />
+          <img src={systemConfig.branding.heroPath} alt={systemConfig.branding.logoAlt} className="w-40 h-40 object-contain" />
         </div>
         <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div>

@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
 import { Sparkles, ArrowRight, ShieldCheck, Database, Award } from 'lucide-react';
 import Link from 'next/link';
+import { systemConfig } from '@/config';
 
 export default function Home() {
   const { user, loading } = useAuth();
@@ -27,7 +28,7 @@ export default function Home() {
         <div className="absolute inset-0">
           <img
             src="/images/hero.png"
-            alt="QSU Recommender"
+            alt={systemConfig.branding.logoAlt}
             className="w-full h-full object-cover opacity-60 dark:opacity-40"
           />
           <div className="absolute inset-0 bg-gradient-to-r from-white/70 via-white/60 to-white/40 dark:from-dark-bg dark:via-dark-bg/90 dark:to-dark-bg/70" />
@@ -36,14 +37,14 @@ export default function Home() {
         <div className="relative px-6 py-16 sm:py-20 lg:px-10 lg:py-24 text-center space-y-6 max-w-5xl mx-auto">
           <div className="flex justify-center">
             <img
-              src="/images/logo.png"
-              alt="QSU Recommender"
+              src={systemConfig.branding.logoPath}
+              alt={systemConfig.branding.logoAlt}
               className="h-16 w-auto object-contain drop-shadow-md"
             />
           </div>
 
           <div className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full text-xs font-semibold bg-brand-green/10 text-brand-green border border-brand-green/25 backdrop-blur-sm">
-            <span>QSU Faculty Training Needs Recommender System</span>
+            <span>{systemConfig.name}</span>
           </div>
 
           <h1 className="text-4xl sm:text-5xl font-extrabold text-light-text dark:text-white tracking-tight leading-tight">
@@ -54,7 +55,7 @@ export default function Home() {
           </h1>
 
           <p className="text-sm sm:text-base text-light-text dark:text-dark-muted max-w-2xl mx-auto leading-relaxed">
-            A research-backed system matching faculty competency assessments and emerging training needs to institutional catalog programs using machine learning.
+            {systemConfig.description}
           </p>
 
           <div className="pt-2 flex items-center justify-center gap-4">

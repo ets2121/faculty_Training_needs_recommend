@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { useAuth } from '@/context/AuthContext';
 import ThemeToggle from './ThemeToggle';
 import { LogOut, Building, Info, AlertTriangle, MapPin } from 'lucide-react';
+import { systemConfig } from '@/config';
 
 export default function Navbar() {
   const { user, logout } = useAuth();
@@ -33,19 +34,19 @@ export default function Navbar() {
           {/* Brand Logo */}
           <Link href="/dashboard" className="flex items-center gap-3 group">
             <img
-              src="/images/logo.png"
-              alt="QSU Recommender"
+              src={systemConfig.branding.logoPath}
+              alt={systemConfig.branding.logoAlt}
               className="h-9 w-auto object-contain"
             />
             <div>
               <h1 className="text-sm font-bold text-light-text dark:text-white tracking-tight flex items-center gap-2">
-                <span>QSU Recommender</span>
+                <span>{systemConfig.shortName}</span>
                 <span className="text-[10px] font-mono font-semibold px-1.5 py-0.5 rounded bg-brand-gold/10 text-brand-gold-dark border border-brand-gold/20">
-                  v2.0
+                  v{systemConfig.version}
                 </span>
               </h1>
               <p className="text-[11px] text-light-text dark:text-dark-text opacity-80 hidden sm:block">
-                Multi-Campus Training Needs Recommender
+                {systemConfig.tagline}
               </p>
             </div>
           </Link>

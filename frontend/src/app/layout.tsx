@@ -5,10 +5,11 @@ import { ToastProvider } from '@/context/ToastContext';
 import { AuthProvider } from '@/context/AuthContext';
 import Navbar from '@/components/Navbar';
 import Sidebar from '@/components/Sidebar';
+import { systemConfig } from '@/config';
 
 export const metadata: Metadata = {
-  title: 'QSU Faculty Training Needs Recommender System',
-  description: 'Production-ready recommendation portal with MySQL, RBAC, and scikit-learn ML engine.',
+  title: systemConfig.meta.title,
+  description: systemConfig.meta.description,
 };
 
 export default function RootLayout({

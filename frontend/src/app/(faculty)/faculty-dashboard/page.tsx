@@ -12,6 +12,7 @@ import GeneratingProgressModal from '@/components/GeneratingProgressModal';
 import { RecommendationSkeleton, ProfileSkeleton } from '@/components/Skeletons';
 import { useToast } from '@/context/ToastContext';
 import { Sparkles, ArrowRight, ClipboardList, BookOpen, RefreshCw, AlertCircle } from 'lucide-react';
+import { systemConfig } from '@/config';
 
 export default function FacultyDashboardPage() {
   const [data, setData] = useState<FullProfileResponse | null>(null);
@@ -100,8 +101,8 @@ export default function FacultyDashboardPage() {
         <div className="space-y-2">
           <div className="flex items-center gap-3">
             <img
-              src="/images/logo.png"
-              alt="QSU Recommender"
+              src={systemConfig.branding.logoPath}
+              alt={systemConfig.branding.logoAlt}
               className="w-10 h-10 object-contain shrink-0"
             />
             <div className="min-w-0">

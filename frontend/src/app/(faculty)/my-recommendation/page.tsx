@@ -10,6 +10,7 @@ import GeneratingProgressModal from '@/components/GeneratingProgressModal';
 import { RecommendationSkeleton } from '@/components/Skeletons';
 import { useToast } from '@/context/ToastContext';
 import { Sparkles, RefreshCw, AlertCircle, ArrowLeft, ClipboardList, Clock } from 'lucide-react';
+import { systemConfig } from '@/config';
 
 export default function MyRecommendationPage() {
   const [recommendation, setRecommendation] = useState<RecommendationResult | null>(null);
@@ -92,8 +93,8 @@ export default function MyRecommendationPage() {
       <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-3 sm:gap-4">
         <div className="flex items-center gap-3">
           <img
-            src="/images/logo.png"
-            alt="QSU Recommender"
+            src={systemConfig.branding.logoPath}
+            alt={systemConfig.branding.logoAlt}
             className="w-9 h-9 object-contain shrink-0"
           />
           <Link

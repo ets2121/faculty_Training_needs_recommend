@@ -8,6 +8,7 @@ import ProgressBar from '@/components/ProgressBar';
 import QuestionnairePartForm from '@/components/QuestionnairePartForm';
 import { useToast } from '@/context/ToastContext';
 import { Sparkles, ArrowRight } from 'lucide-react';
+import { systemConfig } from '@/config';
 
 export default function QuestionnairePage() {
   const [progress, setProgress] = useState<QuestionnaireProgress | null>(null);
@@ -83,7 +84,7 @@ export default function QuestionnairePage() {
   return (
     <div className="space-y-6 max-w-5xl mx-auto">
       <div className="flex justify-center pt-1">
-        <img src="/images/logo.png" alt="QSU Recommender" className="w-12 h-12 object-contain" />
+        <img src={systemConfig.branding.logoPath} alt={systemConfig.branding.logoAlt} className="w-12 h-12 object-contain" />
       </div>
       {/* Step Progress Component */}
       <ProgressBar

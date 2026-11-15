@@ -26,6 +26,7 @@ import {
   Calendar,
   Lock,
 } from 'lucide-react';
+import { systemConfig } from '@/config';
 
 const ACADEMIC_RANKS = [
   'Instructor I',
@@ -180,16 +181,16 @@ export default function ProfilePage() {
       <div className="relative overflow-hidden bg-white dark:bg-dark-card border border-light-border dark:border-dark-border rounded-3xl p-6 sm:p-8 shadow-xl backdrop-blur-md flex flex-col sm:flex-row sm:items-center justify-between gap-6">
         <div className="absolute -right-6 -top-6 opacity-[0.07] pointer-events-none select-none dark:opacity-[0.09]">
           <img
-            src="/images/logo.png"
-            alt="QSU Recommender"
+            src={systemConfig.branding.logoPath}
+            alt={systemConfig.branding.logoAlt}
             className="w-48 h-48 object-contain"
           />
         </div>
 
         <div className="relative z-10 flex items-center gap-5">
           <img
-            src="/images/logo.png"
-            alt="QSU Recommender"
+            src={systemConfig.branding.logoPath}
+            alt={systemConfig.branding.logoAlt}
             className="w-16 h-16 object-contain shrink-0"
           />
 

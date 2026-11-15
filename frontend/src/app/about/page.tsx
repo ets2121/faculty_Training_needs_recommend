@@ -23,6 +23,7 @@ import {
   Award,
   Zap,
 } from 'lucide-react';
+import { systemConfig } from '@/config';
 
 export default function AboutPage() {
   const [activeTab, setActiveTab] = useState<'pipeline' | 'ml' | 'matching' | 'rbac'>('pipeline');
@@ -33,24 +34,24 @@ export default function AboutPage() {
       <div className="relative overflow-hidden rounded-3xl bg-white dark:bg-dark-card border border-light-border dark:border-dark-border p-8 sm:p-12 shadow-xl">
         <div className="absolute top-0 right-0 p-8 opacity-10 pointer-events-none dark:opacity-[0.10]">
           <img
-            src="/images/hero-2.png"
-            alt="QSU Recommender"
+            src={systemConfig.branding.heroPath}
+            alt={systemConfig.branding.logoAlt}
             className="w-72 h-72 object-contain"
           />
         </div>
 
         <div className="relative z-10 space-y-4 max-w-3xl">
           <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-semibold bg-brand-green/10 text-brand-green border border-brand-green/20">
-            <img src="/images/logo.png" alt="QSU Recommender" className="w-4 h-4 object-contain" />
-            <span>AI-Driven Institutional Decision Support System</span>
+            <img src={systemConfig.branding.logoPath} alt={systemConfig.branding.logoAlt} className="w-4 h-4 object-contain" />
+            <span>{systemConfig.branding.badgeText}</span>
           </div>
 
           <h1 className="text-3xl sm:text-4xl font-extrabold text-light-text dark:text-white tracking-tight leading-tight">
-            How the QSU Training Recommender System Works
+            How the {systemConfig.shortName} Works
           </h1>
 
           <p className="text-sm sm:text-base text-light-text dark:text-dark-muted leading-relaxed">
-            The Quirino State University (QSU) Faculty Training Needs Recommender bridges the gap between individual faculty professional growth and institutional development goals. By analyzing self-assessment survey responses using advanced multi-label machine learning models, the system predicts precise competency needs and matches them to curated training catalog programs.
+            The {systemConfig.institution.name} ({systemConfig.institution.shortName}) Faculty Training Needs Recommender bridges the gap between individual faculty professional growth and institutional development goals. By analyzing self-assessment survey responses using advanced multi-label machine learning models, the system predicts precise competency needs and matches them to curated training catalog programs.
           </p>
 
           <div className="flex flex-wrap items-center gap-3 pt-2">

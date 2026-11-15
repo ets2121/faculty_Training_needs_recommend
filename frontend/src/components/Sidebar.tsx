@@ -21,6 +21,7 @@ import {
   Menu,
   LogOut,
 } from 'lucide-react';
+import { systemConfig } from '@/config';
 
 export default function Sidebar() {
   const pathname = usePathname();
@@ -156,8 +157,8 @@ export default function Sidebar() {
             <GraduationCap className="w-3.5 h-3.5 text-brand-green" />
           </div>
           <div>
-            <p className="text-[10px] font-bold text-light-text dark:text-dark-text leading-none">QSU Recommender</p>
-            <p className="text-[9px] text-light-text dark:text-dark-muted mt-0.5">v2.0 • Multi-Campus</p>
+            <p className="text-[10px] font-bold text-light-text dark:text-dark-text leading-none">{systemConfig.shortName}</p>
+            <p className="text-[9px] text-light-text dark:text-dark-muted mt-0.5">v{systemConfig.version} • Multi-Campus</p>
           </div>
         </div>
       </div>
@@ -196,10 +197,10 @@ export default function Sidebar() {
             {/* Drawer Header */}
             <div className="flex items-center justify-between px-4 py-3.5 border-b border-light-border dark:border-dark-border shrink-0">
               <div className="flex items-center gap-2">
-                <img src="/images/logo.png" alt="QSU" className="h-7 w-auto object-contain" />
+                <img src={systemConfig.branding.logoPath} alt={systemConfig.institution.shortName} className="h-7 w-auto object-contain" />
                 <div>
-                  <p className="text-xs font-bold text-light-text dark:text-white leading-none">QSU Recommender</p>
-                  <p className="text-[10px] text-light-text dark:text-dark-muted mt-0.5">v2.0 • Multi-Campus</p>
+                  <p className="text-xs font-bold text-light-text dark:text-white leading-none">{systemConfig.shortName}</p>
+                  <p className="text-[10px] text-light-text dark:text-dark-muted mt-0.5">v{systemConfig.version} • Multi-Campus</p>
                 </div>
               </div>
               <button

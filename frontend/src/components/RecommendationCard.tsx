@@ -20,6 +20,7 @@ import {
   CheckCircle2,
 } from 'lucide-react';
 import { formatPercent } from '@/lib/utils';
+import { systemConfig } from '@/config';
 
 interface RecommendationCardProps {
   result: RecommendationResult | DepartmentRecommendationResult;
@@ -226,16 +227,16 @@ export default function RecommendationCard({
       <div className="relative overflow-hidden rounded-3xl bg-white dark:bg-dark-card border border-light-border dark:border-dark-border p-5 sm:p-7 shadow-xl">
         <div className="absolute top-0 right-0 p-6 opacity-5 pointer-events-none">
           <img
-            src="/images/hero-2.png"
-            alt="QSU Recommender"
+            src={systemConfig.branding.heroPath}
+            alt={systemConfig.branding.logoAlt}
             className="w-40 h-40 object-contain"
           />
         </div>
         <div className="relative z-10 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div className="flex items-center gap-3.5">
             <img
-              src="/images/logo.png"
-              alt="QSU Recommender"
+              src={systemConfig.branding.logoPath}
+              alt={systemConfig.branding.logoAlt}
               className="w-11 h-11 object-contain shrink-0"
             />
             <div>

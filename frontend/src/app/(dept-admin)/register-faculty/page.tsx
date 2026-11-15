@@ -6,6 +6,7 @@ import api from '@/lib/api';
 import { useAuth } from '@/context/AuthContext';
 import { useToast } from '@/context/ToastContext';
 import { UserPlus, ArrowLeft, Check, Lock, User, Mail, Award, BookOpen } from 'lucide-react';
+import { systemConfig } from '@/config';
 
 export default function RegisterFacultyPage() {
   const { user } = useAuth();
@@ -83,8 +84,8 @@ export default function RegisterFacultyPage() {
       <div className="bg-white dark:bg-dark-card border border-light-border dark:border-dark-border rounded-3xl p-6 sm:p-8 shadow-2xl backdrop-blur-md space-y-6">
         <div className="flex items-center gap-3">
           <img
-            src="/images/logo.png"
-            alt="QSU Recommender"
+            src={systemConfig.branding.logoPath}
+            alt={systemConfig.branding.logoAlt}
             className="w-10 h-10 object-contain"
           />
           <div>

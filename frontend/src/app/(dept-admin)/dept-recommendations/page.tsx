@@ -25,6 +25,7 @@ import {
   Target,
   Layers,
 } from 'lucide-react';
+import { systemConfig } from '@/config';
 
 export default function DeptRecommendationsPage() {
   const { user: authUser } = useAuth();
@@ -160,8 +161,8 @@ export default function DeptRecommendationsPage() {
       <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-3 sm:gap-4">
         <div className="flex items-center gap-3">
           <img
-            src="/images/logo.png"
-            alt="QSU Recommender"
+            src={systemConfig.branding.logoPath}
+            alt={systemConfig.branding.logoAlt}
             className="w-9 h-9 object-contain shrink-0"
           />
           <Link

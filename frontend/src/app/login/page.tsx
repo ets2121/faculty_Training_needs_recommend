@@ -4,6 +4,7 @@ import React, { useState } from 'react';
 import { useAuth } from '@/context/AuthContext';
 import { LogIn, User, Lock, ShieldCheck } from 'lucide-react';
 import DataPrivacyModal from '@/components/DataPrivacyModal';
+import { systemConfig } from '@/config';
 
 export default function LoginPage() {
   const [username, setUsername] = useState('');
@@ -40,8 +41,8 @@ export default function LoginPage() {
       <div className="relative">
         <div className="absolute -right-8 -top-8 opacity-[0.08] pointer-events-none select-none dark:opacity-[0.10]">
           <img
-            src="/images/logo.png"
-            alt="QSU Recommender"
+            src={systemConfig.branding.logoPath}
+            alt={systemConfig.branding.logoAlt}
             className="w-56 h-56 object-contain"
           />
         </div>
@@ -50,11 +51,11 @@ export default function LoginPage() {
           <div className="bg-white dark:bg-dark-card border border-light-border dark:border-dark-border rounded-3xl p-6 sm:p-8 shadow-2xl backdrop-blur-md space-y-6">
             <div className="flex items-center gap-3">
               <img
-                src="/images/logo.png"
-                alt="QSU Recommender"
+                src={systemConfig.branding.logoPath}
+                alt={systemConfig.branding.logoAlt}
                 className="w-10 h-10 object-contain"
               />
-              <h2 className="text-2xl font-extrabold text-light-text dark:text-white tracking-tight">Sign In to QSU Portal</h2>
+              <h2 className="text-2xl font-extrabold text-light-text dark:text-white tracking-tight">Sign In to {systemConfig.portalName}</h2>
             </div>
             <p className="text-xs text-light-text dark:text-dark-muted mt-1">
               Enter your credentials to access your faculty dashboard or administrative panel.

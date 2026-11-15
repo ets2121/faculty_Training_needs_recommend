@@ -15,6 +15,7 @@ import {
   Mail,
   ExternalLink,
 } from 'lucide-react';
+import { systemConfig } from '@/config';
 
 interface DataPrivacyModalProps {
   isOpen: boolean;
@@ -68,7 +69,7 @@ export default function DataPrivacyModal({
                 id="privacy-policy-title"
                 className="text-base sm:text-lg font-extrabold text-light-text dark:text-white mt-1 leading-snug"
               >
-                Quirino State University Data Privacy Policy & Consent Agreement
+                {systemConfig.legal.privacyPolicyTitle}
               </h2>
             </div>
           </div>
@@ -90,16 +91,14 @@ export default function DataPrivacyModal({
               <span>Institutional Statement of Privacy Commitment</span>
             </div>
             <p className="text-[11px] leading-relaxed text-light-secondary dark:text-dark-secondary">
-              Quirino State University (QSU) recognizes its responsibilities under the{' '}
+              {systemConfig.institution.name} ({systemConfig.institution.shortName}) recognizes its responsibilities under the{' '}
               <strong className="text-light-text dark:text-white font-semibold">
-                Philippine Data Privacy Act of 2012 (Republic Act No. 10173)
+                {systemConfig.legal.privacyAct}
               </strong>
               , its Implementing Rules and Regulations (IRR), and all applicable circulars issued by the National
               Privacy Commission (NPC). This Policy applies to all faculty members, department chairs, academic
-              deans, and university administrators accessing the QSU Faculty Training Needs Recommender System across
-              the <strong className="text-light-text dark:text-white font-semibold">Diffun (Main)</strong>,{' '}
-              <strong className="text-light-text dark:text-white font-semibold">Maddela</strong>, and{' '}
-              <strong className="text-light-text dark:text-white font-semibold">Cabarroguis</strong> campuses.
+              deans, and university administrators accessing the {systemConfig.name} across
+              the university campuses.
             </p>
           </div>
 
@@ -235,7 +234,7 @@ export default function DataPrivacyModal({
             </div>
             <p className="text-[11px]">
               Your competency assessments and recommendation histories are retained for the duration of your active academic
-              service at Quirino State University. In case of separation from service, records are archived or anonymized in
+              service at {systemConfig.institution.name}. In case of separation from service, records are archived or anonymized in
               compliance with Commission on Higher Education (CHED) records management protocols and National Archives of
               the Philippines regulations.
             </p>
@@ -245,18 +244,18 @@ export default function DataPrivacyModal({
           <div className="p-3.5 rounded-xl border border-light-border dark:border-dark-border bg-light-muted-surface dark:bg-dark-card-elevated flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-[11px]">
             <div>
               <span className="font-bold text-light-text dark:text-white block">
-                QSU Data Protection Officer (DPO) Contact
+                {systemConfig.institution.shortName} Data Protection Officer (DPO) Contact
               </span>
               <span>
-                Office of Information and Communications Technology • Quirino State University, Diffun, Quirino
+                {systemConfig.institution.office} • {systemConfig.institution.name}
               </span>
             </div>
             <a
-              href="mailto:dpo@qsu.edu.ph"
+              href={`mailto:${systemConfig.institution.dpoEmail}`}
               className="inline-flex items-center gap-1.5 text-brand-green hover:underline font-semibold shrink-0"
             >
               <Mail className="w-3.5 h-3.5" />
-              <span>dpo@qsu.edu.ph</span>
+              <span>{systemConfig.institution.dpoEmail}</span>
             </a>
           </div>
 
@@ -268,9 +267,9 @@ export default function DataPrivacyModal({
             </div>
             <p className="text-[11px] leading-relaxed">
               By checking the consent box and signing into this platform, you freely, voluntarily, and expressly grant your
-              consent to Quirino State University to process your personal and competency data for the aforementioned
+              consent to {systemConfig.institution.name} to process your personal and competency data for the aforementioned
               training needs assessment, machine learning modeling, and faculty development recommendation purposes, in
-              accordance with the Philippine Data Privacy Act of 2012 and this Privacy Policy.
+              accordance with {systemConfig.legal.privacyAct} and this Privacy Policy.
             </p>
           </div>
         </div>
