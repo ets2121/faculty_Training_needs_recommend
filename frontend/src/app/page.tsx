@@ -48,9 +48,9 @@ export default function Home() {
           </div>
 
           <h1 className="text-4xl sm:text-5xl font-extrabold text-light-text dark:text-white tracking-tight leading-tight">
-            Model-Driven Faculty Development & <br className="hidden sm:inline" />
+            Model-Driven{' '}
             <span className="text-brand-gold">
-              Training Program Recommendations
+              {systemConfig.subTagline}
             </span>
           </h1>
 
