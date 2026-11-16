@@ -23,6 +23,7 @@ export default function RegisterFacultyPage() {
   const [academicRank, setAcademicRank] = useState('Instructor I');
   const [highestDegree, setHighestDegree] = useState("Master's Degree");
   const [specialization, setSpecialization] = useState('');
+  const [position, setPosition] = useState('Permanent');
   const [submitting, setSubmitting] = useState(false);
   const [formErrors, setFormErrors] = useState<{ username?: string; email?: string; general?: string }>({});
 
@@ -42,6 +43,7 @@ export default function RegisterFacultyPage() {
         academic_rank: academicRank,
         highest_degree: highestDegree,
         specialization: specialization.trim() || undefined,
+        position: position,
       });
 
       showToast('success', 'Faculty Created', `Account for '${username}' was created under department ${deptCode}.`);
@@ -166,6 +168,20 @@ export default function RegisterFacultyPage() {
             </div>
 
             <div>
+              <label className="block text-xs font-semibold text-light-text dark:text-dark-text mb-1.5">
+                Position / Employment Status *
+              </label>
+              <select
+                value={position}
+                onChange={(e) => setPosition(e.target.value)}
+                className="w-full bg-white dark:bg-dark-bg border border-light-border dark:border-dark-border rounded-xl px-3.5 py-2.5 text-sm text-light-text dark:text-dark-text focus:border-brand-green focus:outline-none"
+              >
+                <option value="Permanent">Permanent</option>
+                <option value="COS">COS (Contract of Service)</option>
+              </select>
+            </div>
+
+            <div>
               <label className="block text-xs font-semibold text-light-text dark:text-dark-text mb-1.5">Academic Rank</label>
               <select
                 value={academicRank}
@@ -191,6 +207,17 @@ export default function RegisterFacultyPage() {
                 <option value="Master's Degree">Master's Degree</option>
                 <option value="Doctoral Degree">Doctoral Degree</option>
               </select>
+            </div>
+
+            <div>
+              <label className="block text-xs font-semibold text-light-text dark:text-dark-text mb-1.5">Faculty Code (Optional)</label>
+              <input
+                type="text"
+                value={facultyCode}
+                onChange={(e) => setFacultyCode(e.target.value)}
+                placeholder="e.g. FAC-2024-001"
+                className="w-full bg-white dark:bg-dark-bg border border-light-border dark:border-dark-border rounded-xl px-3.5 py-2.5 text-sm text-light-text dark:text-dark-text placeholder:text-light-text dark:placeholder:text-dark-muted focus:border-brand-green focus:outline-none"
+              />
             </div>
           </div>
 

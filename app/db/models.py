@@ -158,6 +158,7 @@ class Faculty(Base):
     academic_rank: Mapped[str | None] = mapped_column(String(100), nullable=True)
     highest_degree: Mapped[str | None] = mapped_column(String(100), nullable=True)
     specialization: Mapped[str | None] = mapped_column(String(200), nullable=True)
+    position: Mapped[str | None] = mapped_column(String(50), nullable=True, default="Permanent")
     status: Mapped[str] = mapped_column(String(20), nullable=False, default="active")
     
     # Questionnaire lifecycle status:

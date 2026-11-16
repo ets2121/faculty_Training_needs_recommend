@@ -224,7 +224,7 @@ export default function DeptFacultyPage() {
             <table className="w-full text-sm">
               <thead>
                 <tr className="border-b border-light-border dark:border-dark-border bg-slate-50/80 dark:bg-slate-900/60">
-                  {['Faculty Member', 'Username', 'Academic Rank', 'Specialization', 'Assessment Status', 'Actions'].map((h) => (
+                  {['Faculty Member', 'Username', 'Position', 'Academic Rank', 'Specialization', 'Assessment Status', 'Actions'].map((h) => (
                     <th key={h} className="px-5 py-3.5 text-left text-[11px] font-bold uppercase tracking-wider text-light-text dark:text-dark-muted">{h}</th>
                   ))}
                 </tr>
@@ -247,6 +247,15 @@ export default function DeptFacultyPage() {
                       </td>
                       <td className="px-5 py-4">
                         <span className="font-mono text-xs font-semibold text-light-text dark:text-slate-300">@{u.username}</span>
+                      </td>
+                      <td className="px-5 py-4">
+                        <span className={`inline-block px-2.5 py-0.5 rounded-full text-[10px] font-bold border ${
+                          (u.position || '').toUpperCase() === 'COS' || (u.position || '').toLowerCase().includes('contract')
+                            ? 'bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/20'
+                            : 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/20'
+                        }`}>
+                          {u.position || 'Permanent'}
+                        </span>
                       </td>
                       <td className="px-5 py-4 text-xs text-light-text dark:text-dark-muted">
                         {u.academic_rank || '—'}

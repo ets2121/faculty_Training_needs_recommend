@@ -72,6 +72,7 @@ export default function ProfilePage() {
   const [academicRank, setAcademicRank] = useState('');
   const [specialization, setSpecialization] = useState('');
   const [highestDegree, setHighestDegree] = useState('');
+  const [position, setPosition] = useState('Permanent');
   const [savingProfile, setSavingProfile] = useState(false);
 
   // Change password state
@@ -95,6 +96,7 @@ export default function ProfilePage() {
         setAcademicRank(res.data.faculty_profile?.academic_rank || 'Instructor I');
         setSpecialization(res.data.faculty_profile?.specialization || '');
         setHighestDegree(res.data.faculty_profile?.highest_degree || "Master's Degree");
+        setPosition(res.data.faculty_profile?.position || 'Permanent');
       } else {
         const res = await api.get('/auth/me');
         setFullName(res.data.full_name || '');
@@ -123,6 +125,7 @@ export default function ProfilePage() {
           academic_rank: academicRank,
           specialization: specialization.trim() || undefined,
           highest_degree: highestDegree,
+          position: position,
         });
       } else {
         await api.patch(`/users/${authUser?.id}`, {
@@ -303,7 +306,19 @@ export default function ProfilePage() {
                   Academic & Specialization Attributes
                 </h3>
 
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                  <div className="space-y-1">
+                    <label className="block text-xs font-semibold text-light-text dark:text-dark-text">Position / Status</label>
+                    <select
+                      value={position}
+                      onChange={(e) => setPosition(e.target.value)}
+                      className="w-full bg-light-bg dark:bg-dark-bg border border-light-border dark:border-dark-border hover:border-brand-green focus:border-brand-green rounded-xl px-3.5 py-2.5 text-xs text-light-text dark:text-dark-text outline-none transition-colors"
+                    >
+                      <option value="Permanent">Permanent</option>
+                      <option value="COS">COS (Contract of Service)</option>
+                    </select>
+                  </div>
+
                   <div className="space-y-1">
                     <label className="block text-xs font-semibold text-light-text dark:text-dark-text">Academic Rank</label>
                     <select

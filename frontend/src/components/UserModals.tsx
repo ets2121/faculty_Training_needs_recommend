@@ -75,6 +75,7 @@ export function ViewEditUserModal({
   const [highestDegree, setHighestDegree] = useState(user.highest_degree || "Master's Degree");
   const [specialization, setSpecialization] = useState(user.specialization || '');
   const [facultyCode, setFacultyCode] = useState(user.faculty_code || '');
+  const [position, setPosition] = useState(user.position || 'Permanent');
 
   // Reset password state
   const [newPassword, setNewPassword] = useState('');
@@ -100,6 +101,7 @@ export function ViewEditUserModal({
         highest_degree: isFaculty ? highestDegree : undefined,
         specialization: isFaculty ? specialization.trim() : undefined,
         faculty_code: isFaculty ? facultyCode.trim() : undefined,
+        position: isFaculty ? position : undefined,
       });
 
       showToast('success', 'User Updated', `Details for '${user.username}' have been updated.`);
@@ -270,7 +272,19 @@ export function ViewEditUserModal({
                     <GraduationCap className="w-3.5 h-3.5" /> Faculty Academic Info
                   </h4>
 
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                    <div className="space-y-1">
+                      <label className="block text-xs font-semibold text-light-text dark:text-dark-text">Position</label>
+                      <select
+                        value={position}
+                        onChange={(e) => setPosition(e.target.value)}
+                        className="w-full bg-light-bg dark:bg-dark-bg border border-light-border dark:border-dark-border hover:border-slate-500 focus:border-emerald-500 rounded-xl px-3.5 py-2 text-xs text-white outline-none transition-colors"
+                      >
+                        <option value="Permanent">Permanent</option>
+                        <option value="COS">COS (Contract of Service)</option>
+                      </select>
+                    </div>
+
                     <div className="space-y-1">
                       <label className="block text-xs font-semibold text-light-text dark:text-dark-text">Faculty ID / Code</label>
                       <input

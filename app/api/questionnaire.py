@@ -313,7 +313,7 @@ def get_part_data_endpoint(
                 "department": faculty.department.code,
                 "age": 35,
                 "sex": "Female",
-                "employment_status": "Permanent",
+                "employment_status": faculty.position or "Permanent",
             }
         elif part_number == 3:
             role_name = current_user.role.name if current_user.role else ""

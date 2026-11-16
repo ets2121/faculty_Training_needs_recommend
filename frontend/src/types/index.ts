@@ -269,6 +269,7 @@ export interface UserListItem {
   academic_rank?: string | null;
   highest_degree?: string | null;
   specialization?: string | null;
+  position?: string | null;
   status: string;
   questionnaire_status?: QuestionnaireStatus | string | null;
   user_status?: string | null;

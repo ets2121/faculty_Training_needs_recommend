@@ -208,7 +208,16 @@ export default function CampusFacultyPage() {
                         </span>
                       </td>
                       <td className="p-3.5">
-                        <div className="text-light-text dark:text-slate-200">{u.academic_rank || 'Instructor I'}</div>
+                        <div className="flex items-center gap-1.5 flex-wrap">
+                          <span className="text-light-text dark:text-slate-200">{u.academic_rank || 'Instructor I'}</span>
+                          <span className={`px-1.5 py-0.5 rounded text-[10px] font-bold border ${
+                            (u.position || '').toUpperCase() === 'COS' || (u.position || '').toLowerCase().includes('contract')
+                              ? 'bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/20'
+                              : 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/20'
+                          }`}>
+                            {u.position || 'Permanent'}
+                          </span>
+                        </div>
                         <div className="text-[11px] text-light-text dark:text-dark-muted">{u.specialization || u.highest_degree || 'General'}</div>
                       </td>
                       <td className="p-3.5">

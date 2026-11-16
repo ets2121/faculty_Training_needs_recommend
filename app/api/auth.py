@@ -60,6 +60,7 @@ class RegisterRequest(BaseModel):
     academic_rank: str | None = None
     highest_degree: str | None = None
     specialization: str | None = None
+    position: str | None = "Permanent"
 
 
 def _get_user_campus_dept_info(user: User, db: Session):
@@ -266,6 +267,7 @@ def register_user(
             academic_rank=body.academic_rank.strip() if body.academic_rank else "Assistant Professor I",
             highest_degree=body.highest_degree.strip() if body.highest_degree else None,
             specialization=body.specialization.strip() if body.specialization else None,
+            position=body.position.strip() if body.position else "Permanent",
             status="active",
             questionnaire_status="not_started",
         ))
@@ -277,6 +279,7 @@ def register_user(
             academic_rank=body.academic_rank.strip() if body.academic_rank else "Instructor I",
             highest_degree=body.highest_degree.strip() if body.highest_degree else None,
             specialization=body.specialization.strip() if body.specialization else None,
+            position=body.position.strip() if body.position else "Permanent",
             status="active",
         ))
 

@@ -33,6 +33,7 @@ class UpdateProfileRequest(BaseModel):
     academic_rank: str | None = None
     specialization: str | None = None
     highest_degree: str | None = None
+    position: str | None = None
 
 
 @router.get("")
@@ -62,6 +63,7 @@ def get_my_profile(
             "academic_rank": faculty.academic_rank,
             "highest_degree": faculty.highest_degree,
             "specialization": faculty.specialization,
+            "position": faculty.position or "Permanent",
             "department": {
                 "code": dept.code if dept else None,
                 "name": dept.name if dept else None,
@@ -114,6 +116,8 @@ def update_my_profile(
         faculty.specialization = body.specialization
     if body.highest_degree is not None:
         faculty.highest_degree = body.highest_degree
+    if body.position is not None:
+        faculty.position = body.position
 
     db.commit()
 

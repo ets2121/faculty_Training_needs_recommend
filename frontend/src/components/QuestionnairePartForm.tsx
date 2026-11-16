@@ -497,6 +497,7 @@ export default function QuestionnairePartForm({
                 className="w-full bg-light-bg dark:bg-dark-bg border border-light-border dark:border-dark-border rounded-xl px-3.5 py-2.5 text-sm text-light-text dark:text-white focus:border-brand-green focus:outline-none"
               >
                 <option value="Permanent">Permanent</option>
+                <option value="COS">COS (Contract of Service)</option>
                 <option value="Contract of Service">Contract of Service (COS)</option>
                 <option value="Part-time">Part-time</option>
                 <option value="Temporary">Temporary</option>

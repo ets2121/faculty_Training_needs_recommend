@@ -76,6 +76,7 @@ def _user_to_out(u: User, db: Session) -> dict:
         "academic_rank": faculty.academic_rank if faculty else None,
         "highest_degree": faculty.highest_degree if faculty else None,
         "specialization": faculty.specialization if faculty else None,
+        "position": faculty.position if faculty else None,
         "questionnaire_status": q_status,
         "status": q_status if q_status else u.status,
         "user_status": u.status,
@@ -189,6 +190,7 @@ class UpdateUserRequest(BaseModel):
     highest_degree: str | None = None
     specialization: str | None = None
     faculty_code: str | None = None
+    position: str | None = None
 
 
 @router.patch("/{user_id}")
@@ -258,6 +260,8 @@ def update_user(
             faculty.specialization = body.specialization.strip()
         if body.faculty_code is not None:
             faculty.faculty_code = body.faculty_code.strip()
+        if body.position is not None:
+            faculty.position = body.position.strip()
 
     db.commit()
 
