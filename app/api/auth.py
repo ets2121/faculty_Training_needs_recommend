@@ -1,4 +1,4 @@
-﻿"""
+"""
 Auth API — Login, user profile, registration, and password change endpoints.
 """
 from datetime import datetime, timezone

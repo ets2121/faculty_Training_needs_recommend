@@ -69,10 +69,10 @@ export default function Sidebar() {
     role === 'system_admin'
       ? sysAdminNav
       : role === 'campus_admin'
-      ? campusAdminNav
-      : role === 'department_admin'
-      ? deptAdminNav
-      : facultyNav;
+        ? campusAdminNav
+        : role === 'department_admin'
+          ? deptAdminNav
+          : facultyNav;
 
   const generalNav = [
     { href: '/profile', label: 'My Profile', icon: User },
@@ -83,10 +83,10 @@ export default function Sidebar() {
     role === 'system_admin'
       ? 'System Administration'
       : role === 'campus_admin'
-      ? `${user.campus?.code || 'Campus'} Administration`
-      : role === 'department_admin'
-      ? `${user.department?.code || 'Dept'} Admin Panel`
-      : 'Faculty Portal';
+        ? `${user.campus?.code || 'Campus'} Administration`
+        : role === 'department_admin'
+          ? `${user.department?.code || 'Dept'} Admin Panel`
+          : 'Faculty Portal';
 
   const allNav = [...currentNav, ...generalNav];
 
@@ -107,16 +107,14 @@ export default function Sidebar() {
               key={item.href}
               href={item.href}
               onClick={onClose}
-              className={`flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-xs font-semibold transition-all duration-150 ${
-                isActive
+              className={`flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-xs font-semibold transition-all duration-150 ${isActive
                   ? 'bg-brand-green/15 text-brand-green border border-brand-green/30 shadow-sm'
                   : 'text-light-text dark:text-dark-text hover:text-brand-green hover:bg-light-bg dark:hover:bg-dark-card border border-transparent'
-              }`}
+                }`}
             >
               <Icon
-                className={`w-4 h-4 shrink-0 ${
-                  isActive ? 'text-light-text dark:text-white' : 'text-light-text dark:text-dark-muted'
-                }`}
+                className={`w-4 h-4 shrink-0 ${isActive ? 'text-light-text dark:text-white' : 'text-light-text dark:text-dark-muted'
+                  }`}
               />
               <span>{item.label}</span>
             </Link>
@@ -138,16 +136,14 @@ export default function Sidebar() {
               key={item.href}
               href={item.href}
               onClick={onClose}
-              className={`flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-xs font-semibold transition-all duration-150 ${
-                isActive
+              className={`flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-xs font-semibold transition-all duration-150 ${isActive
                   ? 'bg-brand-green/15 text-brand-green border border-brand-green/30 shadow-sm'
                   : 'text-light-text dark:text-dark-text hover:text-brand-green hover:bg-light-bg dark:hover:bg-dark-card border border-transparent'
-              }`}
+                }`}
             >
               <Icon
-                className={`w-4 h-4 shrink-0 ${
-                  isActive ? 'text-light-text dark:text-white' : 'text-light-text dark:text-dark-muted'
-                }`}
+                className={`w-4 h-4 shrink-0 ${isActive ? 'text-light-text dark:text-white' : 'text-light-text dark:text-dark-muted'
+                  }`}
               />
               <span>{item.label}</span>
             </Link>
