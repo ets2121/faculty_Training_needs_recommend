@@ -84,6 +84,7 @@ export function ViewEditUserModal({
 
   const isFaculty = user.role === 'faculty';
   const isSysAdmin = currentUserRole === 'system_admin';
+  const canManageStatus = currentUserRole === 'system_admin' || currentUserRole === 'campus_admin';
 
   // Save profile updates
   const handleSaveDetails = async (e: React.FormEvent) => {
@@ -94,7 +95,7 @@ export function ViewEditUserModal({
       await api.patch(`/users/${user.id}`, {
         full_name: fullName.trim() || undefined,
         email: email.trim() || undefined,
-        status: isSysAdmin ? status : undefined,
+        status: canManageStatus ? status : undefined,
         academic_rank: isFaculty ? academicRank : undefined,
         highest_degree: isFaculty ? highestDegree : undefined,
         specialization: isFaculty ? specialization.trim() : undefined,
@@ -247,8 +248,8 @@ export function ViewEditUserModal({
                 </div>
               </div>
 
-              {/* Status (Sys Admin only) */}
-              {isSysAdmin && (
+              {/* Status (Sys Admin & Campus Admin) */}
+              {canManageStatus && (
                 <div className="space-y-1">
                   <label className="block text-xs font-semibold text-light-text dark:text-dark-text">Account Status</label>
                   <select
