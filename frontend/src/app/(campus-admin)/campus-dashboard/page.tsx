@@ -4,7 +4,6 @@ import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import {
   Building2,
   Users,
-  Lightbulb,
   GraduationCap,
   BarChart3,
   ArrowRight,
@@ -12,9 +11,7 @@ import {
   TrendingUp,
   BookOpen,
   CheckCircle2,
-  Clock,
   ChevronRight,
-  ShieldCheck,
 } from 'lucide-react';
 import Link from 'next/link';
 import api from '@/lib/api';
@@ -151,42 +148,6 @@ export default function CampusDashboardPage() {
     ];
   }, [latestCampusRec]);
 
-  const modules = useMemo(
-    () => [
-      {
-        href: '/campus-faculty',
-        icon: Users,
-        color: 'from-sky-500 to-blue-600',
-        glow: 'shadow-sky-500/20',
-        title: 'Faculty Management',
-        description: 'View, manage, and transfer faculty members across departments within your campus.',
-        stat: loading ? '...' : String(stats?.total_faculty ?? campusFaculty.length),
-        statLabel: 'Faculty Members',
-      },
-      {
-        href: '/campus-departments',
-        icon: Building2,
-        color: 'from-amber-400 to-orange-500',
-        glow: 'shadow-amber-500/20',
-        title: 'Academic Departments',
-        description: 'Manage academic units, department programs, and view faculty distribution per department.',
-        stat: loading ? '...' : String(stats?.total_departments ?? (stats?.departments?.length ?? 0)),
-        statLabel: 'Departments',
-      },
-      {
-        href: '/campus-recommendations',
-        icon: Lightbulb,
-        color: 'from-emerald-500 to-teal-600',
-        glow: 'shadow-emerald-500/20',
-        title: 'Model Training Synthesis',
-        description: 'Generate model-powered training recommendations tailored to campus faculty needs and assessments.',
-        stat: loading ? '...' : `${assessedPct}%`,
-        statLabel: 'Faculty with Recs',
-      },
-    ],
-    [loading, stats, campusFaculty, assessedPct]
-  );
-
   return (
     <div className="space-y-8 max-w-6xl mx-auto pb-10">
       {/* 1. Welcome Banner */}
@@ -225,19 +186,70 @@ export default function CampusDashboardPage() {
         </div>
       </div>
 
-      {/* 2. Quick Metrics Row */}
+      {/* 2. Interactive Quick Metrics Row */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
         {[
-          { label: 'Total Faculty', value: loading ? '...' : String(stats?.total_faculty ?? campusFaculty.length), icon: Users, color: 'text-brand-green' },
-          { label: 'Departments', value: loading ? '...' : String(stats?.total_departments ?? (stats?.departments?.length ?? 0)), icon: Building2, color: 'text-brand-gold' },
-          { label: 'Eligible Faculty', value: loading ? '...' : String(stats?.eligible_faculty ?? campusFaculty.filter((f) => (f as any).questionnaire_status === 'eligible').length), icon: CheckCircle2, color: 'text-brand-green' },
-          { label: 'Has Recommendation', value: loading ? '...' : String(stats?.has_recommendation_faculty ?? campusFaculty.filter((f) => (f as any).questionnaire_status === 'has_recommendation').length), icon: TrendingUp, color: 'text-brand-gold' },
+          {
+            label: 'Total Faculty',
+            value: loading ? '...' : String(stats?.total_faculty ?? campusFaculty.length),
+            icon: Users,
+            color: 'text-brand-green',
+            bgColor: 'bg-brand-green/10',
+            borderColor: 'border-brand-green/20',
+            href: '/campus-faculty',
+            actionText: 'Manage Faculty',
+          },
+          {
+            label: 'Departments',
+            value: loading ? '...' : String(stats?.total_departments ?? (stats?.departments?.length ?? 0)),
+            icon: Building2,
+            color: 'text-brand-gold',
+            bgColor: 'bg-brand-gold/10',
+            borderColor: 'border-brand-gold/20',
+            href: '/campus-departments',
+            actionText: 'View Departments',
+          },
+          {
+            label: 'Eligible Faculty',
+            value: loading ? '...' : String(stats?.eligible_faculty ?? campusFaculty.filter((f) => (f as any).questionnaire_status === 'eligible').length),
+            icon: CheckCircle2,
+            color: 'text-brand-green',
+            bgColor: 'bg-brand-green/10',
+            borderColor: 'border-brand-green/20',
+            href: '/campus-faculty',
+            actionText: 'Review Eligibility',
+          },
+          {
+            label: 'Has Recommendation',
+            value: loading ? '...' : String(stats?.has_recommendation_faculty ?? campusFaculty.filter((f) => (f as any).questionnaire_status === 'has_recommendation').length),
+            icon: TrendingUp,
+            color: 'text-brand-gold',
+            bgColor: 'bg-brand-gold/10',
+            borderColor: 'border-brand-gold/20',
+            href: '/campus-recommendations',
+            actionText: 'Campus Synthesis',
+          },
         ].map((s) => (
-          <div key={s.label} className="p-4 sm:p-5 rounded-2xl bg-white dark:bg-dark-card border border-light-border dark:border-dark-border shadow-sm">
-            <s.icon className={`w-5 h-5 ${s.color} mb-2`} />
-            <p className={`text-2xl font-extrabold ${s.color}`}>{s.value}</p>
-            <p className="text-[11px] font-semibold text-light-text dark:text-dark-muted mt-0.5">{s.label}</p>
-          </div>
+          <Link
+            key={s.label}
+            href={s.href}
+            className="group p-4 sm:p-5 rounded-2xl bg-white dark:bg-dark-card border border-light-border dark:border-dark-border hover:border-brand-green/60 shadow-sm hover:shadow-lg hover:-translate-y-0.5 transition-all flex flex-col justify-between"
+          >
+            <div>
+              <div className="flex items-center justify-between mb-2">
+                <div className={`w-9 h-9 rounded-xl ${s.bgColor} border ${s.borderColor} flex items-center justify-center`}>
+                  <s.icon className={`w-4 h-4 sm:w-5 sm:h-5 ${s.color}`} />
+                </div>
+                <ChevronRight className="w-4 h-4 text-light-text/30 dark:text-dark-muted/30 group-hover:text-brand-green group-hover:translate-x-1 transition-all" />
+              </div>
+              <p className={`text-2xl sm:text-3xl font-extrabold ${s.color}`}>{s.value}</p>
+              <p className="text-[11px] sm:text-xs font-semibold text-light-text dark:text-dark-muted mt-0.5">{s.label}</p>
+            </div>
+            <div className="pt-3 mt-3 border-t border-light-border/60 dark:border-dark-border/40 flex items-center justify-between text-[11px] font-semibold text-light-text dark:text-dark-muted group-hover:text-brand-green transition-colors">
+              <span>{s.actionText}</span>
+              <ArrowRight className="w-3.5 h-3.5 group-hover:translate-x-0.5 transition-transform" />
+            </div>
+          </Link>
         ))}
       </div>
 
@@ -280,47 +292,7 @@ export default function CampusDashboardPage() {
         </div>
       </div>
 
-      {/* 4. Campus Management Modules */}
-      <div className="space-y-4">
-        <div className="flex items-center gap-2">
-          <Building2 className="w-4 h-4 text-brand-green" />
-          <h2 className="text-base font-bold text-light-text dark:text-white">Campus Management Modules</h2>
-        </div>
-
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 sm:gap-5">
-          {modules.map((mod) => (
-            <Link
-              key={mod.href}
-              href={mod.href}
-              className={`p-5 sm:p-6 rounded-3xl bg-white dark:bg-dark-card border border-light-border dark:border-dark-border hover:border-brand-green/50 transition-all shadow-md hover:shadow-xl group space-y-3 sm:space-y-4`}
-            >
-              <div className="flex items-center justify-between">
-                <div className={`w-11 h-11 rounded-2xl bg-gradient-to-br ${mod.color} flex items-center justify-center shadow-md`}>
-                  <mod.icon className="w-5 h-5 text-white" />
-                </div>
-                <ChevronRight className="w-5 h-5 text-light-text dark:text-dark-muted group-hover:text-brand-green group-hover:translate-x-1 transition-all" />
-              </div>
-              <div>
-                <h3 className="text-sm sm:text-base font-extrabold text-light-text dark:text-white group-hover:text-brand-green-dark transition-colors">
-                  {mod.title}
-                </h3>
-                <p className="text-xs text-light-text dark:text-dark-muted mt-1 leading-relaxed">
-                  {mod.description}
-                </p>
-              </div>
-              <div className="flex items-center justify-between pt-2 border-t border-light-border dark:border-dark-border">
-                <div>
-                  <p className="text-lg font-extrabold text-light-text dark:text-white">{mod.stat}</p>
-                  <p className="text-[10px] font-semibold text-light-text dark:text-dark-muted">{mod.statLabel}</p>
-                </div>
-                <ArrowRight className="w-4 h-4 text-light-text dark:text-dark-muted group-hover:text-brand-green group-hover:translate-x-1 transition-all" />
-              </div>
-            </Link>
-          ))}
-        </div>
-      </div>
-
-      {/* 5. Department Overview Grid */}
+      {/* 4. Department Overview Grid */}
       {(stats?.departments?.length ?? 0) > 0 && (
         <div className="bg-white dark:bg-dark-card border border-light-border dark:border-dark-border rounded-2xl p-5 sm:p-6 shadow-xl space-y-4">
           <div className="flex items-center justify-between">
