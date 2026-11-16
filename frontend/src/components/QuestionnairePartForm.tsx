@@ -453,8 +453,13 @@ export default function QuestionnairePartForm({
                 type="number"
                 min={18}
                 max={80}
-                value={formData.age || 35}
-                onChange={(e) => setFormData({ ...formData, age: parseInt(e.target.value) || 35 })}
+                value={formData.age ?? ''}
+                onChange={(e) =>
+                  setFormData({
+                    ...formData,
+                    age: e.target.value === '' ? '' : parseInt(e.target.value) || '',
+                  })
+                }
                 className="w-full bg-light-bg dark:bg-dark-bg border border-light-border dark:border-dark-border rounded-xl px-3.5 py-2.5 text-sm text-light-text dark:text-white focus:border-brand-green focus:outline-none"
                 required
               />
@@ -527,7 +532,7 @@ export default function QuestionnairePartForm({
               </label>
               <input
                 type="text"
-                value={formData.field_of_specialization || 'Information Technology'}
+                value={formData.field_of_specialization ?? ''}
                 onChange={(e) =>
                   setFormData({ ...formData, field_of_specialization: e.target.value })
                 }
