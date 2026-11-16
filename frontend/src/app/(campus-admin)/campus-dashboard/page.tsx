@@ -300,10 +300,16 @@ export default function CampusDashboardPage() {
               <BookOpen className="w-4 h-4 text-brand-gold" />
               <h2 className="text-base font-bold text-light-text dark:text-white">Academic Departments Directory</h2>
             </div>
-            <Link href="/campus-departments" className="text-xs font-semibold text-brand-green hover:underline flex items-center gap-1">
-              <span>View All ({stats?.departments?.length ?? 0})</span>
-              <ArrowRight className="w-3.5 h-3.5" />
-            </Link>
+            <div className="flex items-center gap-4">
+              <Link href="/campus-admins" className="text-xs font-semibold text-brand-gold hover:underline flex items-center gap-1">
+                <span>Manage Dept Admins</span>
+                <ArrowRight className="w-3.5 h-3.5" />
+              </Link>
+              <Link href="/campus-departments" className="text-xs font-semibold text-brand-green hover:underline flex items-center gap-1">
+                <span>View Departments ({stats?.departments?.length ?? 0})</span>
+                <ArrowRight className="w-3.5 h-3.5" />
+              </Link>
+            </div>
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3.5">

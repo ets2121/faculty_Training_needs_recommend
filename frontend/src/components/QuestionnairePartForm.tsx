@@ -648,11 +648,10 @@ export default function QuestionnairePartForm({
                 return (
                   <label
                     key={area}
-                    className={`flex items-center gap-3 p-3 rounded-xl border text-xs cursor-pointer transition-all ${
-                      isChecked
-                        ? 'border-brand-green bg-brand-green/10 text-light-text dark:text-white font-medium shadow-sm'
-                        : 'border-light-border dark:border-dark-border bg-light-bg dark:bg-dark-bg text-light-text dark:text-dark-text hover:border-brand-green/40'
-                    }`}
+                    className={`flex items-center gap-3 p-3 rounded-xl border text-xs cursor-pointer transition-all ${isChecked
+                      ? 'border-brand-green bg-brand-green/10 text-light-text dark:text-white font-medium shadow-sm'
+                      : 'border-light-border dark:border-dark-border bg-light-bg dark:bg-dark-bg text-light-text dark:text-dark-text hover:border-brand-green/40'
+                      }`}
                   >
                     <input
                       type="checkbox"
@@ -689,11 +688,10 @@ export default function QuestionnairePartForm({
                 return (
                   <label
                     key={mod}
-                    className={`flex items-center gap-2.5 p-2.5 rounded-xl border text-xs cursor-pointer transition-all ${
-                      isChecked
-                        ? 'border-brand-gold bg-brand-gold/10 text-light-text dark:text-white font-medium'
-                        : 'border-light-border dark:border-dark-border bg-light-bg dark:bg-dark-bg text-light-text dark:text-dark-text hover:border-brand-gold/40'
-                    }`}
+                    className={`flex items-center gap-2.5 p-2.5 rounded-xl border text-xs cursor-pointer transition-all ${isChecked
+                      ? 'border-brand-gold bg-brand-gold/10 text-light-text dark:text-white font-medium'
+                      : 'border-light-border dark:border-dark-border bg-light-bg dark:bg-dark-bg text-light-text dark:text-dark-text hover:border-brand-gold/40'
+                      }`}
                   >
                     <input
                       type="checkbox"
@@ -746,11 +744,10 @@ export default function QuestionnairePartForm({
                       setExpandedDomains((prev) => ({ ...prev, [tab.id]: true }));
                     }
                   }}
-                  className={`px-3 py-1.5 rounded-xl text-xs font-semibold transition-all ${
-                    activeCompetencyDomain === tab.id
-                      ? 'bg-brand-green text-white shadow-sm'
-                      : 'bg-light-muted-surface dark:bg-dark-bg text-light-text dark:text-dark-muted hover:text-white'
-                  }`}
+                  className={`px-3 py-1.5 rounded-xl text-xs font-semibold transition-all ${activeCompetencyDomain === tab.id
+                    ? 'bg-brand-green text-white shadow-sm'
+                    : 'bg-light-muted-surface dark:bg-dark-bg text-light-text dark:text-dark-muted hover:text-white'
+                    }`}
                 >
                   {tab.label}
                 </button>
@@ -1009,11 +1006,10 @@ export default function QuestionnairePartForm({
                 return (
                   <label
                     key={mod}
-                    className={`flex items-center gap-2.5 p-3 rounded-xl border text-xs cursor-pointer transition-all ${
-                      checked
-                        ? 'border-brand-green bg-brand-green/10 text-light-text dark:text-white font-medium'
-                        : 'border-light-border dark:border-dark-border bg-light-bg dark:bg-dark-bg text-light-text dark:text-dark-text hover:border-brand-green/40'
-                    }`}
+                    className={`flex items-center gap-2.5 p-3 rounded-xl border text-xs cursor-pointer transition-all ${checked
+                      ? 'border-brand-green bg-brand-green/10 text-light-text dark:text-white font-medium'
+                      : 'border-light-border dark:border-dark-border bg-light-bg dark:bg-dark-bg text-light-text dark:text-dark-text hover:border-brand-green/40'
+                      }`}
                   >
                     <input
                       type="checkbox"
@@ -1048,11 +1044,10 @@ export default function QuestionnairePartForm({
                 return (
                   <label
                     key={sched}
-                    className={`flex items-center gap-2 p-3 rounded-xl border text-xs cursor-pointer transition-all ${
-                      checked
-                        ? 'border-brand-gold bg-brand-gold/10 text-light-text dark:text-white font-medium'
-                        : 'border-light-border dark:border-dark-border bg-light-bg dark:bg-dark-bg text-light-text dark:text-dark-text hover:border-brand-gold/40'
-                    }`}
+                    className={`flex items-center gap-2 p-3 rounded-xl border text-xs cursor-pointer transition-all ${checked
+                      ? 'border-brand-gold bg-brand-gold/10 text-light-text dark:text-white font-medium'
+                      : 'border-light-border dark:border-dark-border bg-light-bg dark:bg-dark-bg text-light-text dark:text-dark-text hover:border-brand-gold/40'
+                      }`}
                   >
                     <input
                       type="checkbox"
@@ -1087,11 +1082,10 @@ export default function QuestionnairePartForm({
                 return (
                   <label
                     key={dur}
-                    className={`flex items-center gap-2 p-3 rounded-xl border text-xs cursor-pointer transition-all ${
-                      checked
-                        ? 'border-brand-green bg-brand-green/10 text-light-text dark:text-white font-medium'
-                        : 'border-light-border dark:border-dark-border bg-light-bg dark:bg-dark-bg text-light-text dark:text-dark-text hover:border-brand-green/40'
-                    }`}
+                    className={`flex items-center gap-2 p-3 rounded-xl border text-xs cursor-pointer transition-all ${checked
+                      ? 'border-brand-green bg-brand-green/10 text-light-text dark:text-white font-medium'
+                      : 'border-light-border dark:border-dark-border bg-light-bg dark:bg-dark-bg text-light-text dark:text-dark-text hover:border-brand-green/40'
+                      }`}
                   >
                     <input
                       type="checkbox"

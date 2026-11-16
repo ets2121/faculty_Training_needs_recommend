@@ -17,6 +17,7 @@ import {
   Cpu,
   BookOpen,
   Users,
+  ShieldCheck,
   X,
   Menu,
   LogOut,
@@ -48,6 +49,7 @@ export default function Sidebar() {
   const campusAdminNav = [
     { href: '/campus-dashboard', label: 'Campus Overview', icon: LayoutDashboard },
     { href: '/campus-faculty', label: 'Campus Faculty Management', icon: Users },
+    { href: '/campus-admins', label: 'Dept Admins Management', icon: ShieldCheck },
     { href: '/campus-recommendations', label: 'Campus Model Synthesis', icon: Sparkles },
     { href: '/campus-departments', label: 'Academic Departments', icon: Building },
     { href: '/register-admin', label: 'Add Dept Admin', icon: UserPlus },

@@ -97,7 +97,7 @@ export default function RegisterAdminPage() {
       );
       
       if (isCampusAdmin) {
-        router.push('/campus-dashboard');
+        router.push('/campus-admins');
       } else {
         router.push('/admin-dashboard');
       }
