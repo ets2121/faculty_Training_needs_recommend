@@ -25,6 +25,10 @@ def init_db():
                 conn.execute(text(
                     "ALTER TABLE faculty ADD COLUMN last_recommendation_at DATETIME NULL"
                 ))
+            if "position" not in existing_cols:
+                conn.execute(text(
+                    "ALTER TABLE faculty ADD COLUMN position VARCHAR(50) DEFAULT 'Permanent'"
+                ))
             conn.commit()
     except Exception as e:
         print(f"Schema update notice for faculty table: {e}")
@@ -37,6 +41,27 @@ def init_db():
             if role_count == 0:
                 print("Fresh database detected. Running seed logic...")
                 seed_database(db)
+            else:
+                # Ensure Department Admins have linked Faculty profiles
+                from app.db.models import DepartmentAdmin, Faculty
+                das = db.query(DepartmentAdmin).all()
+                created = False
+                for da in das:
+                    if da.department_id:
+                        fac = db.query(Faculty).filter(Faculty.user_id == da.user_id).first()
+                        if not fac:
+                            db.add(Faculty(
+                                user_id=da.user_id,
+                                department_id=da.department_id,
+                                faculty_code=f"CHAIR-{da.user_id:04d}",
+                                academic_rank="Assistant Professor I",
+                                position="Permanent",
+                                status="active",
+                                questionnaire_status="not_started",
+                            ))
+                            created = True
+                if created:
+                    db.commit()
         finally:
             db.close()
     except Exception as e:

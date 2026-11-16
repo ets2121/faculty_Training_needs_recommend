@@ -200,6 +200,16 @@ def seed_database(db: Session) -> None:
                 department_id=dept_obj.id,
                 status="active",
             ))
+            db.add(Faculty(
+                user_id=u.id,
+                department_id=dept_obj.id,
+                faculty_code=f"CHAIR-{u.id:04d}",
+                academic_rank="Assistant Professor I",
+                highest_degree="Master's Degree",
+                position="Permanent",
+                status="active",
+                questionnaire_status="not_started",
+            ))
 
     # 9. Seed Faculty Accounts with realistic Questionnaire Data & Statuses
     faculty_role = roles_map["faculty"]
@@ -473,6 +483,8 @@ def seed_database(db: Session) -> None:
             highest_degree = p2.get("highest_educational_attainment", "Bachelor's Degree")
             specialization = p2.get("field_of_specialization",
                 "Computer Science" if d_code == "BSIT" else "Education" if d_code == "BSED" else "Business")
+            raw_pos = p1.get("employment_status", "Permanent")
+            position = "COS" if "contract" in raw_pos.lower() or "cos" in raw_pos.lower() else "Permanent"
 
             fac = Faculty(
                 user_id=user.id,
@@ -481,6 +493,7 @@ def seed_database(db: Session) -> None:
                 academic_rank=academic_rank,
                 highest_degree=highest_degree,
                 specialization=specialization,
+                position=position,
                 questionnaire_status=target_status,
                 status="active",
             )
