@@ -1,4 +1,4 @@
-﻿"""
+"""
 Campuses API — Multi-campus management endpoints for Diffun, Maddela, and Cabarroguis.
 """
 from datetime import datetime, timezone
@@ -13,7 +13,15 @@ from app.core.security import (
     enforce_campus_scope,
     log_audit,
 )
-from app.db.models import Campus, Department, Faculty, DepartmentAdmin, User
+from app.db.models import (
+    Campus,
+    Department,
+    Faculty,
+    DepartmentAdmin,
+    User,
+    TrainingResponse,
+    RecommendationHistory,
+)
 from app.db.session import get_db
 
 router = APIRouter(prefix="/campuses", tags=["Campuses"])
@@ -338,10 +346,11 @@ def delete_campus_department(
     db: Session = Depends(get_db),
 ):
     """
-    Soft-delete (deactivate) a department.
+    Permanently delete an academic department from the database.
     - system_admin: any campus
     - campus_admin: their campus only
-    Departments with active faculty cannot be deleted.
+    Departments with assigned faculty members or department admins cannot be deleted
+    to prevent orphaning user accounts.
     """
     role_name = get_user_role_name(current_user, db)
     if role_name not in ("system_admin", "campus_admin"):
@@ -356,25 +365,42 @@ def delete_campus_department(
     if not dept:
         raise HTTPException(status_code=404, detail="Department not found in this campus.")
 
-    # Prevent deletion if department has active faculty
-    active_faculty = [f for f in dept.faculty_members if f.status == "active"]
-    if active_faculty:
+    # 1. Prevent deletion if department has any faculty members assigned
+    faculty_count = len(dept.faculty_members)
+    if faculty_count > 0:
         raise HTTPException(
             status_code=status.HTTP_409_CONFLICT,
-            detail=f"Cannot delete department '{dept.code}' — it has {len(active_faculty)} active faculty member(s). Transfer or deactivate them first.",
+            detail=f"Cannot delete department '{dept.code}' — it currently has {faculty_count} faculty member(s) assigned. Please transfer or remove all faculty members before deleting this department.",
         )
 
-    dept.status = "inactive"
-    db.commit()
+    # 2. Prevent deletion if department has any department administrators assigned
+    admin_count = len(dept.department_admins)
+    if admin_count > 0:
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail=f"Cannot delete department '{dept.code}' — it currently has {admin_count} department administrator(s) assigned. Please reassign or delete the administrator accounts first.",
+        )
 
+    dept_code = dept.code
+    dept_name = dept.name
+
+    # 3. Clean up any historical nullable references
+    db.query(TrainingResponse).filter(TrainingResponse.department_id == dept_id).update({"department_id": None})
+    db.query(RecommendationHistory).filter(RecommendationHistory.department_id == dept_id).update({"department_id": None})
+
+    # 4. Audit log entry
     log_audit(
         db, current_user, "delete_department",
         entity_type="department", entity_id=str(dept_id),
-        old_values={"code": dept.code, "name": dept.name, "campus_id": campus_id},
+        old_values={"code": dept_code, "name": dept_name, "campus_id": campus_id},
         ip_address=request.client.host if request.client else None,
     )
 
+    # 5. Permanently remove department record from database
+    db.delete(dept)
+    db.commit()
+
     return {
         "status": "success",
-        "message": f"Department '{dept.code}' has been deactivated.",
+        "message": f"Department '{dept_code}' ({dept_name}) has been permanently deleted from the database.",
     }

@@ -25,6 +25,8 @@ interface ConfirmDeleteModalProps {
 }
 
 function ConfirmDeleteModal({ dept, onClose, onConfirm, loading }: ConfirmDeleteModalProps) {
+  const hasFaculty = (dept.faculty_count ?? 0) > 0;
+
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm animate-fadeIn">
       <div className="bg-white dark:bg-dark-card border border-light-border dark:border-dark-border rounded-3xl p-8 max-w-sm w-full shadow-2xl space-y-5">
@@ -34,14 +36,14 @@ function ConfirmDeleteModal({ dept, onClose, onConfirm, loading }: ConfirmDelete
           </div>
           <div>
             <h3 className="text-base font-bold text-light-text dark:text-dark-text">Delete Department</h3>
-            <p className="text-xs text-light-text dark:text-dark-muted">This action will deactivate the unit</p>
+            <p className="text-xs text-light-text dark:text-dark-muted">Permanently remove from database</p>
           </div>
         </div>
-        <p className="text-sm text-light-text dark:text-dark-muted">
-          Delete <strong className="text-light-text dark:text-dark-text">{dept.name} ({dept.code})</strong>?
-          {(dept.faculty_count ?? 0) > 0 && (
-            <span className="block mt-1 text-rose-500 font-semibold">
-              Warning: {dept.faculty_count} faculty member(s) in this department.
+        <p className="text-sm text-light-text dark:text-dark-muted leading-relaxed">
+          Permanently delete <strong className="text-light-text dark:text-dark-text">{dept.name} ({dept.code})</strong>?
+          {hasFaculty && (
+            <span className="block mt-2 p-2.5 rounded-xl bg-rose-500/10 border border-rose-500/20 text-rose-600 dark:text-rose-400 text-xs font-semibold">
+              ⚠️ Cannot delete: {dept.faculty_count} faculty member(s) are currently assigned to this department. Please transfer them to another department first.
             </span>
           )}
         </p>
@@ -51,8 +53,8 @@ function ConfirmDeleteModal({ dept, onClose, onConfirm, loading }: ConfirmDelete
           </button>
           <button
             onClick={onConfirm}
-            disabled={loading}
-            className="flex-1 px-4 py-2.5 rounded-xl bg-rose-500 hover:bg-rose-600 text-white text-sm font-bold disabled:opacity-50 transition-all shadow-md"
+            disabled={loading || hasFaculty}
+            className="flex-1 px-4 py-2.5 rounded-xl bg-rose-500 hover:bg-rose-600 text-white text-sm font-bold disabled:opacity-40 disabled:cursor-not-allowed transition-all shadow-md"
           >
             {loading ? 'Deleting...' : 'Delete'}
           </button>
@@ -196,7 +198,7 @@ export default function CampusDepartmentsPage() {
     setDeleteLoading(true);
     try {
       await api.delete(`/campuses/${campusId}/departments/${deletingDept.id}`);
-      showToast('success', 'Department Deactivated', `Department "${deletingDept.code}" was deactivated successfully.`);
+      showToast('success', 'Department Deleted', `Department "${deletingDept.code}" was permanently deleted from the database.`);
       setDeletingDept(null);
       loadDepartments();
     } catch (err: any) {
