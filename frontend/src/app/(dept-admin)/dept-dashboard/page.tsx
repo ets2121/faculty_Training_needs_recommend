@@ -16,12 +16,15 @@ import {
   Award,
   ChevronRight,
   Sparkles,
+  GraduationCap,
+  ClipboardList,
 } from 'lucide-react';
 import Link from 'next/link';
 import api from '@/lib/api';
 import { useAuth } from '@/context/AuthContext';
 import { useToast } from '@/context/ToastContext';
-import { UserListItem, DepartmentRecommendationResult } from '@/types';
+import { UserListItem, DepartmentRecommendationResult, QuestionnaireProgress } from '@/types';
+import StatusBadge from '@/components/StatusBadge';
 import { systemConfig } from '@/config';
 import {
   ResponsiveDonutChart,
@@ -39,21 +42,31 @@ export default function DeptDashboardPage() {
 
   const [faculty, setFaculty] = useState<UserListItem[]>([]);
   const [deptRec, setDeptRec] = useState<DepartmentRecommendationResult | null>(null);
+  const [personalProgress, setPersonalProgress] = useState<QuestionnaireProgress | null>(null);
+  const [personalRec, setPersonalRec] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const now = new Date().toLocaleString('en-PH', { timeZone: 'Asia/Manila', dateStyle: 'long', timeStyle: 'short' });
 
   const loadData = useCallback(async () => {
     setLoading(true);
     try {
-      const [usersRes, recRes] = await Promise.all([
+      const [usersRes, recRes, myProgRes, myRecRes] = await Promise.all([
         api.get('/users'),
         api.get('/recommendations/department/history').catch(() => ({ data: [] })),
+        api.get('/questionnaire/progress').catch(() => ({ data: null })),
+        api.get('/profile/last-recommendation').catch(() => ({ data: null })),
       ]);
       const all: UserListItem[] = usersRes.data?.users || [];
       setFaculty(all.filter((u) => u.role === 'faculty'));
       const history = Array.isArray(recRes.data) ? recRes.data : [];
       if (history.length > 0) {
         setDeptRec(history[0]);
+      }
+      if (myProgRes.data) {
+        setPersonalProgress(myProgRes.data);
+      }
+      if (myRecRes.data?.recommendation) {
+        setPersonalRec(myRecRes.data);
       }
     } catch (err: any) {
       showToast('error', 'Load Error', err.response?.data?.detail || 'Failed to load dashboard.');
@@ -140,16 +153,36 @@ export default function DeptDashboardPage() {
       icon: Lightbulb,
       color: 'from-emerald-500 to-teal-600',
       glow: 'shadow-emerald-500/20',
-      title: 'Model Recommendations',
-      description: 'Generate and view model-powered training recommendations based on your department faculty assessments.',
+      title: 'Dept Model Synthesis',
+      description: 'Generate and view aggregated training recommendations based on all department faculty assessments.',
       stat: loading ? '...' : `${assessedPct}%`,
       statLabel: 'Faculty with Recs',
     },
     {
+      href: '/questionnaire',
+      icon: ClipboardList,
+      color: 'from-brand-green to-emerald-600',
+      glow: 'shadow-brand-green/20',
+      title: 'My Needs Assessment',
+      description: 'Complete your personal 8-part faculty competency and professional development assessment.',
+      stat: loading ? '...' : personalProgress?.total_parts_completed || '0/8',
+      statLabel: 'Parts Completed',
+    },
+    {
+      href: '/my-recommendation',
+      icon: Sparkles,
+      color: 'from-brand-gold to-amber-600',
+      glow: 'shadow-brand-gold/20',
+      title: 'My Recommendations',
+      description: 'View or run personalized AI training recommendations based on your individual profile.',
+      stat: loading ? '...' : personalProgress?.questionnaire_status === 'has_recommendation' ? 'Ready' : personalProgress?.eligible_for_recommendation ? 'Eligible' : 'Pending',
+      statLabel: 'Recommendation Status',
+    },
+    {
       href: '/register-faculty',
       icon: UserPlus,
-      color: 'from-amber-400 to-orange-500',
-      glow: 'shadow-amber-500/20',
+      color: 'from-purple-500 to-indigo-600',
+      glow: 'shadow-purple-500/20',
       title: 'Add Faculty Account',
       description: 'Create new faculty accounts and assign them to your department for assessment tracking.',
       stat: loading ? '...' : String(stats.total),
@@ -209,6 +242,63 @@ export default function DeptDashboardPage() {
             <p className="text-[11px] font-semibold text-light-text dark:text-dark-muted mt-0.5">{s.label}</p>
           </div>
         ))}
+      </div>
+
+      {/* 2.5 Personal Faculty Training & Recommendation Hub */}
+      <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-brand-green/10 via-white to-brand-gold/10 dark:from-brand-green/15 dark:via-dark-card dark:to-brand-gold/10 border border-brand-green/30 dark:border-brand-green/20 p-5 sm:p-6 shadow-lg">
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-5">
+          <div className="space-y-2 max-w-2xl">
+            <div className="flex flex-wrap items-center gap-2">
+              <span className="inline-flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-brand-green px-3 py-1 rounded-full bg-brand-green/15 border border-brand-green/30">
+                <GraduationCap className="w-3.5 h-3.5" />
+                Department Chair &mdash; Personal Faculty Assessment
+              </span>
+              <StatusBadge status={personalProgress?.questionnaire_status || 'not_started'} />
+            </div>
+            <h2 className="text-xl sm:text-2xl font-extrabold text-light-text dark:text-white tracking-tight">
+              Your Personal Training Needs Assessment &amp; AI Recommendations
+            </h2>
+            <p className="text-xs sm:text-sm text-light-text dark:text-dark-muted leading-relaxed">
+              As Department Administrator, you are also an active academic faculty member. Complete your personal 8-part questionnaire to assess your pedagogical, technical, and research competencies, and unlock AI-recommended training programs tailored to your profile.
+            </p>
+
+            <div className="flex flex-wrap items-center gap-4 pt-1 text-xs text-light-text dark:text-dark-muted font-medium">
+              <span className="flex items-center gap-1.5">
+                <ClipboardList className="w-4 h-4 text-brand-green" />
+                <span>Parts Completed: <strong className="text-light-text dark:text-white font-mono">{personalProgress?.total_parts_completed || '0/8'}</strong></span>
+              </span>
+              <span className="flex items-center gap-1.5">
+                <CheckCircle2 className="w-4 h-4 text-brand-gold" />
+                <span>Required for AI Model: <strong className="text-light-text dark:text-white font-mono">{personalProgress?.required_parts_completed || '0/5'}</strong></span>
+              </span>
+              {personalRec?.last_recommendation_at && (
+                <span className="flex items-center gap-1.5 text-emerald-600 dark:text-emerald-400">
+                  <Sparkles className="w-4 h-4" />
+                  <span>Recommendation Active</span>
+                </span>
+              )}
+            </div>
+          </div>
+
+          <div className="flex flex-col sm:flex-row md:flex-col gap-2.5 shrink-0">
+            <Link
+              href="/questionnaire"
+              className="inline-flex items-center justify-center gap-2 px-5 py-3 rounded-xl bg-brand-green hover:bg-brand-green-dark text-white text-xs font-bold shadow-md hover:shadow-lg transition-all active:scale-95"
+            >
+              <ClipboardList className="w-4 h-4" />
+              <span>{personalProgress?.questionnaire_status === 'has_recommendation' ? 'Review Assessment' : personalProgress?.questionnaire_status === 'eligible' ? 'Update Assessment' : 'Take Needs Assessment'}</span>
+              <ArrowRight className="w-4 h-4 ml-0.5" />
+            </Link>
+
+            <Link
+              href="/my-recommendation"
+              className="inline-flex items-center justify-center gap-2 px-5 py-3 rounded-xl bg-white dark:bg-dark-card border border-light-border dark:border-dark-border hover:border-brand-gold/60 text-light-text dark:text-white text-xs font-bold shadow-sm hover:shadow-md transition-all active:scale-95 group"
+            >
+              <Sparkles className="w-4 h-4 text-brand-gold group-hover:rotate-12 transition-transform" />
+              <span>{personalRec?.recommendation ? 'View My Recommendations' : 'Generate Recommendation'}</span>
+            </Link>
+          </div>
+        </div>
       </div>
 
       {/* 3. Visual Charts & Analytics Section */}

@@ -148,14 +148,34 @@ PART_SCHEMAS = {
 # ─── Status Helpers ───────────────────────────────────────────────────────────
 
 def _get_faculty_or_403(current_user: User, db: Session) -> Faculty:
-    """Ensure user is a faculty member and return their Faculty profile."""
+    """Ensure user is a faculty member or department admin, and return their Faculty profile."""
     faculty = db.query(Faculty).filter(Faculty.user_id == current_user.id).first()
-    if not faculty:
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="Only faculty members can access the questionnaire.",
-        )
-    return faculty
+    if faculty:
+        return faculty
+
+    # If user is a department_admin without a faculty profile, auto-provision one
+    role_name = current_user.role.name if current_user.role else ""
+    if role_name == "department_admin":
+        from app.db.models import DepartmentAdmin
+        da = db.query(DepartmentAdmin).filter(DepartmentAdmin.user_id == current_user.id).first()
+        if da and da.department_id:
+            faculty = Faculty(
+                user_id=current_user.id,
+                department_id=da.department_id,
+                faculty_code=f"CHAIR-{current_user.id:04d}",
+                academic_rank="Assistant Professor I",
+                status="active",
+                questionnaire_status="not_started",
+            )
+            db.add(faculty)
+            db.commit()
+            db.refresh(faculty)
+            return faculty
+
+    raise HTTPException(
+        status_code=status.HTTP_403_FORBIDDEN,
+        detail="Only faculty members and department chairs/admins can access the questionnaire and training recommendations.",
+    )
 
 
 def _get_completed_parts(faculty_id: int, db: Session) -> dict[int, bool]:
@@ -287,11 +307,27 @@ def get_part_data_endpoint(
     ).first()
 
     if not part:
+        initial_data = None
+        if part_number == 1 and faculty.department:
+            initial_data = {
+                "department": faculty.department.code,
+                "age": 35,
+                "sex": "Female",
+                "employment_status": "Permanent",
+            }
+        elif part_number == 3:
+            role_name = current_user.role.name if current_user.role else ""
+            initial_data = {
+                "academic_rank": faculty.academic_rank or "Assistant Professor I",
+                "years_teaching": "5–10 years",
+                "administrative_designation": "Department Chair" if role_name == "department_admin" else "None",
+                "trainings_last_3_years": "3–5",
+            }
         return {
             "part_number": part_number,
             "label": PART_LABELS[part_number],
             "is_complete": False,
-            "data": None,
+            "data": initial_data,
         }
 
     return {

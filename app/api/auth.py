@@ -259,6 +259,16 @@ def register_user(
             department_id=department.id,
             status="active",
         ))
+        db.add(Faculty(
+            user_id=new_user.id,
+            department_id=department.id,
+            faculty_code=body.faculty_code.strip() if body.faculty_code else f"CHAIR-{new_user.id:04d}",
+            academic_rank=body.academic_rank.strip() if body.academic_rank else "Assistant Professor I",
+            highest_degree=body.highest_degree.strip() if body.highest_degree else None,
+            specialization=body.specialization.strip() if body.specialization else None,
+            status="active",
+            questionnaire_status="not_started",
+        ))
     elif body.role == "faculty" and department:
         db.add(Faculty(
             user_id=new_user.id,

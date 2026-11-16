@@ -82,7 +82,7 @@ export default function ProfilePage() {
   const [showNew, setShowNew] = useState(false);
   const [savingPassword, setSavingPassword] = useState(false);
 
-  const isFaculty = authUser?.role === 'faculty';
+  const isFaculty = authUser?.role === 'faculty' || authUser?.role === 'department_admin';
 
   const loadProfile = useCallback(async () => {
     setLoading(true);

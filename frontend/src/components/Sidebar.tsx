@@ -42,7 +42,9 @@ export default function Sidebar() {
   const deptAdminNav = [
     { href: '/dept-dashboard', label: 'Dept Overview', icon: LayoutDashboard },
     { href: '/dept-faculty', label: 'Faculty Management', icon: Users },
-    { href: '/dept-recommendations', label: 'Model Recommendations', icon: Sparkles },
+    { href: '/dept-recommendations', label: 'Dept Model Synthesis', icon: Sparkles },
+    { href: '/questionnaire', label: 'My Needs Assessment', icon: ClipboardList },
+    { href: '/my-recommendation', label: 'My Recommendations', icon: GraduationCap },
     { href: '/register-faculty', label: 'Add Faculty Account', icon: UserPlus },
   ];
 

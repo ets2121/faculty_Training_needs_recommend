@@ -20,6 +20,7 @@ import {
   ChevronUp,
 } from 'lucide-react';
 import { useToast } from '@/context/ToastContext';
+import { useAuth } from '@/context/AuthContext';
 
 interface QuestionnairePartFormProps {
   partNumber: number;
@@ -306,16 +307,22 @@ export default function QuestionnairePartForm({
     leadership: false,
   });
   const { showToast } = useToast();
+  const { user } = useAuth();
 
   useEffect(() => {
-    setFormData(initialData || getDefaultData(partNumber));
-  }, [partNumber, initialData]);
+    const fallback = getDefaultData(partNumber);
+    const combined = initialData ? { ...fallback, ...initialData } : fallback;
+    if (partNumber === 1 && !combined.department && user?.department?.code) {
+      combined.department = user.department.code;
+    }
+    setFormData(combined);
+  }, [partNumber, initialData, user]);
 
   function getDefaultData(part: number) {
     switch (part) {
       case 1:
         return {
-          department: 'BSIT',
+          department: user?.department?.code || 'BSIT',
           age: 35,
           sex: 'Female',
           employment_status: 'Permanent',
@@ -329,7 +336,7 @@ export default function QuestionnairePartForm({
         return {
           academic_rank: 'Assistant Professor',
           years_teaching: '5–10 years',
-          administrative_designation: 'None',
+          administrative_designation: user?.role === 'department_admin' ? 'Department Chair' : 'None',
           trainings_last_3_years: '3–5',
         };
       case 4:
@@ -432,7 +439,7 @@ export default function QuestionnairePartForm({
                 <div className="flex items-center gap-2">
                   <Building className="w-4 h-4 text-brand-gold shrink-0" />
                   <span className="font-bold font-mono text-light-text dark:text-white">
-                    {formData.department || 'BSIT'}
+                    {formData.department || user?.department?.code || 'BSIT'}
                   </span>
                 </div>
                 <span className="inline-flex items-center gap-1 text-[10px] text-light-text dark:text-dark-muted font-mono bg-white dark:bg-dark-card px-2 py-0.5 rounded border border-light-border dark:border-dark-border">

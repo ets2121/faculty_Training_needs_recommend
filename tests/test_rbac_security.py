@@ -52,3 +52,35 @@ def test_rbac_access_control():
         users_res = client.get("/api/v1/users", headers=headers)
         assert users_res.status_code == 200, users_res.text
         assert len(users_res.json()["users"]) > 0
+
+
+def test_dept_admin_has_faculty_assessment_access():
+    """Verify department admins have linked faculty profiles and access to questionnaire & individual profile."""
+    from app.core.security import create_access_token
+    from app.db.models import User
+    from app.db.session import SessionLocal
+
+    db = SessionLocal()
+    try:
+        dept_user = db.query(User).filter(User.username == "dept_bsit").first()
+        assert dept_user is not None
+        token = create_access_token(data={"sub": str(dept_user.id), "username": dept_user.username})
+
+        with TestClient(app) as client:
+            headers = {"Authorization": f"Bearer {token}"}
+
+            # Progress check
+            res_prog = client.get("/api/v1/questionnaire/progress", headers=headers)
+            assert res_prog.status_code == 200, res_prog.text
+            assert "questionnaire_status" in res_prog.json()
+
+            # Profile check
+            res_prof = client.get("/api/v1/profile", headers=headers)
+            assert res_prof.status_code == 200, res_prof.text
+            assert res_prof.json()["faculty_profile"]["faculty_code"] is not None
+
+            # Can recommend check
+            res_elig = client.get("/api/v1/questionnaire/can-recommend", headers=headers)
+            assert res_elig.status_code == 200, res_elig.text
+    finally:
+        db.close()

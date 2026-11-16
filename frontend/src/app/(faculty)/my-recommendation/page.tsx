@@ -9,6 +9,7 @@ import CompetencyProfilingCard from '@/components/CompetencyProfilingCard';
 import GeneratingProgressModal from '@/components/GeneratingProgressModal';
 import { RecommendationSkeleton } from '@/components/Skeletons';
 import { useToast } from '@/context/ToastContext';
+import { useAuth } from '@/context/AuthContext';
 import { Sparkles, RefreshCw, AlertCircle, ArrowLeft, ClipboardList, Clock } from 'lucide-react';
 import { systemConfig } from '@/config';
 
@@ -20,6 +21,8 @@ export default function MyRecommendationPage() {
   const [timestamp, setTimestamp] = useState<string | null>(null);
   const [runError, setRunError] = useState<string | null>(null);
   const { showToast } = useToast();
+  const { user } = useAuth();
+  const dashboardHref = user?.role === 'department_admin' ? '/dept-dashboard' : '/faculty-dashboard';
 
   const loadData = useCallback(async () => {
     try {
@@ -98,7 +101,7 @@ export default function MyRecommendationPage() {
             className="w-9 h-9 object-contain shrink-0"
           />
           <Link
-            href="/faculty-dashboard"
+            href={dashboardHref}
             className="inline-flex items-center gap-1.5 text-xs text-light-text dark:text-dark-muted hover:text-brand-green-dark transition-colors"
           >
             <ArrowLeft className="w-4 h-4" />
